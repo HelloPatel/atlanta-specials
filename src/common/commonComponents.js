@@ -1,8 +1,5 @@
 // restaurantUtils.js
 
-import { BlobServiceClient } from "@azure/storage-blob"
-import React, { useEffect, useState } from "react";
-
 // Function to create a restaurant object
 function createRestaurant(name, locations, cuisine, specials, website) {
     return {
