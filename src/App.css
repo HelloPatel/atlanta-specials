@@ -1,15 +1,20 @@
 /* App.css */
 
+/* Regular styles */
 body {
   font-family: Arial, sans-serif;
   background-color: #f5f5f5;
   margin: 0;
   padding: 0;
+  width:auto;
 }
 
 .container {
-  padding: 20px;
-  width: 100%;
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+  width:auto;
 }
 
 .title {
@@ -17,10 +22,11 @@ body {
   font-weight: bold;
   margin-bottom: 20px;
   text-align: center; /* Center the title horizontally */
-  padding: 40px 20px; /* Add padding to the title box */
+  padding: 20px 0; /* Adjust padding */
   background-color: #de6d6d; /* Set a light background color */
   border: 1px solid #ddd; /* Add a border */
-  width: 100%;
+  width: 100%; /* Set width to 100% */
+  box-sizing: border-box; /* Ensure padding and border are included in the width */
 }
 
 .filters {
@@ -51,6 +57,7 @@ body {
 .restaurant-table {
   width: 100%;
   border-collapse: collapse;
+  max-width: 100%;
 }
 
 .restaurant-table th,
@@ -78,9 +85,43 @@ body {
 
 .specials-table td:first-child {
   width: 200px;
+  width: 50px; 
 }
 
 .restaurant-image {
   width: 100%;
   height: auto;
+}
+
+/* Media query for smaller screens */
+@media only screen and (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+
+  .title {
+    padding: 20px 0; /* Reduce padding for smaller screens */
+    width: 100%;
+    text-align: center;
+    margin-right: 10px;
+  }
+
+  .filters {
+    flex-direction: column; /* Stack filters vertically */
+    align-items: center; /* Center filters vertically */
+  }
+
+  .select-wrapper {
+    width: 100%; /* Make filters take up full width on smaller screens */
+    margin: 0; /* Remove margin */
+  }
+
+  .select-wrapper:not(:last-child) {
+    margin-bottom: 10px; /* Add margin between filters */
+  }
+
+  .restaurant-table th,
+  .restaurant-table td {
+    font-size: 10px; /* Reduce font size for smaller screens */
+  }
 }
