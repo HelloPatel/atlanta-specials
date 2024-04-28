@@ -30,7 +30,7 @@ function App() {
 
   return (
     <div className="container">
-      <h1 className="title">Atlanta Specials</h1>
+      <h1 className="title">ATLANTA SPECIALS</h1>
       <div className="filters">
         <label>Location:</label>
         <div className="select-wrapper">
