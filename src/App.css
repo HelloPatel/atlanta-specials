@@ -9,6 +9,7 @@ body {
 
 .container {
   padding: 20px;
+  width: 100%;
 }
 
 .title {
@@ -19,6 +20,7 @@ body {
   padding: 40px 20px; /* Add padding to the title box */
   background-color: #de6d6d; /* Set a light background color */
   border: 1px solid #ddd; /* Add a border */
+  width: 100%;
 }
 
 .filters {
