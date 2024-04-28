@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import './App.css'; // Import CSS file for styling
 import { daysOfWeek, locationOptions, cuisineOptions, restaurantsList } from './common/commonComponents'; // Import common function and properties
 import Select from 'react-select'; // Import react-select component
-
+import AdsComponent from './common/AdsComponent';
+import { HelmetProvider } from 'react-helmet-async';
 function App() {
   // Sample restaurant data
   const restaurants = restaurantsList;
@@ -30,7 +31,11 @@ function App() {
 
   return (
     <div className="container">
-      <h1 className="title">ATLANTA SPECIALS</h1>
+          <HelmetProvider>
+      <h1 className='title'>ATLANTA SPECIALS</h1>
+      
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4490891114081212" crossOrigin="anonymous"></script>
+    </HelmetProvider>
       <div className="filters">
         <label>Location:</label>
         <div className="select-wrapper">
@@ -96,6 +101,7 @@ function App() {
           </tbody>
         </table>
       </div>
+      <AdsComponent dataAdSlot='8007098827' />
     </div>
   );
 }
