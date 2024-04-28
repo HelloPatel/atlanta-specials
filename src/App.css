@@ -15,22 +15,35 @@ body {
   font-size: 24px;
   font-weight: bold;
   margin-bottom: 20px;
+  text-align: center; /* Center the title horizontally */
+  padding: 40px 20px; /* Add padding to the title box */
+  background-color: #de6d6d; /* Set a light background color */
+  border: 1px solid #ddd; /* Add a border */
 }
 
 .filters {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
+  justify-content: center;
   margin-bottom: 20px;
+}
+
+.select-wrapper {
+  width: 200px; /* Adjust width as needed */
+  margin-right: 10px; /* Add margin for spacing */
+  display: inline-block; /* Display elements side by side */
+  margin-top: 10px;
 }
 
 .filters label {
   margin-right: 10px;
+  margin-bottom: 10px; /* Add some bottom margin to separate filters vertically */
+  margin-top: 20px;
 }
 
 .select-wrapper {
-  flex: 0 0 calc(50% - 10px);
-  margin-bottom: 10px;
+  flex: 0 0 calc(15%); /* Each filter takes up 50% width with space between them */
+  margin-bottom: 10px; /* Add some bottom margin to separate filters vertically */
 }
 
 .restaurant-table {
