@@ -12,24 +12,40 @@ body {
 }
 
 .title {
-  .title {
-    font-family: 'Arial Black', sans-serif; /* Apply a fancy font */
-    font-size: 48px; /* Increase font size */
-    color: #800000; /* Set a dark red color */
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Add text shadow for depth */
-  }
-}  
+  position: relative; /* Ensure the title box is positioned relative to its parent */
+  display: flexbox; /* Display as an inline block to fit the content */
+  padding: 40px 5px; /* Add padding to the title box */
+  background-color: #de6d6d; /* Set a light background color */
+  border: 1px solid #ddd; /* Add a border */
+  border-radius: 10px; /* Add rounded corners */
+  margin-bottom: 20px; /* Add margin to separate from other elements */
+}
 
 .filters {
-  margin-bottom: 20px;
+  display: flex;
+  justify-content: center; /* Align filters to the center */
+  margin-bottom: 20px; /* Add some space between filters and table */
 }
 
 .filters label {
-  margin-right: 5px; /* Add spacing after the colon */
+  margin-right: 10px; /* Reduce the space between labels and selects */
+  margin-top: 20px;
+  vertical-align: middle;
 }
 
-.filters select {
-  margin-right: 10px; /* Add spacing between select elements */
+.select-wrapper {
+  width: 200px; /* Adjust width as needed */
+  margin-right: 10px; /* Add margin for spacing */
+  display: inline-block; /* Display elements side by side */
+  margin-top: 10px;
+}
+
+.filters Select {
+  width: 10px; /* Set a fixed width for the selects */
+  margin-bottom: 10px; /* Add space below each select element */
+  margin-right: 100px;
+  margin-top: 10px;
+
 }
 
 .restaurant-table {
