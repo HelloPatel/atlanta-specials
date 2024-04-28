@@ -39,6 +39,7 @@ function App() {
             value={locationFilter}
             onChange={(selectedOptions) => setLocationFilter(selectedOptions)}
             isMulti
+            isSearchable={false}
           />
         </div>
         <label>Cuisine Type:</label>
@@ -48,6 +49,7 @@ function App() {
             value={cuisineFilter}
             onChange={(selectedOptions) => setCuisineFilter(selectedOptions)}
             isMulti
+            isSearchable={false}
           />
         </div>
         <label>Day of the Week:</label>
@@ -57,6 +59,7 @@ function App() {
             value={selectedDay}
             onChange={(selectedOptions) => setSelectedDay(selectedOptions)}
             isMulti
+            isSearchable={false}
           />
         </div>
       </div>
