@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import './App.css'; // Import CSS file for styling
-import restaurantImage from './img/restaurant-image.jpg'; // Import your restaurant image
 import { daysOfWeek, locationOptions, cuisineOptions, restaurantsList } from './common/commonComponents'; // Import common function and properties
 import Select from 'react-select'; // Import react-select component
 
