@@ -1,26 +1,33 @@
+/* Body Styles */
 body {
   background-color: #f5f5f5; /* Set a nice background color */
 }
 
+/* Container Styles */
 .container {
   text-align: center;
   background-color: #fff; /* Set container background color */
   padding: 20px;
   border-radius: 10px;
   margin: 20px auto;
-  max-width: auto;
+  max-width: 90%; /* Adjust max-width for smaller screens */
 }
 
+/* Title Styles */
 .title {
   position: relative; /* Ensure the title box is positioned relative to its parent */
-  display: flexbox; /* Display as an inline block to fit the content */
-  padding: 40px 5px; /* Add padding to the title box */
+  display: flex; /* Display as a flex container */
+  justify-content: center; /* Center the content horizontally */
+  align-items: center; /* Center the content vertically */
+  padding: 40px 20px; /* Add padding to the title box */
   background-color: #de6d6d; /* Set a light background color */
   border: 1px solid #ddd; /* Add a border */
   border-radius: 10px; /* Add rounded corners */
   margin-bottom: 20px; /* Add margin to separate from other elements */
+  font-size: 24px; /* Adjust font size for smaller screens */
 }
 
+/* Filters Styles */
 .filters {
   display: flex;
   justify-content: center; /* Align filters to the center */
@@ -40,14 +47,14 @@ body {
   margin-top: 10px;
 }
 
-.filters Select {
-  width: 10px; /* Set a fixed width for the selects */
+.filters select {
+  width: auto; /* Allow selects to adjust width based on content */
   margin-bottom: 10px; /* Add space below each select element */
   margin-right: 100px;
   margin-top: 10px;
-
 }
 
+/* Table Styles */
 .restaurant-table {
   width: 100%; /* Set table width to 100% */
   border-collapse: collapse;
@@ -68,6 +75,7 @@ body {
   background-color: #f2f2f2;
 }
 
+/* Specials Table Styles */
 .specials-table {
   width: 100%; /* Ensure specials table stretches the whole width */
   table-layout: auto; /* Reset table layout for specials table */
@@ -81,7 +89,8 @@ body {
   width: 200px;
 }
 
+/* Image Styles */
 .restaurant-image {
-  width: 800px; /* Adjust the width of the image to match the table */
+  width: 100%; /* Set the width of the image to 100% */
   height: auto; /* Maintain aspect ratio */
 }
