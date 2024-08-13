@@ -237,6 +237,52 @@ export const restaurantsList = [
     },
     "https://establishmentatlanta.com/atlanta-establishment-midtown-food-menu"
   ),
+  createRestaurant(
+    "Snap Thai",
+    ["Buckhead"],
+    "Asian",
+    {
+      Monday:"",
+      Tuesday:"Happy Hour 3pm-5:30pm",
+      Wednesday: "Happy Hour 3pm-5:30pm",
+      Thursday: "Happy Hour 3pm-5:30pm",
+      Friday:"Happy Hour 3pm-5:30pm.",
+      Saturday: "",
+      Sunday:
+        "",
+    },
+    "https://www.snapthaiatl.com/menu"
+  ),
+  createRestaurant(
+    "Beetlecat",
+    ["Inman Park"],
+    "Seafood",
+    {
+      Monday: "Oyster Happy Hour: Monday to Friday from 4-5pm",
+      Tuesday: "Oyster Happy Hour: Monday to Friday from 4-5pm",
+      Wednesday: "Oyster Happy Hour: Monday to Friday from 4-5pm",
+      Thursday: "Oyster Happy Hour: Monday to Friday from 4-5pm",
+      Friday: "Oyster Happy Hour: Monday to Friday from 4-5pm",
+      Saturday: "",
+      Sunday: "",
+    },
+    "https://beetlecatatl.com/"
+  ),
+  createRestaurant(
+    "Biltong Bar",
+    ["Ponce City Market"],
+    "South African",
+    {
+      Monday: "Happy Hour: Great deals on snacks and drinks from 12pm onward",
+      Tuesday: "Happy Hour: Great deals on snacks and drinks from 12pm onward",
+      Wednesday: "Happy Hour: Great deals on snacks and drinks from 12pm onward",
+      Thursday: "Happy Hour: Great deals on snacks and drinks from 12pm onward",
+      Friday: "Happy Hour: Great deals on snacks and drinks from 12pm onward",
+      Saturday: "",
+      Sunday: "",
+    },
+    "https://biltong-bar.com/"
+  ),
 
   // Add more restaurant objects as needed
 ];
@@ -257,5 +303,5 @@ export const cuisineOptions = [
   "Italian",
   "Mexican",
   "American",
-  "Japanese",
+  "Asian",
 ];

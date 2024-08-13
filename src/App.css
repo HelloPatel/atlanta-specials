@@ -9,6 +9,7 @@ body {
   width:auto;
 }
 
+
 .container {
   font-family: Arial, sans-serif;
   background-color: #f5f5f5;
@@ -28,6 +29,7 @@ body {
   width: 100%; /* Set width to 100% */
   box-sizing: border-box; /* Ensure padding and border are included in the width */
 }
+
 
 .filters {
   display: flex;
