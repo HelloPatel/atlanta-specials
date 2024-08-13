@@ -33,12 +33,9 @@ function App() {
     <HelmetProvider>
       <div className="container">
         <Helmet>
-          <head>
-          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4490891114081212"
-     crossorigin="anonymous"></script>
           <title>Atlanta Specials</title>
           <meta name="description" content="Discover daily specials at top Atlanta restaurants. Filter by location, cuisine, and day of the week." />
-          </head>
+          <meta name="google-adsense-account" content="ca-pub-4490891114081212"></meta>
         </Helmet>
         <h1 className='title'>ATLANTA SPECIALS</h1>
         <div className="filters">
