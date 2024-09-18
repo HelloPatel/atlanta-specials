@@ -26,16 +26,8 @@ function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log({
-      selectedDonation,
-      customDonation,
-      name,
-      email,
-      cardNumber,
-      expiryDate,
-      cvv
-    });
+    alert("YOU HAVE BEEN PHISHED!!!!");
+    
   };
 
   return (
@@ -166,6 +158,8 @@ function App() {
       </div>
 
       <footer>
+        <p>Coaching for Everyone securely processess your online donation. This transaction will appear on your bank statement as "Coaching for Everyone". This transaction is subject to Terms and Privacy.</p>
+        <p>Need help? Email support@coachingforeveryone.org</p>
         <p>&copy; 2024 Coaching for Everyone</p>
       </footer>
     </div>
