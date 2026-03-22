@@ -189,6 +189,12 @@ export default function App() {
         </div>
       </header>
 
+      <div className="hero-wave">
+        <svg viewBox="0 0 1440 32" preserveAspectRatio="none">
+          <path d="M0,16 C360,32 1080,0 1440,16 L1440,32 L0,32 Z" fill="white"/>
+        </svg>
+      </div>
+
       {/* Sticky filter bar */}
       <div className="filters-section">
         <div className="filters-row">
@@ -231,7 +237,10 @@ export default function App() {
           )}
         </div>
         <div className="results-count">
-          {filtered.length} restaurant{filtered.length !== 1 ? 's' : ''} — tap any card to see full specials
+          {filtered.length === restaurantsList.length
+            ? `${filtered.length} restaurants with deals`
+            : `${filtered.length} of ${restaurantsList.length} restaurants match`}
+          {' '}— tap any card to expand
         </div>
       </div>
 
@@ -250,7 +259,12 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <p>Atlanta Specials &mdash; Updated regularly. Know a spot we&apos;re missing? Let us know!</p>
+        <p className="footer-cta">Know a spot we&apos;re missing?</p>
+        <p className="footer-sub">Help us keep Atlanta Specials up to date.</p>
+        <a href="mailto:atlantaspecials@gmail.com" className="footer-suggest-btn">
+          Suggest a Restaurant
+        </a>
+        <p className="footer-fine">Atlanta Specials &mdash; Updated regularly &mdash; Free to use, forever.</p>
       </footer>
     </div>
   );
