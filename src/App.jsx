@@ -58,6 +58,15 @@ function RestaurantCard({ restaurant, selectedDays }) {
   return (
     <div className={`card ${expanded ? 'card-expanded' : ''}`}>
       <button className="card-toggle" onClick={() => setExpanded(!expanded)}>
+        {restaurant.image && (
+          <img
+            className="card-image"
+            src={restaurant.image}
+            alt={restaurant.name}
+            loading="lazy"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        )}
         <div className="card-top">
           <div className="card-title-row">
             <a
@@ -140,22 +149,32 @@ export default function App() {
     .map((o) => ({ value: o, label: o }));
   const daysFormatted = daysOfWeek.map((d) => ({ value: d, label: d }));
 
+  const todayIndex = daysOfWeek.indexOf(TODAY);
+  const daysUntilNextSpecial = (r) => {
+    for (let i = 0; i <= 6; i++) {
+      if (r.specials[daysOfWeek[(todayIndex + i) % 7]]) return i;
+    }
+    return 7;
+  };
+
   const filtered = useMemo(() => {
-    return restaurantsList.filter((r) => {
-      const matchLoc =
-        locationFilter.length === 0 ||
-        locationFilter.some((o) => r.location.includes(o.value));
-      const matchCuisine =
-        cuisineFilter.length === 0 ||
-        cuisineFilter.some((o) => r.cuisine === o.value);
-      const matchSearch =
-        search.trim() === '' ||
-        r.name.toLowerCase().includes(search.toLowerCase());
-      const matchDay =
-        selectedDay.length === 0 ||
-        selectedDay.some((o) => r.specials[o.value]);
-      return matchLoc && matchCuisine && matchSearch && matchDay;
-    });
+    return restaurantsList
+      .filter((r) => {
+        const matchLoc =
+          locationFilter.length === 0 ||
+          locationFilter.some((o) => r.location.includes(o.value));
+        const matchCuisine =
+          cuisineFilter.length === 0 ||
+          cuisineFilter.some((o) => r.cuisine === o.value);
+        const matchSearch =
+          search.trim() === '' ||
+          r.name.toLowerCase().includes(search.toLowerCase());
+        const matchDay =
+          selectedDay.length === 0 ||
+          selectedDay.some((o) => r.specials[o.value]);
+        return matchLoc && matchCuisine && matchSearch && matchDay;
+      })
+      .sort((a, b) => daysUntilNextSpecial(a) - daysUntilNextSpecial(b));
   }, [locationFilter, cuisineFilter, selectedDay, search]);
 
   const clearAll = () => {

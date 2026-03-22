@@ -164,6 +164,14 @@ body {
   box-shadow: 0 6px 24px rgba(0,0,0,0.12);
 }
 
+/* ===== Card Image ===== */
+.card-image {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
 /* The entire top section is a button for accessibility */
 .card-toggle {
   width: 100%;

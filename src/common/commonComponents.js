@@ -1,12 +1,15 @@
 // restaurantUtils.js
 
-function createRestaurant(name, locations, cuisine, specials, website) {
-  return { name, location: locations, cuisine, specials, website };
+function createRestaurant(name, locations, cuisine, specials, website, image) {
+  return { name, location: locations, cuisine, specials, website, image };
 }
 
 export const daysOfWeek = [
   "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
 ];
+
+const img = (id) =>
+  `https://images.unsplash.com/photo-${id}?w=600&h=240&fit=crop&auto=format&q=80`;
 
 export const restaurantsList = [
   createRestaurant(
@@ -22,7 +25,8 @@ export const restaurantsList = [
       Saturday: "Brunch is back. Come hungry and plan to stay a while.",
       Sunday: "Sunday brunch — the perfect way to close out the weekend.",
     },
-    "https://www.postino.com/"
+    "https://www.postino.com/",
+    img("1510812431401-41d2bd2722f3") // wine & glasses
   ),
   createRestaurant(
     "Gypsy Kitchen",
@@ -37,7 +41,8 @@ export const restaurantsList = [
       Saturday: "Weekend brunch — come for the food, stay for the atmosphere.",
       Sunday: "Sunday brunch — a relaxed way to end the week.",
     },
-    "https://www.gypsykitchenatl.com/"
+    "https://www.gypsykitchenatl.com/",
+    img("1540189549336-e6e99c3679fe") // Mediterranean small plates
   ),
   createRestaurant(
     "The Iberian Pig",
@@ -52,7 +57,8 @@ export const restaurantsList = [
       Saturday: "Happy hour 5–6 PM. Even weekends get a deal here.",
       Sunday: "Happy hour 5–6 PM. Wind down Sunday with quality bites and drinks.",
     },
-    "https://theiberianpig.com/"
+    "https://theiberianpig.com/",
+    img("1544148103-0773bf10d330") // charcuterie board
   ),
   createRestaurant(
     "Industry Tavern",
@@ -67,7 +73,8 @@ export const restaurantsList = [
       Saturday: "$5 Sam Adams Draft and $6 Sun Cruiser Cans. A great excuse to stay out late.",
       Sunday: "$5 Blue Moon Draft and $6 High Noon Cans. The ultimate Sunday recovery drinks.",
     },
-    "https://www.industrytavern.com/weekly-specials/"
+    "https://www.industrytavern.com/weekly-specials/",
+    img("1436076863939-06870fe779c2") // bar/beer pints
   ),
   createRestaurant(
     "Eclipse di Luna",
@@ -82,7 +89,8 @@ export const restaurantsList = [
       Saturday: "Happy hour 4–6 PM. Even weekends get a deal here.",
       Sunday: "Bottomless mimosas and sangria from 12–4 PM, plus the full menu all day. Sunday done right.",
     },
-    "https://eclipsediluna.com/buckhead-deal/"
+    "https://eclipsediluna.com/buckhead-deal/",
+    img("1515443961218-a51367888e4b") // colorful Spanish tapas
   ),
   createRestaurant(
     "5Church",
@@ -97,7 +105,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://midtown.5church-atlanta.com/atlanta-midtown-5church-midtown-food-menu"
+    "https://midtown.5church-atlanta.com/atlanta-midtown-5church-midtown-food-menu",
+    img("1414235077428-338989a2e8c0") // upscale restaurant dining
   ),
   createRestaurant(
     "Superica",
@@ -112,7 +121,8 @@ export const restaurantsList = [
       Saturday: "Weekend brunch — Superica's brunch is a crowd favorite. Come hungry.",
       Sunday: "Sunday brunch at one of Atlanta's most popular Tex-Mex spots. A true staple.",
     },
-    "https://superica.com/buckhead/#menus"
+    "https://superica.com/buckhead/#menus",
+    img("1565299507177-b0ac66763828") // tacos
   ),
   createRestaurant(
     "Red Pepper Taqueria",
@@ -127,7 +137,8 @@ export const restaurantsList = [
       Saturday: "$20 bottomless mimosas from 11 AM to 4 PM. Brunch the right way.",
       Sunday: "$20 bottomless mimosas from 11 AM to 4 PM. Sunday is meant for this.",
     },
-    "https://www.redpepperatl.com/"
+    "https://www.redpepperatl.com/",
+    img("1551504734-5ee1c4a1479b") // Mexican tacos & margarita
   ),
   createRestaurant(
     "Fados Irish Pub",
@@ -142,7 +153,8 @@ export const restaurantsList = [
       Saturday: "$20 bottomless mimosas until 3 PM. A Fado's weekend tradition.",
       Sunday: "$20 bottomless mimosas until 3 PM. Great value to close out the weekend.",
     },
-    "https://www.fadoirishpub.com/"
+    "https://www.fadoirishpub.com/",
+    img("1535268647677-300dbf3d78d1") // pub/Guinness
   ),
   createRestaurant(
     "Whiskey Bird",
@@ -157,7 +169,8 @@ export const restaurantsList = [
       Saturday: "Happy hour 3–6 PM. Yes, even on Saturdays — a rare find in the neighborhood.",
       Sunday: "Happy hour 3–6 PM. Whiskey Bird makes Sunday feel special.",
     },
-    "https://www.eatwhiskeybird.com/"
+    "https://www.eatwhiskeybird.com/",
+    img("1551024709-8f23befc3a5e") // craft cocktails
   ),
   createRestaurant(
     "Establishment",
@@ -172,7 +185,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://establishmentatlanta.com/atlanta-establishment-midtown-food-menu"
+    "https://establishmentatlanta.com/atlanta-establishment-midtown-food-menu",
+    img("1559339352-11d035aa65de") // fine dining atmosphere
   ),
   createRestaurant(
     "Snap Thai",
@@ -187,7 +201,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://www.snapthaiatl.com/menu"
+    "https://www.snapthaiatl.com/menu",
+    img("1569050467447-ce54b3bbc37d") // Thai noodles
   ),
   createRestaurant(
     "Beetlecat",
@@ -202,7 +217,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://beetlecatatl.com/"
+    "https://beetlecatatl.com/",
+    img("1559847844-5315695dadae") // fresh oysters on ice
   ),
   createRestaurant(
     "The Big Ketch",
@@ -217,7 +233,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://www.thebigketch.com/"
+    "https://www.thebigketch.com/",
+    img("1565680018434-b513d5e5fd47") // grilled seafood
   ),
   createRestaurant(
     "Grana",
@@ -232,7 +249,8 @@ export const restaurantsList = [
       Saturday: "Aperitivo Hour 4–6 PM. Even on weekends — Grana doesn't take days off.",
       Sunday: "Aperitivo Hour 4–6 PM. Wood-fired pizza to close out the weekend. A non-negotiable Sunday ritual.",
     },
-    "https://www.granaatl.com/"
+    "https://www.granaatl.com/",
+    img("1565299624946-b28f40a0ae38") // Neapolitan pizza
   ),
   createRestaurant(
     "Ela",
@@ -247,7 +265,8 @@ export const restaurantsList = [
       Saturday: "Happy hour 3–5 PM. A rare weekend deal — Mediterranean bites before the dinner rush.",
       Sunday: "Happy hour 3–5 PM. Ela on a Sunday afternoon hits different.",
     },
-    "https://www.ela-atlanta.com/"
+    "https://www.ela-atlanta.com/",
+    img("1544025162-d76694265947") // Mediterranean mezze spread
   ),
   createRestaurant(
     "Roshambo",
@@ -262,7 +281,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://roshamboatl.com/"
+    "https://roshamboatl.com/",
+    img("1470337458703-46ad1756a187") // craft cocktails and appetizers
   ),
   createRestaurant(
     "North Italia",
@@ -277,7 +297,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://www.northitalia.com/locations/atlanta-ga-buckhead/"
+    "https://www.northitalia.com/locations/atlanta-ga-buckhead/",
+    img("1555396273-367ea4eb4db5") // Italian pasta dish
   ),
   createRestaurant(
     "White Bull",
@@ -292,7 +313,8 @@ export const restaurantsList = [
       Saturday: "Aperitivo Hour 4–6 PM. White Bull on a Saturday afternoon is worth the trip to Decatur.",
       Sunday: "Aperitivo Hour 4–6 PM. About as good as it gets on a Sunday in Decatur Square.",
     },
-    "https://www.thewhitebullatl.com/"
+    "https://www.thewhitebullatl.com/",
+    img("1550547660-37406b081d7a") // wine and cheese/charcuterie
   ),
   createRestaurant(
     "Tio Lucho's",
@@ -307,7 +329,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://www.tioluchos.com/"
+    "https://www.tioluchos.com/",
+    img("1535400255456-984b4f2e8d49") // ceviche / coastal seafood
   ),
   createRestaurant(
     "Tin Lizzy's Cantina",
@@ -322,7 +345,8 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://tinlizzyscantina.com/"
+    "https://tinlizzyscantina.com/",
+    img("1552332386-f8dd00dc2f85") // loaded tacos / Mexican
   ),
 ];
 
