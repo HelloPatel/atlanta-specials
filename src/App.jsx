@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Select from 'react-select';
 import './App.css';
 import {
@@ -13,19 +13,16 @@ const TODAY = daysOfWeek[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1
 const selectStyles = {
   control: (base, state) => ({
     ...base,
-    borderRadius: '10px',
+    borderRadius: '8px',
     border: state.isFocused ? '2px solid #e8534a' : '2px solid #e0e0e0',
     boxShadow: 'none',
-    minHeight: '44px',
-    fontSize: '14px',
+    minHeight: '42px',
+    fontSize: '13px',
+    background: 'white',
     '&:hover': { borderColor: '#e8534a' },
   }),
-  multiValue: (base) => ({
-    ...base,
-    backgroundColor: '#fde9e8',
-    borderRadius: '6px',
-  }),
-  multiValueLabel: (base) => ({ ...base, color: '#c0392b', fontWeight: 600 }),
+  multiValue: (base) => ({ ...base, backgroundColor: '#fde9e8', borderRadius: '5px' }),
+  multiValueLabel: (base) => ({ ...base, color: '#c0392b', fontWeight: 600, fontSize: '12px' }),
   multiValueRemove: (base) => ({
     ...base,
     color: '#c0392b',
@@ -33,70 +30,98 @@ const selectStyles = {
   }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isSelected
-      ? '#e8534a'
-      : state.isFocused
-      ? '#fde9e8'
-      : 'white',
+    backgroundColor: state.isSelected ? '#e8534a' : state.isFocused ? '#fde9e8' : 'white',
     color: state.isSelected ? 'white' : '#333',
-    fontSize: '14px',
+    fontSize: '13px',
   }),
+  placeholder: (base) => ({ ...base, color: '#aaa', fontSize: '13px' }),
+  menu: (base) => ({ ...base, zIndex: 200 }),
 };
 
-function SpecialsRow({ day, text, isToday, isVisible }) {
-  if (!isVisible || !text) return null;
-  return (
-    <div className={`special-row ${isToday ? 'today' : ''}`}>
-      <span className="day-chip">{day.slice(0, 3)}</span>
-      <span className="special-text">{text}</span>
-    </div>
-  );
-}
-
 function RestaurantCard({ restaurant, selectedDays }) {
+  const [expanded, setExpanded] = useState(false);
+
   const showDay = (day) =>
     selectedDays.length === 0 || selectedDays.some((d) => d.value === day);
 
-  const hasVisibleSpecials = daysOfWeek.some(
+  const visibleDays = daysOfWeek.filter(
     (day) => showDay(day) && restaurant.specials[day]
   );
 
-  if (!hasVisibleSpecials) return null;
+  if (visibleDays.length === 0) return null;
+
+  // In collapsed mode: show today's special or the first available special as preview
+  const previewDay = visibleDays.includes(TODAY) ? TODAY : visibleDays[0];
+  const previewText = restaurant.specials[previewDay];
+  const otherCount = visibleDays.length - 1;
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <a
-          href={restaurant.website}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="restaurant-name"
-        >
-          {restaurant.name}
-          <svg className="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-            <polyline points="15 3 21 3 21 9" />
-            <line x1="10" y1="14" x2="21" y2="3" />
-          </svg>
-        </a>
-        <div className="card-meta">
-          <span className="badge cuisine">{restaurant.cuisine}</span>
-          {restaurant.location.map((loc) => (
-            <span key={loc} className="badge location">{loc}</span>
+    <div className={`card ${expanded ? 'card-expanded' : ''}`}>
+      <button className="card-toggle" onClick={() => setExpanded(!expanded)}>
+        <div className="card-top">
+          <div className="card-title-row">
+            <a
+              href={restaurant.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="restaurant-name"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {restaurant.name}
+              <svg className="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+            </a>
+            <svg
+              className={`chevron ${expanded ? 'chevron-up' : ''}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
+          <div className="card-meta">
+            <span className="badge cuisine">{restaurant.cuisine}</span>
+            {restaurant.location.map((loc) => (
+              <span key={loc} className="badge location">{loc}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Preview row — always visible */}
+        {!expanded && (
+          <div className="card-preview">
+            <span className={`day-chip ${previewDay === TODAY ? 'today-chip' : ''}`}>
+              {previewDay === TODAY ? 'TODAY' : previewDay.slice(0, 3).toUpperCase()}
+            </span>
+            <span className="preview-text">{previewText}</span>
+            {otherCount > 0 && (
+              <span className="more-badge">+{otherCount} more</span>
+            )}
+          </div>
+        )}
+      </button>
+
+      {/* Expanded specials list */}
+      {expanded && (
+        <div className="specials-list">
+          {visibleDays.map((day) => (
+            <div
+              key={day}
+              className={`special-row ${day === TODAY ? 'today' : ''}`}
+            >
+              <span className={`day-chip ${day === TODAY ? 'today-chip' : ''}`}>
+                {day === TODAY ? 'TODAY' : day.slice(0, 3).toUpperCase()}
+              </span>
+              <span className="special-text">{restaurant.specials[day]}</span>
+            </div>
           ))}
         </div>
-      </div>
-      <div className="specials-list">
-        {daysOfWeek.map((day) => (
-          <SpecialsRow
-            key={day}
-            day={day}
-            text={restaurant.specials[day]}
-            isToday={day === TODAY}
-            isVisible={showDay(day)}
-          />
-        ))}
-      </div>
+      )}
     </div>
   );
 }
@@ -146,24 +171,27 @@ export default function App() {
     selectedDay.length > 0 ||
     search.trim() !== '';
 
+  // Restaurants with a special today
+  const todayCount = restaurantsList.filter((r) => r.specials[TODAY]).length;
+
   return (
     <div className="app">
       <header className="hero">
         <div className="hero-content">
           <h1>Atlanta Specials</h1>
-          <p className="subtitle">Find the best daily deals at Atlanta restaurants</p>
-          <div className="today-badge">
+          <p className="subtitle">Discover the best daily deals at Atlanta restaurants</p>
+          <div className="hero-stat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
+              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
-            Today is <strong>{TODAY}</strong>
+            <strong>{todayCount} restaurants</strong>&nbsp;have deals today ({TODAY})
           </div>
         </div>
       </header>
 
-      <main className="main">
-        <div className="filters-bar">
+      {/* Sticky filter bar */}
+      <div className="filters-section">
+        <div className="filters-row">
           <input
             className="search-input"
             type="text"
@@ -177,7 +205,7 @@ export default function App() {
             onChange={setLocationFilter}
             isMulti
             isSearchable={false}
-            placeholder="Filter by location"
+            placeholder="Location"
             styles={selectStyles}
           />
           <Select
@@ -186,7 +214,7 @@ export default function App() {
             onChange={setCuisineFilter}
             isMulti
             isSearchable={false}
-            placeholder="Filter by cuisine"
+            placeholder="Cuisine"
             styles={selectStyles}
           />
           <Select
@@ -195,20 +223,19 @@ export default function App() {
             onChange={setSelectedDay}
             isMulti
             isSearchable={false}
-            placeholder="Filter by day"
+            placeholder="Day"
             styles={selectStyles}
           />
           {hasFilters && (
-            <button className="clear-btn" onClick={clearAll}>
-              Clear all
-            </button>
+            <button className="clear-btn" onClick={clearAll}>Clear</button>
           )}
         </div>
-
         <div className="results-count">
-          {filtered.length} restaurant{filtered.length !== 1 ? 's' : ''} found
+          {filtered.length} restaurant{filtered.length !== 1 ? 's' : ''} — tap any card to see full specials
         </div>
+      </div>
 
+      <main className="main">
         <div className="cards-grid">
           {filtered.map((r) => (
             <RestaurantCard key={r.name} restaurant={r} selectedDays={selectedDay} />
