@@ -90,7 +90,7 @@ export const restaurantsList = [
       Sunday: "Bottomless mimosas and sangria from 12–4 PM, plus the full menu all day. Sunday done right.",
     },
     "https://eclipsediluna.com/buckhead-deal/",
-    img("1515443961218-a51367888e4b") // colorful Spanish tapas
+    "/images/eclipse-di-luna.webp"
   ),
   createRestaurant(
     "5Church",
@@ -106,7 +106,7 @@ export const restaurantsList = [
       Sunday: "",
     },
     "https://midtown.5church-atlanta.com/atlanta-midtown-5church-midtown-food-menu",
-    img("1414235077428-338989a2e8c0") // upscale restaurant dining
+    "/images/5church.webp"
   ),
   createRestaurant(
     "Superica",
@@ -122,7 +122,7 @@ export const restaurantsList = [
       Sunday: "Sunday brunch at one of Atlanta's most popular Tex-Mex spots. A true staple.",
     },
     "https://superica.com/buckhead/#menus",
-    img("1565299507177-b0ac66763828") // tacos
+    "/images/superica.webp"
   ),
   createRestaurant(
     "Red Pepper Taqueria",
@@ -154,7 +154,7 @@ export const restaurantsList = [
       Sunday: "$20 bottomless mimosas until 3 PM. Great value to close out the weekend.",
     },
     "https://www.fadoirishpub.com/",
-    img("1535268647677-300dbf3d78d1") // pub/Guinness
+    "/images/fado-irish-pub.webp"
   ),
   createRestaurant(
     "Whiskey Bird",
@@ -170,7 +170,7 @@ export const restaurantsList = [
       Sunday: "Happy hour 3–6 PM. Whiskey Bird makes Sunday feel special.",
     },
     "https://www.eatwhiskeybird.com/",
-    img("1551024709-8f23befc3a5e") // craft cocktails
+    "/images/whiskey-bird.webp"
   ),
   createRestaurant(
     "Establishment",
