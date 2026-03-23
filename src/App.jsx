@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback, useDeferredValue, useTransition } from 'react';
 import Select from 'react-select';
 import './App.css';
 import {
@@ -38,8 +38,115 @@ const selectStyles = {
   menu: (base) => ({ ...base, zIndex: 200 }),
 };
 
+const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_FULL = {
+  Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday',
+  Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday',
+};
+
+function DayTabs({ selected, onChange }) {
+  const tabRefs = useRef({});
+  const [marker, setMarker] = useState({ left: 0, width: 0 });
+  const [markerVisible, setMarkerVisible] = useState(false);
+
+  const selectedKey = selected.length > 0 ? selected[0].value.slice(0, 3) : null;
+
+  const getPos = useCallback((key) => {
+    const el = tabRefs.current[key];
+    if (!el) return null;
+    return { left: el.offsetLeft, width: el.offsetWidth };
+  }, []);
+
+  // Move marker to selected tab on mount + selection change
+  useEffect(() => {
+    if (selectedKey) {
+      const pos = getPos(selectedKey);
+      if (pos) { setMarker(pos); setMarkerVisible(true); }
+    } else {
+      setMarkerVisible(false);
+    }
+  }, [selectedKey, getPos]);
+
+  // Reposition on window resize (debounced)
+  useEffect(() => {
+    let t;
+    const onResize = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        if (selectedKey) {
+          const pos = getPos(selectedKey);
+          if (pos) setMarker(pos);
+        }
+      }, 150);
+    };
+    window.addEventListener('resize', onResize);
+    return () => { window.removeEventListener('resize', onResize); clearTimeout(t); };
+  }, [selectedKey, getPos]);
+
+  const handleClick = (key) => {
+    const full = DAY_FULL[key];
+    onChange(selected.some(d => d.value === full) ? [] : [{ value: full, label: full }]);
+  };
+
+  const handleMouseEnter = (key) => {
+    const pos = getPos(key);
+    if (pos) { setMarker(pos); setMarkerVisible(true); }
+  };
+
+  const handleMouseLeave = () => {
+    if (selectedKey) {
+      const pos = getPos(selectedKey);
+      if (pos) setMarker(pos);
+    } else {
+      setMarkerVisible(false);
+    }
+  };
+
+  return (
+    <div className="day-tabs" onMouseLeave={handleMouseLeave}>
+      {markerVisible && (
+        <div className="day-tabs-marker" style={{ left: marker.left, width: marker.width }} />
+      )}
+      {DAY_SHORT.map((key) => {
+        const isActive = selected.some(d => d.value === DAY_FULL[key]);
+        const isToday = DAY_FULL[key] === TODAY;
+        return (
+          <button
+            key={key}
+            ref={(el) => { tabRefs.current[key] = el; }}
+            className={`day-tab${isActive ? ' day-tab-active' : ''}${isToday ? ' day-tab-today' : ''}`}
+            onClick={() => handleClick(key)}
+            onMouseEnter={() => handleMouseEnter(key)}
+          >
+            {key}
+            {isToday && <span className="day-tab-dot" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// Intersection Observer — fade cards in as they enter the viewport
+function useReveal() {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
+      { threshold: 0.08 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, visible];
+}
+
 function RestaurantCard({ restaurant, selectedDays }) {
   const [expanded, setExpanded] = useState(false);
+  const [cardRef, visible] = useReveal();
 
   const showDay = (day) =>
     selectedDays.length === 0 || selectedDays.some((d) => d.value === day);
@@ -56,7 +163,7 @@ function RestaurantCard({ restaurant, selectedDays }) {
   const otherCount = visibleDays.length - 1;
 
   return (
-    <div className={`card ${expanded ? 'card-expanded' : ''}`}>
+    <div ref={cardRef} className={`card${expanded ? ' card-expanded' : ''}${visible ? ' card-visible' : ''}`}>
       <button className="card-toggle" onClick={() => setExpanded(!expanded)}>
         {restaurant.image && (
           <img
@@ -140,6 +247,8 @@ export default function App() {
   const [cuisineFilter, setCuisineFilter] = useState([]);
   const [selectedDay, setSelectedDay] = useState([]);
   const [search, setSearch] = useState('');
+  const [isPending, startTransition] = useTransition();
+  const deferredSearch = useDeferredValue(search);
 
   const locationOptionsFormatted = locationOptions
     .filter((o) => o !== 'All')
@@ -147,9 +256,7 @@ export default function App() {
   const cuisineOptionsFormatted = cuisineOptions
     .filter((o) => o !== 'All')
     .map((o) => ({ value: o, label: o }));
-  const daysFormatted = daysOfWeek.map((d) => ({ value: d, label: d }));
-
-  const todayIndex = daysOfWeek.indexOf(TODAY);
+const todayIndex = daysOfWeek.indexOf(TODAY);
   const daysUntilNextSpecial = (r) => {
     for (let i = 0; i <= 6; i++) {
       if (r.specials[daysOfWeek[(todayIndex + i) % 7]]) return i;
@@ -158,6 +265,7 @@ export default function App() {
   };
 
   const filtered = useMemo(() => {
+    const q = deferredSearch.trim().toLowerCase();
     return restaurantsList
       .filter((r) => {
         const matchLoc =
@@ -166,16 +274,18 @@ export default function App() {
         const matchCuisine =
           cuisineFilter.length === 0 ||
           cuisineFilter.some((o) => r.cuisine === o.value);
+        // Smart search: match name OR any special description
         const matchSearch =
-          search.trim() === '' ||
-          r.name.toLowerCase().includes(search.toLowerCase());
+          q === '' ||
+          r.name.toLowerCase().includes(q) ||
+          Object.values(r.specials).some((s) => s && s.toLowerCase().includes(q));
         const matchDay =
           selectedDay.length === 0 ||
           selectedDay.some((o) => r.specials[o.value]);
         return matchLoc && matchCuisine && matchSearch && matchDay;
       })
       .sort((a, b) => daysUntilNextSpecial(a) - daysUntilNextSpecial(b));
-  }, [locationFilter, cuisineFilter, selectedDay, search]);
+  }, [locationFilter, cuisineFilter, selectedDay, deferredSearch]);
 
   const clearAll = () => {
     setLocationFilter([]);
@@ -197,22 +307,30 @@ export default function App() {
     <div className="app">
       <header className="hero">
         <div className="hero-content">
-          <h1>Atlanta Specials</h1>
-          <p className="subtitle">Discover the best daily deals at Atlanta restaurants</p>
+          <p className="hero-eyebrow">Atlanta&apos;s Best Deals</p>
+          <h1>Atlanta<br />Specials</h1>
+          <p className="subtitle">Daily restaurant deals, curated for you</p>
           <div className="hero-stat">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
-            <strong>{todayCount} restaurants</strong>&nbsp;have deals today ({TODAY})
+            <strong>{todayCount} restaurants</strong>&nbsp;with deals today ({TODAY})
           </div>
         </div>
-      </header>
 
-      <div className="hero-wave">
-        <svg viewBox="0 0 1440 32" preserveAspectRatio="none">
-          <path d="M0,16 C360,32 1080,0 1440,16 L1440,32 L0,32 Z" fill="white"/>
-        </svg>
-      </div>
+        <div className="scroll-hint">
+          <span>Swipe up to explore</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+
+        <div className="hero-wave">
+          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="white"/>
+          </svg>
+        </div>
+      </header>
 
       {/* Sticky filter bar */}
       <div className="filters-section">
@@ -227,7 +345,7 @@ export default function App() {
           <Select
             options={locationOptionsFormatted}
             value={locationFilter}
-            onChange={setLocationFilter}
+            onChange={(v) => startTransition(() => setLocationFilter(v))}
             isMulti
             isSearchable={false}
             placeholder="Location"
@@ -236,21 +354,13 @@ export default function App() {
           <Select
             options={cuisineOptionsFormatted}
             value={cuisineFilter}
-            onChange={setCuisineFilter}
+            onChange={(v) => startTransition(() => setCuisineFilter(v))}
             isMulti
             isSearchable={false}
             placeholder="Cuisine"
             styles={selectStyles}
           />
-          <Select
-            options={daysFormatted}
-            value={selectedDay}
-            onChange={setSelectedDay}
-            isMulti
-            isSearchable={false}
-            placeholder="Day"
-            styles={selectStyles}
-          />
+          <DayTabs selected={selectedDay} onChange={setSelectedDay} />
           {hasFilters && (
             <button className="clear-btn" onClick={clearAll}>Clear</button>
           )}
@@ -264,7 +374,7 @@ export default function App() {
       </div>
 
       <main className="main">
-        <div className="cards-grid">
+        <div className={`cards-grid${isPending ? ' grid-pending' : ''}`}>
           {filtered.map((r) => (
             <RestaurantCard key={r.name} restaurant={r} selectedDays={selectedDay} />
           ))}

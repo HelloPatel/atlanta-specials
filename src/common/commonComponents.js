@@ -26,7 +26,7 @@ export const restaurantsList = [
       Sunday: "Sunday brunch — the perfect way to close out the weekend.",
     },
     "https://www.postino.com/",
-    img("1510812431401-41d2bd2722f3") // wine & glasses
+    "/images/postinos.png"
   ),
   createRestaurant(
     "Gypsy Kitchen",
@@ -42,7 +42,7 @@ export const restaurantsList = [
       Sunday: "Sunday brunch — a relaxed way to end the week.",
     },
     "https://www.gypsykitchenatl.com/",
-    img("1540189549336-e6e99c3679fe") // Mediterranean small plates
+    "/images/gypsy-kitchen.webp"
   ),
   createRestaurant(
     "The Iberian Pig",
@@ -58,7 +58,7 @@ export const restaurantsList = [
       Sunday: "Happy hour 5–6 PM. Wind down Sunday with quality bites and drinks.",
     },
     "https://theiberianpig.com/",
-    img("1544148103-0773bf10d330") // charcuterie board
+    "/images/iberian-pig.webp"
   ),
   createRestaurant(
     "Industry Tavern",
@@ -74,7 +74,7 @@ export const restaurantsList = [
       Sunday: "$5 Blue Moon Draft and $6 High Noon Cans. The ultimate Sunday recovery drinks.",
     },
     "https://www.industrytavern.com/weekly-specials/",
-    img("1436076863939-06870fe779c2") // bar/beer pints
+    "/images/industry-tavern.webp"
   ),
   createRestaurant(
     "Eclipse di Luna",
