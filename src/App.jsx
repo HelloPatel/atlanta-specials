@@ -49,11 +49,7 @@ const DAY_FULL = {
 function DayTabs({ selected, onChange }) {
   const handleClick = (key) => {
     const full = DAY_FULL[key];
-    onChange(
-      selected.some(d => d.value === full)
-        ? selected.filter(d => d.value !== full)
-        : [...selected, { value: full, label: full }]
-    );
+    onChange(selected.some(d => d.value === full) ? [] : [{ value: full, label: full }]);
   };
 
   return (
