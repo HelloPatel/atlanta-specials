@@ -153,10 +153,85 @@ body {
   background: white;
   border-bottom: 1px solid #e8e8e8;
   box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-  padding: 12px 24px 8px;
+}
+
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  cursor: default;
+}
+
+.filters-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.filters-active-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e8534a;
+  flex-shrink: 0;
+}
+
+.filters-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filters-toggle-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #e8e8e8;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.filters-toggle-btn:hover {
+  border-color: #e8534a;
+  background: #fff5f5;
+}
+
+.filters-chevron {
+  transition: transform 0.25s ease;
+  color: #aaa;
+}
+
+.filters-chevron-up {
+  transform: rotate(180deg);
+  color: #e8534a;
+}
+
+.filters-body {
+  overflow: hidden;
+  max-height: 200px;
+  transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.25s ease;
+  opacity: 1;
+  padding: 0 24px 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.filters-collapsed .filters-body {
+  max-height: 0;
+  opacity: 0;
+  padding-bottom: 0;
 }
 
 /* Row 1: Search + Clear */
@@ -217,9 +292,10 @@ body {
 .clear-btn:hover { background: #e8534a; color: white; }
 
 .results-count {
-  font-size: 0.75rem;
-  color: #999;
-  font-weight: 500;
+  font-size: 0.72rem;
+  color: #bbb;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* Mobile: stack everything vertically */

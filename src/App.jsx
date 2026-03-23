@@ -268,6 +268,7 @@ export default function App() {
   const [cuisineFilter, setCuisineFilter] = useState([]);    // {value, label}[]
   const [selectedDay, setSelectedDay] = useState([]);
   const [search, setSearch] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(true);
   const [isPending, startTransition] = useTransition();
   const deferredSearch = useDeferredValue(search);
 const todayIndex = daysOfWeek.indexOf(TODAY);
@@ -360,49 +361,71 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
       </header>
 
       {/* Sticky filter bar */}
-      <div id="explore" className="filters-section">
-        {/* Row 1: Search */}
-        <div className="filters-search-row">
-          <input
-            className="search-input"
-            type="text"
-            placeholder="Search by name or deal…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {hasFilters && (
-            <button className="clear-btn" onClick={clearAll}>Clear</button>
-          )}
-        </div>
-        {/* Row 2: Dropdowns + Day tabs */}
-        <div className="filters-controls-row">
-          <div className="filters-selects">
-            <Select
-              options={locationOptionsFormatted}
-              value={locationFilter}
-              onChange={(v) => startTransition(() => setLocationFilter(v))}
-              isMulti
-              isSearchable={false}
-              placeholder="Location"
-              styles={selectStyles}
-            />
-            <Select
-              options={cuisineOptionsFormatted}
-              value={cuisineFilter}
-              onChange={(v) => startTransition(() => setCuisineFilter(v))}
-              isMulti
-              isSearchable={false}
-              placeholder="Cuisine"
-              styles={selectStyles}
-            />
+      <div id="explore" className={`filters-section${filtersOpen ? '' : ' filters-collapsed'}`}>
+        {/* Collapse toggle row */}
+        <div className="filters-header">
+          <div className="filters-header-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+              <line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
+            </svg>
+            <span>Filters</span>
+            {hasFilters && <span className="filters-active-dot" />}
           </div>
-          <DayTabs selected={selectedDay} onChange={setSelectedDay} />
+          <div className="filters-header-right">
+            <span className="results-count">
+              {filtered.length === restaurantsList.length
+                ? `${filtered.length} restaurants`
+                : `${filtered.length} / ${restaurantsList.length}`}
+            </span>
+            <button className="filters-toggle-btn" onClick={() => setFiltersOpen(o => !o)}>
+              <svg
+                className={`filters-chevron${filtersOpen ? ' filters-chevron-up' : ''}`}
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                width="16" height="16"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div className="results-count">
-          {filtered.length === restaurantsList.length
-            ? `${filtered.length} restaurants with deals`
-            : `${filtered.length} of ${restaurantsList.length} restaurants match`}
-          {' '}— tap any card to expand
+
+        {/* Collapsible body */}
+        <div className="filters-body">
+          <div className="filters-search-row">
+            <input
+              className="search-input"
+              type="text"
+              placeholder="Search by name or deal…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {hasFilters && (
+              <button className="clear-btn" onClick={clearAll}>Clear</button>
+            )}
+          </div>
+          <div className="filters-controls-row">
+            <div className="filters-selects">
+              <Select
+                options={locationOptionsFormatted}
+                value={locationFilter}
+                onChange={(v) => startTransition(() => setLocationFilter(v))}
+                isMulti
+                isSearchable={false}
+                placeholder="Location"
+                styles={selectStyles}
+              />
+              <Select
+                options={cuisineOptionsFormatted}
+                value={cuisineFilter}
+                onChange={(v) => startTransition(() => setCuisineFilter(v))}
+                isMulti
+                isSearchable={false}
+                placeholder="Cuisine"
+                styles={selectStyles}
+              />
+            </div>
+            <DayTabs selected={selectedDay} onChange={setSelectedDay} />
+          </div>
         </div>
       </div>
 
