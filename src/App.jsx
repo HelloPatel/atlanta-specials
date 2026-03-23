@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback, useDeferredValue, useTransition } from 'react';
+import Select from 'react-select';
 import './App.css';
 import {
   daysOfWeek,
@@ -7,26 +8,37 @@ import {
   restaurantsList,
 } from './common/commonComponents';
 
+const locationOptionsFormatted = locationOptions.filter(o => o !== 'All').map(o => ({ value: o, label: o }));
+const cuisineOptionsFormatted = cuisineOptions.filter(o => o !== 'All').map(o => ({ value: o, label: o }));
+
+const selectStyles = {
+  control: (b, s) => ({
+    ...b,
+    minHeight: 42,
+    borderColor: s.isFocused ? '#e8534a' : '#e0e0e0',
+    borderWidth: 2,
+    borderRadius: 8,
+    boxShadow: 'none',
+    '&:hover': { borderColor: '#e8534a' },
+    fontSize: 13,
+  }),
+  option: (b, s) => ({
+    ...b,
+    fontSize: 13,
+    backgroundColor: s.isSelected ? '#e8534a' : s.isFocused ? '#fde9e8' : 'white',
+    color: s.isSelected ? 'white' : '#1a1a2e',
+  }),
+  multiValue: (b) => ({ ...b, backgroundColor: '#fde9e8', borderRadius: 4 }),
+  multiValueLabel: (b) => ({ ...b, color: '#e8534a', fontSize: 12, fontWeight: 600 }),
+  multiValueRemove: (b) => ({ ...b, color: '#e8534a', '&:hover': { background: '#e8534a', color: 'white' } }),
+  placeholder: (b) => ({ ...b, color: '#aaa', fontSize: 13 }),
+  indicatorSeparator: () => ({ display: 'none' }),
+  dropdownIndicator: (b) => ({ ...b, color: '#ccc', padding: '0 6px' }),
+  menu: (b) => ({ ...b, fontSize: 13, zIndex: 200 }),
+};
+
 const TODAY = daysOfWeek[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
 
-// Horizontally-scrollable toggle chip row
-function FilterChips({ options, selected, onChange }) {
-  const toggle = (val) =>
-    onChange(selected.includes(val) ? selected.filter((v) => v !== val) : [...selected, val]);
-  return (
-    <div className="filter-chips">
-      {options.filter((o) => o !== 'All').map((opt) => (
-        <button
-          key={opt}
-          className={`filter-chip${selected.includes(opt) ? ' filter-chip-on' : ''}`}
-          onClick={() => toggle(opt)}
-        >
-          {opt}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_FULL = {
@@ -233,8 +245,8 @@ function RestaurantCard({ restaurant, selectedDays }) {
 }
 
 export default function App() {
-  const [locationFilter, setLocationFilter] = useState([]);
-  const [cuisineFilter, setCuisineFilter] = useState([]);
+  const [locationFilter, setLocationFilter] = useState([]);  // {value, label}[]
+  const [cuisineFilter, setCuisineFilter] = useState([]);    // {value, label}[]
   const [selectedDay, setSelectedDay] = useState([]);
   const [search, setSearch] = useState('');
   const [isPending, startTransition] = useTransition();
@@ -253,10 +265,10 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
       .filter((r) => {
         const matchLoc =
           locationFilter.length === 0 ||
-          locationFilter.some((loc) => r.location.includes(loc));
+          locationFilter.some((o) => r.location.includes(o.value));
         const matchCuisine =
           cuisineFilter.length === 0 ||
-          cuisineFilter.includes(r.cuisine);
+          cuisineFilter.some((o) => o.value === r.cuisine);
         const matchSearch =
           q === '' ||
           r.name.toLowerCase().includes(q) ||
@@ -329,21 +341,30 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
             <button className="clear-btn" onClick={clearAll}>Clear</button>
           )}
         </div>
-        {/* Row 2: Filter chips */}
-        <div className="filters-chips-row">
-          <FilterChips
-            options={locationOptions}
-            selected={locationFilter}
-            onChange={(v) => startTransition(() => setLocationFilter(v))}
-          />
-          <FilterChips
-            options={cuisineOptions}
-            selected={cuisineFilter}
-            onChange={(v) => startTransition(() => setCuisineFilter(v))}
-          />
+        {/* Row 2: Dropdowns + Day tabs */}
+        <div className="filters-controls-row">
+          <div className="filters-selects">
+            <Select
+              options={locationOptionsFormatted}
+              value={locationFilter}
+              onChange={(v) => startTransition(() => setLocationFilter(v))}
+              isMulti
+              isSearchable={false}
+              placeholder="Location"
+              styles={selectStyles}
+            />
+            <Select
+              options={cuisineOptionsFormatted}
+              value={cuisineFilter}
+              onChange={(v) => startTransition(() => setCuisineFilter(v))}
+              isMulti
+              isSearchable={false}
+              placeholder="Cuisine"
+              styles={selectStyles}
+            />
+          </div>
+          <DayTabs selected={selectedDay} onChange={setSelectedDay} />
         </div>
-        {/* Row 3: Day tabs */}
-        <DayTabs selected={selectedDay} onChange={setSelectedDay} />
         <div className="results-count">
           {filtered.length === restaurantsList.length
             ? `${filtered.length} restaurants with deals`
