@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useDeferredValue, useTransition } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback, useDeferredValue, useTransition } from 'react';
 import Select from 'react-select';
 import './App.css';
 import {
@@ -47,21 +47,76 @@ const DAY_FULL = {
 };
 
 function DayTabs({ selected, onChange }) {
+  const tabRefs = useRef({});
+  const [marker, setMarker] = useState({ left: 0, width: 0 });
+  const [markerVisible, setMarkerVisible] = useState(false);
+
+  const selectedKey = selected.length > 0 ? selected[0].value.slice(0, 3) : null;
+
+  const getPos = useCallback((key) => {
+    const el = tabRefs.current[key];
+    if (!el) return null;
+    return { left: el.offsetLeft, width: el.offsetWidth };
+  }, []);
+
+  useEffect(() => {
+    if (selectedKey) {
+      const pos = getPos(selectedKey);
+      if (pos) { setMarker(pos); setMarkerVisible(true); }
+    } else {
+      setMarkerVisible(false);
+    }
+  }, [selectedKey, getPos]);
+
+  useEffect(() => {
+    let t;
+    const onResize = () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        if (selectedKey) {
+          const pos = getPos(selectedKey);
+          if (pos) setMarker(pos);
+        }
+      }, 150);
+    };
+    window.addEventListener('resize', onResize);
+    return () => { window.removeEventListener('resize', onResize); clearTimeout(t); };
+  }, [selectedKey, getPos]);
+
   const handleClick = (key) => {
     const full = DAY_FULL[key];
     onChange(selected.some(d => d.value === full) ? [] : [{ value: full, label: full }]);
   };
 
+  const handleMouseEnter = (key) => {
+    const pos = getPos(key);
+    if (pos) { setMarker(pos); setMarkerVisible(true); }
+  };
+
+  const handleMouseLeave = () => {
+    if (selectedKey) {
+      const pos = getPos(selectedKey);
+      if (pos) setMarker(pos);
+    } else {
+      setMarkerVisible(false);
+    }
+  };
+
   return (
-    <div className="day-tabs">
+    <div className="day-tabs" onMouseLeave={handleMouseLeave}>
+      {markerVisible && (
+        <div className="day-tabs-marker" style={{ left: marker.left, width: marker.width }} />
+      )}
       {DAY_SHORT.map((key) => {
         const isActive = selected.some(d => d.value === DAY_FULL[key]);
         const isToday = DAY_FULL[key] === TODAY;
         return (
           <button
             key={key}
+            ref={(el) => { tabRefs.current[key] = el; }}
             className={`day-tab${isActive ? ' day-tab-active' : ''}${isToday ? ' day-tab-today' : ''}`}
             onClick={() => handleClick(key)}
+            onMouseEnter={() => handleMouseEnter(key)}
           >
             {key}
             {isToday && <span className="day-tab-dot" />}
@@ -93,19 +148,21 @@ function RestaurantCard({ restaurant, selectedDays }) {
   const [expanded, setExpanded] = useState(false);
   const [cardRef, visible] = useReveal();
 
-  const showDay = (day) =>
-    selectedDays.length === 0 || selectedDays.some((d) => d.value === day);
-
-  const visibleDays = daysOfWeek.filter(
-    (day) => showDay(day) && restaurant.specials[day]
+  // Days matching the filter (used to decide if card shows at all + preview)
+  const filteredDays = daysOfWeek.filter(
+    (day) => restaurant.specials[day] &&
+      (selectedDays.length === 0 || selectedDays.some((d) => d.value === day))
   );
 
-  if (visibleDays.length === 0) return null;
+  // All days with specials (shown when expanded)
+  const allSpecialDays = daysOfWeek.filter((day) => restaurant.specials[day]);
 
-  // In collapsed mode: show today's special or the first available special as preview
-  const previewDay = visibleDays.includes(TODAY) ? TODAY : visibleDays[0];
+  if (filteredDays.length === 0) return null;
+
+  // In collapsed mode: show today's special or the first matching day as preview
+  const previewDay = filteredDays.includes(TODAY) ? TODAY : filteredDays[0];
   const previewText = restaurant.specials[previewDay];
-  const otherCount = visibleDays.length - 1;
+  const otherCount = allSpecialDays.length - 1;
 
   return (
     <div ref={cardRef} className={`card${expanded ? ' card-expanded' : ''}${visible ? ' card-visible' : ''}`}>
@@ -167,10 +224,10 @@ function RestaurantCard({ restaurant, selectedDays }) {
         )}
       </button>
 
-      {/* Expanded specials list */}
+      {/* Expanded specials list — always show all days */}
       {expanded && (
         <div className="specials-list">
-          {visibleDays.map((day) => (
+          {allSpecialDays.map((day) => (
             <div
               key={day}
               className={`special-row ${day === TODAY ? 'today' : ''}`}
