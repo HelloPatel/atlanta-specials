@@ -318,6 +318,20 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
 
   return (
     <div className="app">
+      <nav className="top-nav">
+        <span className="top-nav-logo">Atlanta Specials</span>
+        <div className="top-nav-auth">
+          {currentUser ? (
+            <>
+              <span className="top-nav-username">👋 {currentUser.displayName || currentUser.email}</span>
+              <button className="top-nav-btn" onClick={logout}>Sign Out</button>
+            </>
+          ) : (
+            <button className="top-nav-btn" onClick={() => setAuthModalOpen(true)}>Sign In</button>
+          )}
+        </div>
+      </nav>
+
       <header className="hero">
         <div className="hero-content">
           <p className="hero-eyebrow">Atlanta&apos;s Best Deals</p>
@@ -328,16 +342,6 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
             <strong>{todayCount} restaurants</strong>&nbsp;with deals today ({TODAY})
-          </div>
-          <div className="hero-auth">
-            {currentUser ? (
-              <>
-                <span className="hero-username">👋 {currentUser.displayName || currentUser.email}</span>
-                <button className="hero-auth-btn" onClick={logout}>Sign Out</button>
-              </>
-            ) : (
-              <button className="hero-auth-btn" onClick={() => setAuthModalOpen(true)}>Sign In / Register</button>
-            )}
           </div>
         </div>
 

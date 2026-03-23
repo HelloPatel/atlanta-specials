@@ -519,29 +519,50 @@ body {
 }
 
 
-/* ===== Hero Auth ===== */
-.hero-auth {
+/* ===== Top Nav ===== */
+.top-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background: rgba(0,0,0,0.18);
+  backdrop-filter: blur(8px);
+}
+
+.top-nav-logo {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.top-nav-auth {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
-.hero-username {
-  font-size: 0.85rem;
+.top-nav-username {
+  font-size: 0.8rem;
+  color: white;
   opacity: 0.9;
   font-weight: 500;
 }
 
-.hero-auth-btn {
-  padding: 8px 20px;
+.top-nav-btn {
+  padding: 7px 18px;
   border-radius: 50px;
   border: 1.5px solid rgba(255,255,255,0.6);
   background: rgba(255,255,255,0.15);
   color: white;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   backdrop-filter: blur(6px);
@@ -549,7 +570,7 @@ body {
   letter-spacing: 0.3px;
 }
 
-.hero-auth-btn:hover {
+.top-nav-btn:hover {
   background: rgba(255,255,255,0.28);
 }
 
