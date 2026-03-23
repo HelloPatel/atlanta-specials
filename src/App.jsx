@@ -38,7 +38,8 @@ const selectStyles = {
   placeholder: (b) => ({ ...b, color: '#aaa', fontSize: 13 }),
   indicatorSeparator: () => ({ display: 'none' }),
   dropdownIndicator: (b) => ({ ...b, color: '#ccc', padding: '0 6px' }),
-  menu: (b) => ({ ...b, fontSize: 13, zIndex: 200 }),
+  menu: (b) => ({ ...b, fontSize: 13, zIndex: 9999 }),
+  menuPortal: (b) => ({ ...b, zIndex: 9999 }),
 };
 
 const TODAY = daysOfWeek[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
@@ -413,6 +414,7 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
                 isSearchable={false}
                 placeholder="Location"
                 styles={selectStyles}
+                menuPortalTarget={document.body}
               />
               <Select
                 options={cuisineOptionsFormatted}
@@ -422,6 +424,7 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
                 isSearchable={false}
                 placeholder="Cuisine"
                 styles={selectStyles}
+                menuPortalTarget={document.body}
               />
             </div>
             <DayTabs selected={selectedDay} onChange={setSelectedDay} />

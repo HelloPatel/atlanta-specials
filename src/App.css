@@ -218,7 +218,7 @@ body {
 }
 
 .filters-body {
-  overflow: hidden;
+  overflow: visible;
   max-height: 200px;
   transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.25s ease;
   opacity: 1;
@@ -229,6 +229,7 @@ body {
 }
 
 .filters-collapsed .filters-body {
+  overflow: hidden;
   max-height: 0;
   opacity: 0;
   padding-bottom: 0;
