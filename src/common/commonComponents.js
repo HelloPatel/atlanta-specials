@@ -26,7 +26,7 @@ export const restaurantsList = [
       Sunday: "Sunday brunch — the perfect way to close out the weekend.",
     },
     "https://www.postino.com/",
-    "/images/postinos.png"
+    "/images/postinos.webp"
   ),
   createRestaurant(
     "Gypsy Kitchen",
