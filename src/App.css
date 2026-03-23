@@ -222,14 +222,47 @@ body {
   font-weight: 500;
 }
 
-/* Mobile: stack selects on their own row, day tabs full width below */
+/* ===== Filter Chips ===== */
+.filters-chips-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-chip {
+  padding: 4px 13px;
+  border-radius: 50px;
+  border: 1.5px solid #ddd;
+  background: white;
+  color: #666;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+
+.filter-chip:hover {
+  border-color: #e8534a;
+  color: #e8534a;
+}
+
+.filter-chip-on {
+  border-color: #e8534a;
+  background: #e8534a;
+  color: white;
+}
+
+/* Mobile */
 @media (max-width: 600px) {
   .filters-section { padding: 10px 16px 8px; }
-
-  .filters-controls-row { flex-direction: column; align-items: stretch; }
-
-  .filters-selects { flex-direction: row; }
-
   .day-tabs { width: 100%; }
 }
 
