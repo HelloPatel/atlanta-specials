@@ -318,12 +318,12 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
           </div>
         </div>
 
-        <div className="scroll-hint">
-          <span>Swipe up to explore</span>
+        <a className="scroll-hint" href="#explore">
+          <span>Explore deals</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
             <polyline points="6 9 12 15 18 9" />
           </svg>
-        </div>
+        </a>
 
         <div className="hero-wave">
           <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
@@ -333,37 +333,43 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
       </header>
 
       {/* Sticky filter bar */}
-      <div className="filters-section">
-        <div className="filters-row">
+      <div id="explore" className="filters-section">
+        {/* Row 1: Search */}
+        <div className="filters-search-row">
           <input
             className="search-input"
             type="text"
-            placeholder="Search restaurants..."
+            placeholder="Search by name or deal…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <Select
-            options={locationOptionsFormatted}
-            value={locationFilter}
-            onChange={(v) => startTransition(() => setLocationFilter(v))}
-            isMulti
-            isSearchable={false}
-            placeholder="Location"
-            styles={selectStyles}
-          />
-          <Select
-            options={cuisineOptionsFormatted}
-            value={cuisineFilter}
-            onChange={(v) => startTransition(() => setCuisineFilter(v))}
-            isMulti
-            isSearchable={false}
-            placeholder="Cuisine"
-            styles={selectStyles}
-          />
-          <DayTabs selected={selectedDay} onChange={setSelectedDay} />
           {hasFilters && (
             <button className="clear-btn" onClick={clearAll}>Clear</button>
           )}
+        </div>
+        {/* Row 2: Dropdowns + Day tabs */}
+        <div className="filters-controls-row">
+          <div className="filters-selects">
+            <Select
+              options={locationOptionsFormatted}
+              value={locationFilter}
+              onChange={(v) => startTransition(() => setLocationFilter(v))}
+              isMulti
+              isSearchable={false}
+              placeholder="Location"
+              styles={selectStyles}
+            />
+            <Select
+              options={cuisineOptionsFormatted}
+              value={cuisineFilter}
+              onChange={(v) => startTransition(() => setCuisineFilter(v))}
+              isMulti
+              isSearchable={false}
+              placeholder="Cuisine"
+              styles={selectStyles}
+            />
+          </div>
+          <DayTabs selected={selectedDay} onChange={setSelectedDay} />
         </div>
         <div className="results-count">
           {filtered.length === restaurantsList.length
