@@ -148,7 +148,7 @@ body {
 /* ===== Sticky Filters ===== */
 .filters-section {
   position: sticky;
-  top: 0;
+  top: 52px;
   z-index: 100;
   background: white;
   border-bottom: 1px solid #e8e8e8;
