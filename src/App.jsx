@@ -393,6 +393,7 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
         <a href="mailto:atlantaspecials@gmail.com" className="footer-suggest-btn">
           Suggest a Restaurant
         </a>
+        <p className="footer-fine">Always verify deals directly with the restaurant before visiting &mdash; specials may change without notice.</p>
         <p className="footer-fine">Atlanta Specials &mdash; Updated regularly &mdash; Free to use, forever.</p>
       </footer>
     </div>
