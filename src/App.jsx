@@ -1,6 +1,10 @@
 import { useState, useMemo, useRef, useEffect, useCallback, useDeferredValue, useTransition } from 'react';
 import Select from 'react-select';
 import './App.css';
+import { useAuth } from './contexts/AuthContext';
+import { useRatings, toRestaurantKey } from './hooks/useRatings';
+import StarRating from './components/StarRating';
+import AuthModal from './components/AuthModal';
 import {
   daysOfWeek,
   locationOptions,
@@ -144,7 +148,7 @@ function useReveal() {
   return [ref, visible];
 }
 
-function RestaurantCard({ restaurant, selectedDays }) {
+function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser }) {
   const [expanded, setExpanded] = useState(false);
   const [cardRef, visible] = useReveal();
 
@@ -208,6 +212,18 @@ function RestaurantCard({ restaurant, selectedDays }) {
               <span key={loc} className="badge location">{loc}</span>
             ))}
           </div>
+          <div className="card-rating-row" onClick={(e) => e.stopPropagation()}>
+            <StarRating
+              averageRating={rating?.averageRating || 0}
+              totalRatings={rating?.totalRatings || 0}
+              userRating={rating?.userRating || 0}
+              onRate={(stars) => onRate(restaurant.name, stars)}
+              readOnly={!currentUser}
+            />
+            {!currentUser && (
+              <button className="rate-prompt" onClick={onSignInClick}>Sign in to rate</button>
+            )}
+          </div>
         </div>
 
         {/* Preview row — always visible */}
@@ -245,6 +261,9 @@ function RestaurantCard({ restaurant, selectedDays }) {
 }
 
 export default function App() {
+  const { currentUser, logout } = useAuth();
+  const { ratings, submitRating } = useRatings(currentUser);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [locationFilter, setLocationFilter] = useState([]);  // {value, label}[]
   const [cuisineFilter, setCuisineFilter] = useState([]);    // {value, label}[]
   const [selectedDay, setSelectedDay] = useState([]);
@@ -309,6 +328,16 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
               <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
             </svg>
             <strong>{todayCount} restaurants</strong>&nbsp;with deals today ({TODAY})
+          </div>
+          <div className="hero-auth">
+            {currentUser ? (
+              <>
+                <span className="hero-username">👋 {currentUser.displayName || currentUser.email}</span>
+                <button className="hero-auth-btn" onClick={logout}>Sign Out</button>
+              </>
+            ) : (
+              <button className="hero-auth-btn" onClick={() => setAuthModalOpen(true)}>Sign In / Register</button>
+            )}
           </div>
         </div>
 
@@ -376,7 +405,15 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
       <main className="main">
         <div className={`cards-grid${isPending ? ' grid-pending' : ''}`}>
           {filtered.map((r) => (
-            <RestaurantCard key={r.name} restaurant={r} selectedDays={selectedDay} />
+            <RestaurantCard
+              key={r.name}
+              restaurant={r}
+              selectedDays={selectedDay}
+              rating={ratings.get(toRestaurantKey(r.name))}
+              onRate={submitRating}
+              onSignInClick={() => setAuthModalOpen(true)}
+              currentUser={currentUser}
+            />
           ))}
           {filtered.length === 0 && (
             <div className="empty-state">
@@ -386,6 +423,8 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
           )}
         </div>
       </main>
+
+      {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
 
       <footer className="footer">
         <p className="footer-cta">Know a spot we&apos;re missing?</p>
