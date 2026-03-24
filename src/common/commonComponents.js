@@ -77,51 +77,19 @@ export const restaurantsList = [
     "/images/industry-tavern.webp"
   ),
   createRestaurant(
-    "Eclipse di Luna – Buckhead",
-    ["Buckhead"],
+    "Eclipse di Luna",
+    ["Buckhead", "Dunwoody", "Alpharetta"],
     "Mediterranean",
     {
-      Monday: "Happy Hour 4–6 PM: $7 tapas & $6 drinks. Plus half-off all $36 & $44 wine bottles all night.",
-      Tuesday: "Happy Hour 4–6 PM: $7 tapas & $6 drinks. Plus $6 classic margaritas all day.",
-      Wednesday: "Happy Hour 4–6 PM: $7 tapas & $6 drinks. Plus half-off all Veggie & Del Dia paellas all day.",
-      Thursday: "Happy Hour 4–6 PM: $7 tapas & $6 drinks. 20% off flight boards of four. Free salsa dancing lessons.",
-      Friday: "Happy Hour 4–6 PM: $7 tapas & $6 drinks. Craft sandwich & side special 11 AM–4 PM. $18 sangria & mimosa carafes, $8 espresso martinis 11 AM–4 PM.",
-      Saturday: "$18 red sangria & mimosa carafes, $8 espresso martinis, half-off coffee 12–4 PM.",
-      Sunday: "Spanish brunch menu 12–4 PM. $18 sangria & mimosa carafes, $8 espresso martinis, half-off coffee 12–4 PM.",
+      Monday: "Happy Hour 4–6 PM at all locations. Buckhead: $7 tapas & $6 drinks + half-off wine bottles all night. Dunwoody: $5 tapas & $5 drinks + half-off wine all night.",
+      Tuesday: "Happy Hour 4–6 PM at all locations. Buckhead: $7 tapas, $6 drinks, $6 margaritas all day. Dunwoody: $5 tapas & $5 drinks.",
+      Wednesday: "Happy Hour 4–6 PM at all locations. Buckhead: $7 tapas, $6 drinks + half-off paellas all day. Dunwoody: $5 tapas & $5 drinks.",
+      Thursday: "Happy Hour 4–6 PM at all locations. Buckhead: $7 tapas, $6 drinks, 20% off flight boards, free salsa dancing lessons. Dunwoody: $5 tapas & $5 drinks.",
+      Friday: "Happy Hour 4–6 PM (Buckhead & Dunwoody). Buckhead: $7 tapas & $6 drinks + craft sandwich special & $18 sangria/mimosa carafes 11 AM–4 PM. Dunwoody: $5 tapas & $5 drinks.",
+      Saturday: "Buckhead: $18 sangria & mimosa carafes, $8 espresso martinis, half-off coffee 12–4 PM. Dunwoody: bottomless mimosas & sangria 12–4 PM, full menu all day.",
+      Sunday: "Buckhead: Spanish brunch menu + $18 sangria & mimosa carafes 12–4 PM. Dunwoody: bottomless mimosas & sangria 12–4 PM + half-off paellas all night.",
     },
     "https://eclipsediluna.com/buckhead-deal/",
-    "/images/eclipse-di-luna.webp"
-  ),
-  createRestaurant(
-    "Eclipse di Luna – Dunwoody",
-    ["Dunwoody"],
-    "Mediterranean",
-    {
-      Monday: "Happy Hour 4–6 PM: $5 tapas, $5 margaritas, mojitos, sangria, well liquor, beer & wine. Half-off all wine bottles all night.",
-      Tuesday: "Happy Hour 4–6 PM: $5 tapas & $5 drinks.",
-      Wednesday: "Happy Hour 4–6 PM: $5 tapas & $5 drinks.",
-      Thursday: "Happy Hour 4–6 PM: $5 tapas & $5 drinks.",
-      Friday: "Happy Hour 4–6 PM: $5 tapas & $5 drinks.",
-      Saturday: "Brunch: bottomless mimosas & sangria 12–4 PM. Full menu all day.",
-      Sunday: "Brunch: bottomless mimosas & sangria 12–4 PM. Full menu all day. Half-off all paellas all night.",
-    },
-    "https://eclipsediluna.com/",
-    "/images/eclipse-di-luna.webp"
-  ),
-  createRestaurant(
-    "Eclipse di Luna – Alpharetta",
-    ["Alpharetta"],
-    "Mediterranean",
-    {
-      Monday: "Happy Hour 4–6 PM.",
-      Tuesday: "Happy Hour 4–6 PM.",
-      Wednesday: "Happy Hour 4–6 PM.",
-      Thursday: "Happy Hour 4–6 PM.",
-      Friday: "",
-      Saturday: "",
-      Sunday: "",
-    },
-    "https://eclipsediluna.com/",
     "/images/eclipse-di-luna.webp"
   ),
   createRestaurant(
