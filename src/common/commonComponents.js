@@ -110,18 +110,18 @@ export const restaurantsList = [
   ),
   createRestaurant(
     "Superica",
-    ["Buckhead", "Midtown", "Alpharetta", "Battery"],
+    ["Alpharetta"],
     "Mexican",
     {
-      Monday: "Siesta menu at the bar from 2:30–5 PM (select locations), plus lunch specials from 11–2:30 PM. Two deals in one day.",
-      Tuesday: "Bar siesta menu 2:30–5 PM at select locations, plus lunch specials 11–2:30 PM.",
-      Wednesday: "Bar siesta menu 2:30–5 PM, lunch specials 11–2:30 PM. The week's best Tex-Mex window.",
-      Thursday: "Bar siesta menu 2:30–5 PM, lunch specials 11–2:30 PM. Don't miss the margaritas.",
-      Friday: "Bar siesta menu 2:30–4 PM (slightly shorter — arrive early), plus lunch specials 11–2:30 PM.",
-      Saturday: "Weekend brunch — Superica's brunch is a crowd favorite. Come hungry.",
-      Sunday: "Sunday brunch at one of Atlanta's most popular Tex-Mex spots. A true staple.",
+      Monday: "Lunch menu 11 AM–3 PM (Alpharetta). Combo plates $13–$23: enchiladas, crispy tacos, quesadillas, blackened redfish tacos, huevos rancheros — all served with family-style rice & refried beans.",
+      Tuesday: "Lunch menu 11 AM–3 PM (Alpharetta). Combo plates $13–$23 served with rice & refried beans.",
+      Wednesday: "Lunch menu 11 AM–3 PM (Alpharetta). Combo plates $13–$23 served with rice & refried beans.",
+      Thursday: "Lunch menu 11 AM–3 PM (Alpharetta). Combo plates $13–$23 served with rice & refried beans.",
+      Friday: "Lunch menu 11 AM–3 PM (Alpharetta). Combo plates $13–$23 served with rice & refried beans.",
+      Saturday: "",
+      Sunday: "",
     },
-    "https://superica.com/buckhead/#menus",
+    "https://superica.com/alpharetta/",
     "/images/superica.webp"
   ),
   createRestaurant(
