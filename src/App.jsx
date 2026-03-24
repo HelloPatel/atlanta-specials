@@ -627,7 +627,7 @@ export default function App() {
       </main>
 
       {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
-      {submitModalOpen && <SubmitDealModal onClose={() => setSubmitModalOpen(false)} currentUser={currentUser} />}
+      {submitModalOpen && <SubmitDealModal onClose={() => setSubmitModalOpen(false)} currentUser={currentUser} onSignInClick={() => setAuthModalOpen(true)} />}
 
       {toast && <div className="toast">{toast}</div>}
 

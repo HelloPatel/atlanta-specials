@@ -6,7 +6,7 @@ import { locationOptions, cuisineOptions, daysOfWeek } from '../common/commonCom
 const neighborhoods = locationOptions.filter(o => o !== 'All');
 const cuisines = cuisineOptions.filter(o => o !== 'All');
 
-export default function SubmitDealModal({ onClose, currentUser }) {
+export default function SubmitDealModal({ onClose, currentUser, onSignInClick }) {
   const [form, setForm] = useState({
     restaurantName: '',
     website: '',
@@ -15,6 +15,7 @@ export default function SubmitDealModal({ onClose, currentUser }) {
     day: '',
     deal: '',
   });
+  const [honeypot, setHoneypot] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,6 +24,8 @@ export default function SubmitDealModal({ onClose, currentUser }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Honeypot — bots fill hidden fields, real users don't
+    if (honeypot) { setSubmitted(true); return; }
     if (!form.restaurantName.trim() || !form.day || !form.deal.trim()) {
       setError('Restaurant name, day, and deal description are required.');
       return;
@@ -37,7 +40,7 @@ export default function SubmitDealModal({ onClose, currentUser }) {
         cuisine: form.cuisine,
         day: form.day,
         deal: form.deal.trim(),
-        submittedBy: currentUser?.uid || 'anonymous',
+        submittedBy: currentUser.uid,
         submittedAt: serverTimestamp(),
         status: 'pending',
       });
@@ -49,6 +52,21 @@ export default function SubmitDealModal({ onClose, currentUser }) {
       setLoading(false);
     }
   };
+
+  if (!currentUser) {
+    return (
+      <div className="auth-backdrop" onClick={onClose}>
+        <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="auth-close" onClick={onClose}>✕</button>
+          <h2 className="auth-title">Submit a Deal</h2>
+          <p style={{ textAlign: 'center', color: '#555', margin: '16px 0 24px' }}>
+            Sign in to submit a restaurant deal.
+          </p>
+          <button className="auth-submit" onClick={() => { onClose(); onSignInClick(); }}>Sign In</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-backdrop" onClick={onClose}>
@@ -67,6 +85,16 @@ export default function SubmitDealModal({ onClose, currentUser }) {
           </div>
         ) : (
           <form className="auth-form" onSubmit={handleSubmit}>
+            {/* Honeypot — hidden from real users, bots fill it in */}
+            <input
+              type="text"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+            />
             <input
               className="auth-input"
               type="text"
