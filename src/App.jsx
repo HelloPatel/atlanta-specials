@@ -197,23 +197,28 @@ function useReveal() {
 function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser, isBookmarked, onBookmark, onShare, nowMinutes, isAutoUpdated }) {
   const [expanded, setExpanded] = useState(false);
   const [cardRef, visible] = useReveal();
+  const [showingAuto, setShowingAuto] = useState(true);
+
+  const displaySpecials = (isAutoUpdated && !showingAuto)
+    ? restaurant._staticSpecials
+    : restaurant.specials;
 
   // Days matching the filter (used to decide if card shows at all + preview)
   const filteredDays = daysOfWeek.filter(
-    (day) => restaurant.specials[day] &&
+    (day) => displaySpecials[day] &&
       (selectedDays.length === 0 || selectedDays.some((d) => d.value === day))
   );
 
   // All days with specials (shown when expanded)
-  const allSpecialDays = daysOfWeek.filter((day) => restaurant.specials[day]);
+  const allSpecialDays = daysOfWeek.filter((day) => displaySpecials[day]);
 
   if (filteredDays.length === 0) return null;
 
   // In collapsed mode: show today's special or the first matching day as preview
   const previewDay = filteredDays.includes(TODAY) ? TODAY : filteredDays[0];
-  const previewText = restaurant.specials[previewDay];
+  const previewText = displaySpecials[previewDay];
   const otherCount = allSpecialDays.length - 1;
-  const liveText = getLiveInfo(restaurant.specials[TODAY], nowMinutes);
+  const liveText = getLiveInfo(displaySpecials[TODAY], nowMinutes);
 
   return (
     <div ref={cardRef} className={`card${expanded ? ' card-expanded' : ''}${visible ? ' card-visible' : ''}`}>
@@ -233,6 +238,9 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
                 {liveText === 'All day' ? 'ALL DAY' : `LIVE · ${liveText}`}
               </span>
             )}
+            {isAutoUpdated && showingAuto && (
+              <span className="limited-time-badge">LIMITED TIME</span>
+            )}
           </div>
         )}
         <div className="card-top">
@@ -245,9 +253,6 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
               onClick={(e) => e.stopPropagation()}
             >
               {restaurant.name}
-              {isAutoUpdated && (
-                <span className="auto-badge" title="Auto-updated from Instagram">↻</span>
-              )}
               <svg className="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
                 <polyline points="15 3 21 3 21 9" />
@@ -305,6 +310,14 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
           </div>
         </div>
 
+        {/* Toggle tabs — only for auto-updated cards */}
+        {isAutoUpdated && (
+          <div className="specials-toggle" onClick={(e) => { e.stopPropagation(); setShowingAuto((v) => !v); }}>
+            <span className={`specials-tab${showingAuto ? ' specials-tab-active' : ''}`}>This Week</span>
+            <span className={`specials-tab${!showingAuto ? ' specials-tab-active' : ''}`}>Regular</span>
+          </div>
+        )}
+
         {/* Preview row — always visible */}
         {!expanded && (
           <div className="card-preview">
@@ -330,7 +343,7 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
               <span className={`day-chip ${day === TODAY ? 'today-chip' : ''}`}>
                 {day === TODAY ? 'TODAY' : day.slice(0, 3).toUpperCase()}
               </span>
-              <span className="special-text">{restaurant.specials[day]}</span>
+              <span className="special-text">{displaySpecials[day]}</span>
             </div>
           ))}
         </div>
@@ -396,7 +409,7 @@ export default function App() {
         for (const [day, text] of Object.entries(autoSpecials)) {
           if (text) mergedSpecials[day] = text;
         }
-        return { ...r, specials: mergedSpecials, _autoUpdated: true };
+        return { ...r, specials: mergedSpecials, _staticSpecials: r.specials, _autoUpdated: true };
       })
       .filter((r) => {
         const matchLoc =

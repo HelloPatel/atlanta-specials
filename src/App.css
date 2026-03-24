@@ -457,19 +457,44 @@ body {
   background: #fafafa;
 }
 
-.auto-badge {
+.limited-time-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   display: inline-flex;
   align-items: center;
+  background: rgba(217, 119, 6, 0.92);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 50px;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+.specials-toggle {
+  display: flex;
+  gap: 6px;
+  padding: 6px 14px 0;
+}
+
+.specials-tab {
   font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0.3px;
-  color: #e8534a;
-  background: #fde9e8;
+  padding: 3px 10px;
   border-radius: 50px;
-  padding: 2px 6px;
-  margin-left: 5px;
-  vertical-align: middle;
-  white-space: nowrap;
+  background: #f0f0f0;
+  color: #aaa;
+  cursor: pointer;
+  user-select: none;
+}
+
+.specials-tab-active {
+  background: #fde9e8;
+  color: #e8534a;
 }
 
 .live-badge {
