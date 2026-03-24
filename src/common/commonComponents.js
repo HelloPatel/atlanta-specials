@@ -47,15 +47,15 @@ export const restaurantsList = [
   createRestaurant(
     "The Iberian Pig",
     ["Buckhead", "Decatur"],
-    "American",
+    "Mediterranean",
     {
-      Monday: "Happy hour 5–6 PM. Spanish-inspired tapas and drinks at reduced prices — a hidden gem.",
-      Tuesday: "Happy hour 5–6 PM. Small plates, big flavors, great prices.",
-      Wednesday: "Happy hour 5–6 PM. Mid-week tapas hour — bring a friend.",
-      Thursday: "Happy hour 5–6 PM. One of Atlanta's most beloved tapas spots doing what it does best.",
-      Friday: "Happy hour 4–5 PM — catch it early for an extra hour at Buckhead, the full window at Decatur.",
-      Saturday: "Happy hour 5–6 PM. Even weekends get a deal here.",
-      Sunday: "Happy hour 5–6 PM. Wind down Sunday with quality bites and drinks.",
+      Monday: "Jamón Happy Hour 5–6 PM: Chef's Selection board (2 quesos + 2 charcuteria) $24. $6 red sangria, red wine & white wine. Add-ons: marinated olives $6, Marcona almonds $5, peppadew peppers $8.",
+      Tuesday: "Jamón Happy Hour 5–6 PM: Chef's Selection board (2 quesos + 2 charcuteria) $24. $6 red sangria, red wine & white wine. Add-ons: marinated olives $6, Marcona almonds $5, peppadew peppers $8.",
+      Wednesday: "Jamón Happy Hour 5–6 PM: Chef's Selection board (2 quesos + 2 charcuteria) $24. $6 red sangria, red wine & white wine. Add-ons: marinated olives $6, Marcona almonds $5, peppadew peppers $8.",
+      Thursday: "Jamón Happy Hour 5–6 PM: Chef's Selection board (2 quesos + 2 charcuteria) $24. $6 red sangria, red wine & white wine. Add-ons: marinated olives $6, Marcona almonds $5, peppadew peppers $8.",
+      Friday: "Jamón Happy Hour 4–6 PM: Chef's Selection board (2 quesos + 2 charcuteria) $24. $6 red sangria, red wine & white wine. Add-ons: marinated olives $6, Marcona almonds $5, peppadew peppers $8.",
+      Saturday: "Jamón Happy Hour 4–6 PM: Chef's Selection board (2 quesos + 2 charcuteria) $24. $6 red sangria, red wine & white wine. Add-ons: marinated olives $6, Marcona almonds $5, peppadew peppers $8.",
+      Sunday: "Jamón Happy Hour 5–6 PM: Chef's Selection board (2 quesos + 2 charcuteria) $24. $6 red sangria, red wine & white wine. Add-ons: marinated olives $6, Marcona almonds $5, peppadew peppers $8.",
     },
     "https://theiberianpig.com/",
     "/images/iberian-pig.webp"
