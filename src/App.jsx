@@ -416,6 +416,7 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
                 styles={selectStyles}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
+                closeMenuOnScroll={true}
               />
               <Select
                 options={cuisineOptionsFormatted}
@@ -427,6 +428,7 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
                 styles={selectStyles}
                 menuPortalTarget={document.body}
                 menuPosition="fixed"
+                closeMenuOnScroll={true}
               />
             </div>
             <DayTabs selected={selectedDay} onChange={setSelectedDay} />
