@@ -430,10 +430,27 @@ export default function App() {
       })
       .sort((a, b) => {
         const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
-        const aLive = !!getLiveInfo(a.specials[TODAY], nowMin);
-        const bLive = !!getLiveInfo(b.specials[TODAY], nowMin);
-        if (aLive !== bLive) return aLive ? -1 : 1;
-        return daysUntilNextSpecial(a) - daysUntilNextSpecial(b);
+
+        function getSortKey(r) {
+          const todayText = r.specials[TODAY];
+          const liveResult = getLiveInfo(todayText, nowMin);
+          if (liveResult && liveResult !== 'All day') {
+            // Tier 1: countdown LIVE — sort by most time remaining first (most actionable)
+            const match = liveResult.match(/(\d+)h(?:\s*(\d+)m)?|(\d+)m/);
+            let rem = 0;
+            if (match) rem = match[3] ? parseInt(match[3]) : (parseInt(match[1]) || 0) * 60 + (parseInt(match[2]) || 0);
+            return [0, -rem];
+          }
+          if (liveResult === 'All day') return [1, 0]; // Tier 2: all-day deal
+          if (todayText) return [2, 0];                // Tier 3: today's special but not active now
+          return [3, daysUntilNextSpecial(r)];          // Tier 4: upcoming
+        }
+
+        const [aTier, aSecondary] = getSortKey(a);
+        const [bTier, bSecondary] = getSortKey(b);
+        if (aTier !== bTier) return aTier - bTier;
+        if (aSecondary !== bSecondary) return aSecondary - bSecondary;
+        return a.name.localeCompare(b.name);
       });
   }, [locationFilter, cuisineFilter, selectedDay, deferredSearch, savedOnly, isBookmarked, tick, autoDeals]);
 
