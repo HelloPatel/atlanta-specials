@@ -186,7 +186,7 @@ export const restaurantsList = [
       Sunday: "",
     },
     "https://establishmentatlanta.com/atlanta-establishment-midtown-food-menu",
-    img("1559339352-11d035aa65de") // fine dining atmosphere
+    "/images/establishment.jpg"
   ),
   createRestaurant(
     "Snap Thai",
@@ -218,7 +218,7 @@ export const restaurantsList = [
       Sunday: "",
     },
     "https://beetlecatatl.com/",
-    img("1559847844-5315695dadae") // fresh oysters on ice
+    "/images/beetlecat.webp"
   ),
   createRestaurant(
     "The Big Ketch",
