@@ -3,8 +3,10 @@ import Select from 'react-select';
 import './App.css';
 import { useAuth } from './contexts/AuthContext';
 import { useRatings, toRestaurantKey } from './hooks/useRatings';
+import { useBookmarks } from './hooks/useBookmarks';
 import StarRating from './components/StarRating';
 import AuthModal from './components/AuthModal';
+import SubmitDealModal from './components/SubmitDealModal';
 import {
   daysOfWeek,
   locationOptions,
@@ -149,7 +151,7 @@ function useReveal() {
   return [ref, visible];
 }
 
-function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser }) {
+function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser, isBookmarked, onBookmark, onShare }) {
   const [expanded, setExpanded] = useState(false);
   const [cardRef, visible] = useReveal();
 
@@ -197,6 +199,27 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
                 <line x1="10" y1="14" x2="21" y2="3" />
               </svg>
             </a>
+            <div className="card-actions" onClick={(e) => e.stopPropagation()}>
+              {/* Share */}
+              <button className="card-action-btn" onClick={() => onShare(restaurant, previewText)} aria-label="Share">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+              </button>
+              {/* Bookmark */}
+              {currentUser && (
+                <button
+                  className={`card-action-btn${isBookmarked ? ' bookmarked' : ''}`}
+                  onClick={() => onBookmark(restaurant.name)}
+                  aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
+                >
+                  <svg viewBox="0 0 24 24" fill={isBookmarked ? '#e8534a' : 'none'} stroke={isBookmarked ? '#e8534a' : 'currentColor'} strokeWidth="2" width="15" height="15">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+                  </svg>
+                </button>
+              )}
+            </div>
             <svg
               className={`chevron ${expanded ? 'chevron-up' : ''}`}
               viewBox="0 0 24 24"
@@ -264,7 +287,11 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
 export default function App() {
   const { currentUser, logout } = useAuth();
   const { ratings, submitRating } = useRatings(currentUser);
+  const { isBookmarked, toggleBookmark } = useBookmarks(currentUser);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [submitModalOpen, setSubmitModalOpen] = useState(false);
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [toast, setToast] = useState('');
   const [locationFilter, setLocationFilter] = useState([]);  // {value, label}[]
   const [cuisineFilter, setCuisineFilter] = useState([]);    // {value, label}[]
   const [selectedDay, setSelectedDay] = useState([]);
@@ -279,6 +306,19 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
     }
     return 7;
   };
+
+  const handleShare = useCallback((restaurant, previewText) => {
+    const url = 'https://www.atlantaspecials.com';
+    const text = `${restaurant.name} has a deal on Atlanta Specials!\n${previewText}`;
+    if (navigator.share) {
+      navigator.share({ title: restaurant.name, text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        setToast('Link copied!');
+        setTimeout(() => setToast(''), 2000);
+      });
+    }
+  }, []);
 
   const filtered = useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
@@ -297,10 +337,11 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
         const matchDay =
           selectedDay.length === 0 ||
           selectedDay.some((o) => r.specials[o.value]);
-        return matchLoc && matchCuisine && matchSearch && matchDay;
+        const matchSaved = !savedOnly || isBookmarked(r.name);
+        return matchLoc && matchCuisine && matchSearch && matchDay && matchSaved;
       })
       .sort((a, b) => daysUntilNextSpecial(a) - daysUntilNextSpecial(b));
-  }, [locationFilter, cuisineFilter, selectedDay, deferredSearch]);
+  }, [locationFilter, cuisineFilter, selectedDay, deferredSearch, savedOnly, isBookmarked]);
 
   const clearAll = () => {
     setLocationFilter([]);
@@ -373,6 +414,17 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
             {hasFilters && <span className="filters-active-dot" />}
           </div>
           <div className="filters-header-right">
+            {currentUser && (
+              <button
+                className={`saved-filter-btn${savedOnly ? ' saved-filter-active' : ''}`}
+                onClick={() => setSavedOnly(o => !o)}
+              >
+                <svg viewBox="0 0 24 24" fill={savedOnly ? '#e8534a' : 'none'} stroke={savedOnly ? '#e8534a' : 'currentColor'} strokeWidth="2" width="13" height="13">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
+                </svg>
+                Saved
+              </button>
+            )}
             <span className="results-count">
               {filtered.length === restaurantsList.length
                 ? `${filtered.length} restaurants`
@@ -447,6 +499,9 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
               onRate={submitRating}
               onSignInClick={() => setAuthModalOpen(true)}
               currentUser={currentUser}
+              isBookmarked={isBookmarked(r.name)}
+              onBookmark={toggleBookmark}
+              onShare={handleShare}
             />
           ))}
           {filtered.length === 0 && (
@@ -459,13 +514,16 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
       </main>
 
       {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
+      {submitModalOpen && <SubmitDealModal onClose={() => setSubmitModalOpen(false)} currentUser={currentUser} />}
+
+      {toast && <div className="toast">{toast}</div>}
 
       <footer className="footer">
         <p className="footer-cta">Know a spot we&apos;re missing?</p>
         <p className="footer-sub">Help us keep Atlanta Specials up to date.</p>
-        <a href="mailto:atlantaspecials@gmail.com" className="footer-suggest-btn">
-          Suggest a Restaurant
-        </a>
+        <button className="footer-suggest-btn" onClick={() => setSubmitModalOpen(true)}>
+          Submit a Deal
+        </button>
         <p className="footer-fine">Always verify deals directly with the restaurant before visiting &mdash; specials may change without notice.</p>
         <p className="footer-fine">Atlanta Specials &mdash; Updated regularly &mdash; Free to use, forever.</p>
       </footer>

@@ -705,6 +705,101 @@ body {
   color: #e8534a;
 }
 
+/* ===== Card Actions (share / bookmark) ===== */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: 6px;
+}
+
+.card-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #aaa;
+  transition: color 0.15s, background 0.15s;
+}
+
+.card-action-btn:hover {
+  color: #e8534a;
+  background: #fde9e8;
+}
+
+.card-action-btn.bookmarked {
+  color: #e8534a;
+}
+
+/* ===== Saved filter pill ===== */
+.saved-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 50px;
+  border: 1.5px solid #ddd;
+  background: white;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.saved-filter-btn:hover,
+.saved-filter-btn.saved-filter-active {
+  border-color: #e8534a;
+  color: #e8534a;
+  background: #fde9e8;
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a2e;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 50px;
+  z-index: 9999;
+  pointer-events: none;
+  animation: toast-in 0.2s ease;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ===== Submit Deal form extras ===== */
+.submit-textarea {
+  resize: vertical;
+  min-height: 72px;
+  font-family: inherit;
+}
+
+.submit-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0 8px;
+  text-align: center;
+  color: #444;
+  font-size: 0.95rem;
+}
+
 /* ===== Auth Modal ===== */
 .auth-backdrop {
   position: fixed;
