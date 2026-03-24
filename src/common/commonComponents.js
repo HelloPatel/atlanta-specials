@@ -218,7 +218,7 @@ export const restaurantsList = [
       Sunday: "",
     },
     "https://www.snapthaiatl.com/menu",
-    img("1569050467447-ce54b3bbc37d") // Thai noodles
+    "/images/snap-thai.webp"
   ),
   createRestaurant(
     "Beetlecat",
