@@ -361,7 +361,7 @@ export const restaurantsList = [
       Saturday: "",
       Sunday: "",
     },
-    "https://www.closecompanyatl.com/",
+    "https://www.closecompanybar.com/",
     "/images/close-company.jpg"
   ),
   createRestaurant(
