@@ -349,6 +349,22 @@ export const restaurantsList = [
     img("1535400255456-984b4f2e8d49") // ceviche / coastal seafood
   ),
   createRestaurant(
+    "Chattahoochee Food Works",
+    ["West Midtown"],
+    "American",
+    {
+      Monday: "",
+      Tuesday: "Georgia's Largest Happy Hour 4–6 PM! Deals across all vendors: $2.50 tacos (Taqueria La Luz), BOGO handrolls (Flying Fish), BOGO spring & egg rolls (Banh Mi Station), 3 wings + cornbread $10 (Delilah's), $2 baked bacon oysters (Fuzzy's Seafood), $8 marg & $8 patatas bravas (Tequila & Tapas), $5 potstickers (Saigon), $5 app sampler (Tyde Tate Kitchen), free tots with entrée (Farm Grill), loaded fries/tots $8 (Patty & Franks), $13 frito misto (Flora D'Italia), 3 mini arepas $8.50 (Papins Bites), $12 media noche (La Tropical), $5 strawberry milk tea (Unbelibubble), and more.",
+      Wednesday: "",
+      Thursday: "",
+      Friday: "",
+      Saturday: "",
+      Sunday: "",
+    },
+    "https://www.chattahoocheefoodworks.com/",
+    "/images/chattahoochee-food-works.png"
+  ),
+  createRestaurant(
     "The Optimist",
     ["West Midtown"],
     "Seafood",
