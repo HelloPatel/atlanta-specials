@@ -4,6 +4,7 @@ import './App.css';
 import { useAuth } from './contexts/AuthContext';
 import { useRatings, toRestaurantKey } from './hooks/useRatings';
 import { useBookmarks } from './hooks/useBookmarks';
+import { useAutoDeals } from './hooks/useAutoDeals';
 import StarRating from './components/StarRating';
 import AuthModal from './components/AuthModal';
 import SubmitDealModal from './components/SubmitDealModal';
@@ -193,7 +194,7 @@ function useReveal() {
   return [ref, visible];
 }
 
-function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser, isBookmarked, onBookmark, onShare, nowMinutes }) {
+function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser, isBookmarked, onBookmark, onShare, nowMinutes, isAutoUpdated }) {
   const [expanded, setExpanded] = useState(false);
   const [cardRef, visible] = useReveal();
 
@@ -244,6 +245,9 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
               onClick={(e) => e.stopPropagation()}
             >
               {restaurant.name}
+              {isAutoUpdated && (
+                <span className="auto-badge" title="Auto-updated from Instagram">↻</span>
+              )}
               <svg className="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
                 <polyline points="15 3 21 3 21 9" />
@@ -339,6 +343,7 @@ export default function App() {
   const { currentUser, logout } = useAuth();
   const { ratings, submitRating } = useRatings(currentUser);
   const { isBookmarked, toggleBookmark } = useBookmarks(currentUser);
+  const autoDeals = useAutoDeals();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [savedOnly, setSavedOnly] = useState(false);
@@ -382,6 +387,17 @@ export default function App() {
   const filtered = useMemo(() => {
     const q = deferredSearch.trim().toLowerCase();
     return restaurantsList
+      .map((r) => {
+        const key = toRestaurantKey(r.name);
+        const autoSpecials = autoDeals.get(key);
+        if (!autoSpecials) return r;
+        // Merge auto-detected specials over static ones (auto wins where non-empty)
+        const mergedSpecials = { ...r.specials };
+        for (const [day, text] of Object.entries(autoSpecials)) {
+          if (text) mergedSpecials[day] = text;
+        }
+        return { ...r, specials: mergedSpecials, _autoUpdated: true };
+      })
       .filter((r) => {
         const matchLoc =
           locationFilter.length === 0 ||
@@ -406,7 +422,7 @@ export default function App() {
         if (aLive !== bLive) return aLive ? -1 : 1;
         return daysUntilNextSpecial(a) - daysUntilNextSpecial(b);
       });
-  }, [locationFilter, cuisineFilter, selectedDay, deferredSearch, savedOnly, isBookmarked, tick]);
+  }, [locationFilter, cuisineFilter, selectedDay, deferredSearch, savedOnly, isBookmarked, tick, autoDeals]);
 
   const clearAll = () => {
     setLocationFilter([]);
@@ -568,6 +584,7 @@ export default function App() {
               onBookmark={toggleBookmark}
               onShare={handleShare}
               nowMinutes={new Date().getHours() * 60 + new Date().getMinutes()}
+              isAutoUpdated={!!r._autoUpdated}
             />
           ))}
           {filtered.length === 0 && (

@@ -1,0 +1,5 @@
+local.settings.json
+service-account.json
+__pycache__/
+*.pyc
+.python_packages/
