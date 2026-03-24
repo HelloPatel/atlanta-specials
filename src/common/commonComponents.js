@@ -349,6 +349,22 @@ export const restaurantsList = [
     img("1535400255456-984b4f2e8d49") // ceviche / coastal seafood
   ),
   createRestaurant(
+    "The Optimist",
+    ["West Midtown"],
+    "Seafood",
+    {
+      Monday: "",
+      Tuesday: "",
+      Wednesday: "",
+      Thursday: "",
+      Friday: "",
+      Saturday: "Oyster Happy Hour 3–5 PM: select oysters on ice $1.75 each / Baker's Dozen $23. Small plates: deviled eggs $9, octopus ceviche $14, hamachi $18, razor clams $22, wood roasted oysters $24. Opti Burger $18, proper chips $8, chowder fries $18.",
+      Sunday: "Oyster Happy Hour 3–5 PM: select oysters on ice $1.75 each / Baker's Dozen $23. Small plates: deviled eggs $9, octopus ceviche $14, hamachi $18, razor clams $22, wood roasted oysters $24. Opti Burger $18, proper chips $8, chowder fries $18.",
+    },
+    "https://theoptimistrestaurant.com/",
+    "/images/the-optimist.webp"
+  ),
+  createRestaurant(
     "Close Company",
     ["West Midtown"],
     "American",
