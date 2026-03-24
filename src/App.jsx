@@ -232,10 +232,10 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
               loading="lazy"
               onError={(e) => { e.target.parentElement.style.display = 'none'; }}
             />
-            {liveText && (
+            {liveText && liveText !== 'All day' && (
               <span className="live-badge">
                 <span className="live-dot" />
-                {liveText === 'All day' ? 'ALL DAY' : `LIVE · ${liveText}`}
+                {`LIVE · ${liveText}`}
               </span>
             )}
             {isAutoUpdated && showingAuto && (
