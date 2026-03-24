@@ -141,19 +141,35 @@ export const restaurantsList = [
     img("1551504734-5ee1c4a1479b") // Mexican tacos & margarita
   ),
   createRestaurant(
-    "Fados Irish Pub",
-    ["Buckhead", "Midtown"],
+    "Fado's Irish Pub – Buckhead",
+    ["Buckhead"],
     "American",
     {
-      Monday: "Happy hour 4–7 PM — $6 draft beer, $7.50 wine, $8 cocktails, $6 snacks. Three solid hours at a classic Irish pub.",
-      Tuesday: "Happy hour 4–7 PM. Five different bites for $6, cold pints to match.",
-      Wednesday: "Happy hour 4–7 PM. Perfect for a mid-week pint with friends.",
-      Thursday: "Happy hour 4–7 PM. Wind down before the weekend with a cold Guinness.",
-      Friday: "Happy hour 4–7 PM, then $24 bottomless Moscow Mules from 7–9 PM. A full evening of deals.",
-      Saturday: "$20 bottomless mimosas until 3 PM. A Fado's weekend tradition.",
-      Sunday: "$20 bottomless mimosas until 3 PM. Great value to close out the weekend.",
+      Monday: "Happy Hour 2–7 PM: $7 small plates (BBQ chicken flatbread, fish & chip cup, sausage rolls, corned beef rolls, quesadilla). $8 wines (Casa Lunardi, Riondo Prosecco, Portillo Malbec). $9 cocktails (Old Fashioned, Moscow Mule).",
+      Tuesday: "Happy Hour 2–7 PM: $7 small plates (BBQ chicken flatbread, fish & chip cup, sausage rolls, corned beef rolls, quesadilla). $8 wines. $9 cocktails.",
+      Wednesday: "Happy Hour 2–7 PM: $7 small plates (BBQ chicken flatbread, fish & chip cup, sausage rolls, corned beef rolls, quesadilla). $8 wines. $9 cocktails.",
+      Thursday: "Happy Hour 2–7 PM: $7 small plates (BBQ chicken flatbread, fish & chip cup, sausage rolls, corned beef rolls, quesadilla). $8 wines. $9 cocktails.",
+      Friday: "Happy Hour open–7 PM: $7 small plates (BBQ chicken flatbread, fish & chip cup, sausage rolls, corned beef rolls, quesadilla). $8 wines. $9 cocktails.",
+      Saturday: "",
+      Sunday: "",
     },
-    "https://www.fadoirishpub.com/",
+    "https://www.fadoirishpub.com/buckhead/",
+    "/images/fado-irish-pub.webp"
+  ),
+  createRestaurant(
+    "Fado's Irish Pub – Midtown",
+    ["Midtown"],
+    "American",
+    {
+      Monday: "Beers of the Month all day: $6 Truly Hard Seltzer Wildberry & $6 Sam Adams Seasonal.",
+      Tuesday: "Beers of the Month all day: $6 Truly Hard Seltzer Wildberry & $6 Sam Adams Seasonal.",
+      Wednesday: "Beers of the Month all day: $6 Truly Hard Seltzer Wildberry & $6 Sam Adams Seasonal.",
+      Thursday: "Beers of the Month all day: $6 Truly Hard Seltzer Wildberry & $6 Sam Adams Seasonal.",
+      Friday: "Beers of the Month all day: $6 Truly Hard Seltzer Wildberry & $6 Sam Adams Seasonal.",
+      Saturday: "Beers of the Month all day: $6 Truly Hard Seltzer Wildberry & $6 Sam Adams Seasonal. Brunch With Benefits until 3 PM: $11 Signature Bloody Mary & $11 Irish Coffee.",
+      Sunday: "Beers of the Month all day: $6 Truly Hard Seltzer Wildberry & $6 Sam Adams Seasonal. Brunch With Benefits until 3 PM: $11 Signature Bloody Mary & $11 Irish Coffee.",
+    },
+    "https://www.fadoirishpub.com/midtown/",
     "/images/fado-irish-pub.webp"
   ),
   createRestaurant(
