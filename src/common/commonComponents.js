@@ -349,6 +349,22 @@ export const restaurantsList = [
     img("1535400255456-984b4f2e8d49") // ceviche / coastal seafood
   ),
   createRestaurant(
+    "Close Company",
+    ["West Midtown"],
+    "American",
+    {
+      Monday: "Happy Hour 4–6 PM: $14.99 combo — one cocktail, one pastry pocket, and a salty side (popcorn or pickles).",
+      Tuesday: "Happy Hour 4–6 PM: $14.99 combo — one cocktail, one pastry pocket, and a salty side (popcorn or pickles).",
+      Wednesday: "Happy Hour 4–6 PM: $14.99 combo — one cocktail, one pastry pocket, and a salty side (popcorn or pickles).",
+      Thursday: "Happy Hour 4–6 PM: $14.99 combo — one cocktail, one pastry pocket, and a salty side (popcorn or pickles).",
+      Friday: "Happy Hour 4–6 PM: $14.99 combo — one cocktail, one pastry pocket, and a salty side (popcorn or pickles).",
+      Saturday: "",
+      Sunday: "",
+    },
+    "https://www.closecompanyatl.com/",
+    "/images/close-company.jpg"
+  ),
+  createRestaurant(
     "Talat Market",
     ["Summerhill"],
     "Asian",
