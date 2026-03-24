@@ -349,6 +349,22 @@ export const restaurantsList = [
     img("1535400255456-984b4f2e8d49") // ceviche / coastal seafood
   ),
   createRestaurant(
+    "Talat Market",
+    ["Summerhill"],
+    "Asian",
+    {
+      Monday: "",
+      Tuesday: "",
+      Wednesday: "Happy Hour 5–7 PM: $5 mini-tinis.",
+      Thursday: "Happy Hour 5–7 PM: $5 mini-tinis.",
+      Friday: "",
+      Saturday: "",
+      Sunday: "Happy Hour 5–7 PM: $5 mini-tinis.",
+    },
+    "https://www.talatmarket.com/",
+    "/images/talat-market.webp"
+  ),
+  createRestaurant(
     "Tin Lizzy's Cantina",
     ["Midtown", "Downtown"],
     "Mexican",
