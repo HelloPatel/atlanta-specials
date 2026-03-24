@@ -46,6 +46,48 @@ const selectStyles = {
 
 const TODAY = daysOfWeek[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
 
+// ─── Live deal time parsing ───────────────────────────────────────────────────
+function toMin24(h, m, mer) {
+  let h24 = parseInt(h, 10);
+  if (mer === 'PM' && h24 !== 12) h24 += 12;
+  if (mer === 'AM' && h24 === 12) h24 = 0;
+  return h24 * 60 + parseInt(m || '0', 10);
+}
+
+function parseTimeRanges(text) {
+  if (!text) return [];
+  const results = [];
+  // "4–6 PM", "4:30-7:30 PM", "11–2:30 PM"
+  const re1 = /(\d{1,2})(?::(\d{2}))?\s*[–\-]\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/gi;
+  let m;
+  while ((m = re1.exec(text)) !== null) {
+    const mer = m[5].toUpperCase();
+    const startH = parseInt(m[1], 10), endH = parseInt(m[3], 10);
+    // If start hour > end hour in 12h (e.g. 11–2 PM), start must be AM
+    const startMer = startH > endH ? 'AM' : mer;
+    results.push({ start: toMin24(startH, m[2], startMer), end: toMin24(endH, m[4], mer) });
+  }
+  // "11 AM to 4 PM", "7 PM to 9 PM"
+  const re2 = /(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\s+to\s+(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/gi;
+  while ((m = re2.exec(text)) !== null) {
+    results.push({
+      start: toMin24(m[1], m[2], m[3].toUpperCase()),
+      end: toMin24(m[4], m[5], m[6].toUpperCase()),
+    });
+  }
+  return results;
+}
+
+function getLiveInfo(text, nowMin) {
+  if (!text) return null;
+  if (/all.?day/i.test(text)) return 'All day';
+  const active = parseTimeRanges(text).find(r => nowMin >= r.start && nowMin < r.end);
+  if (!active) return null;
+  const rem = active.end - nowMin;
+  const h = Math.floor(rem / 60), min = rem % 60;
+  return h > 0 ? (min > 0 ? `Ends in ${h}h ${min}m` : `Ends in ${h}h`) : `Ends in ${min}m`;
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAY_FULL = {
@@ -151,7 +193,7 @@ function useReveal() {
   return [ref, visible];
 }
 
-function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser, isBookmarked, onBookmark, onShare }) {
+function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser, isBookmarked, onBookmark, onShare, nowMinutes }) {
   const [expanded, setExpanded] = useState(false);
   const [cardRef, visible] = useReveal();
 
@@ -170,6 +212,7 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
   const previewDay = filteredDays.includes(TODAY) ? TODAY : filteredDays[0];
   const previewText = restaurant.specials[previewDay];
   const otherCount = allSpecialDays.length - 1;
+  const liveText = getLiveInfo(restaurant.specials[TODAY], nowMinutes);
 
   return (
     <div ref={cardRef} className={`card${expanded ? ' card-expanded' : ''}${visible ? ' card-visible' : ''}`}>
@@ -253,6 +296,12 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
         {/* Preview row — always visible */}
         {!expanded && (
           <div className="card-preview">
+            {liveText && (
+              <span className="live-badge">
+                <span className="live-dot" />
+                {liveText === 'All day' ? 'ALL DAY' : `LIVE · ${liveText}`}
+              </span>
+            )}
             <span className={`day-chip ${previewDay === TODAY ? 'today-chip' : ''}`}>
               {previewDay === TODAY ? 'TODAY' : previewDay.slice(0, 3).toUpperCase()}
             </span>
@@ -299,7 +348,15 @@ export default function App() {
   const [filtersOpen, setFiltersOpen] = useState(true);
   const [isPending, startTransition] = useTransition();
   const deferredSearch = useDeferredValue(search);
-const todayIndex = daysOfWeek.indexOf(TODAY);
+
+  // Re-sort every minute so LIVE badges stay accurate
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const todayIndex = daysOfWeek.indexOf(TODAY);
   const daysUntilNextSpecial = (r) => {
     for (let i = 0; i <= 6; i++) {
       if (r.specials[daysOfWeek[(todayIndex + i) % 7]]) return i;
@@ -340,8 +397,14 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
         const matchSaved = !savedOnly || isBookmarked(r.name);
         return matchLoc && matchCuisine && matchSearch && matchDay && matchSaved;
       })
-      .sort((a, b) => daysUntilNextSpecial(a) - daysUntilNextSpecial(b));
-  }, [locationFilter, cuisineFilter, selectedDay, deferredSearch, savedOnly, isBookmarked]);
+      .sort((a, b) => {
+        const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+        const aLive = !!getLiveInfo(a.specials[TODAY], nowMin);
+        const bLive = !!getLiveInfo(b.specials[TODAY], nowMin);
+        if (aLive !== bLive) return aLive ? -1 : 1;
+        return daysUntilNextSpecial(a) - daysUntilNextSpecial(b);
+      });
+  }, [locationFilter, cuisineFilter, selectedDay, deferredSearch, savedOnly, isBookmarked, tick]);
 
   const clearAll = () => {
     setLocationFilter([]);
@@ -502,6 +565,7 @@ const todayIndex = daysOfWeek.indexOf(TODAY);
               isBookmarked={isBookmarked(r.name)}
               onBookmark={toggleBookmark}
               onShare={handleShare}
+              nowMinutes={new Date().getHours() * 60 + new Date().getMinutes()}
             />
           ))}
           {filtered.length === 0 && (
