@@ -218,13 +218,21 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
     <div ref={cardRef} className={`card${expanded ? ' card-expanded' : ''}${visible ? ' card-visible' : ''}`}>
       <button className="card-toggle" onClick={() => setExpanded(!expanded)}>
         {restaurant.image && (
-          <img
-            className="card-image"
-            src={restaurant.image}
-            alt={restaurant.name}
-            loading="lazy"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
+          <div className="card-image-wrap">
+            <img
+              className="card-image"
+              src={restaurant.image}
+              alt={restaurant.name}
+              loading="lazy"
+              onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+            />
+            {liveText && (
+              <span className="live-badge">
+                <span className="live-dot" />
+                {liveText === 'All day' ? 'ALL DAY' : `LIVE · ${liveText}`}
+              </span>
+            )}
+          </div>
         )}
         <div className="card-top">
           <div className="card-title-row">
@@ -296,12 +304,6 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
         {/* Preview row — always visible */}
         {!expanded && (
           <div className="card-preview">
-            {liveText && (
-              <span className="live-badge">
-                <span className="live-dot" />
-                {liveText === 'All day' ? 'ALL DAY' : `LIVE · ${liveText}`}
-              </span>
-            )}
             <span className={`day-chip ${previewDay === TODAY ? 'today-chip' : ''}`}>
               {previewDay === TODAY ? 'TODAY' : previewDay.slice(0, 3).toUpperCase()}
             </span>
