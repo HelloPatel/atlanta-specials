@@ -354,7 +354,7 @@ export const restaurantsList = [
     "American",
     {
       Monday: "",
-      Tuesday: "Georgia's Largest Happy Hour 4–6 PM! Deals across all vendors: $2.50 tacos (Taqueria La Luz), BOGO handrolls (Flying Fish), BOGO spring & egg rolls (Banh Mi Station), 3 wings + cornbread $10 (Delilah's), $2 baked bacon oysters (Fuzzy's Seafood), $8 marg & $8 patatas bravas (Tequila & Tapas), $5 potstickers (Saigon), $5 app sampler (Tyde Tate Kitchen), free tots with entrée (Farm Grill), loaded fries/tots $8 (Patty & Franks), $13 frito misto (Flora D'Italia), 3 mini arepas $8.50 (Papins Bites), $12 media noche (La Tropical), $5 strawberry milk tea (Unbelibubble), and more.",
+      Tuesday: "Georgia's Largest Happy Hour 4–6 PM: $2.50 tacos, BOGO handrolls, $2 oysters, $8 margaritas, and deals across 15+ vendors.",
       Wednesday: "",
       Thursday: "",
       Friday: "",
@@ -362,7 +362,7 @@ export const restaurantsList = [
       Sunday: "",
     },
     "https://www.chattahoocheefoodworks.com/",
-    "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80"
+    "/images/chattahoochee-food-works.png"
   ),
   createRestaurant(
     "The Optimist",
