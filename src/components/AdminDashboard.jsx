@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ onClose }) {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   return (
     <div className="admin-page">
       <div className="admin-header">
-        <button className="admin-back-btn" onClick={() => { window.location.hash = ''; }}>
+        <button className="admin-back-btn" onClick={onClose}>
           ← Back
         </button>
         <h1 className="admin-title">Submissions</h1>

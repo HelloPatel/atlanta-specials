@@ -405,19 +405,9 @@ export default function App() {
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [savedOnly, setSavedOnly] = useState(false);
   const [openNowOnly, setOpenNowOnly] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
-    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
-
   const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
-  const [view, setView] = useState(() => window.location.hash === '#admin' ? 'admin' : 'main');
-  useEffect(() => {
-    const handler = () => setView(window.location.hash === '#admin' ? 'admin' : 'main');
-    window.addEventListener('hashchange', handler);
-    return () => window.removeEventListener('hashchange', handler);
-  }, []);
+  const isAdmin = ADMIN_UID && currentUser?.uid === ADMIN_UID;
+  const [adminOpen, setAdminOpen] = useState(false);
   const [toast, setToast] = useState('');
   const [locationFilter, setLocationFilter] = useState([]);  // {value, label}[]
   const [cuisineFilter, setCuisineFilter] = useState([]);    // {value, label}[]
@@ -545,13 +535,13 @@ export default function App() {
           ) : (
             <button className="top-nav-btn" onClick={() => setAuthModalOpen(true)}>Sign In</button>
           )}
-          <button className="top-nav-btn theme-toggle" onClick={() => setDarkMode(d => !d)} aria-label="Toggle dark mode">
-            {darkMode ? '☀️' : '🌙'}
-          </button>
+          {isAdmin && (
+            <button className="top-nav-btn" onClick={() => setAdminOpen(true)}>Admin</button>
+          )}
         </div>
       </nav>
 
-      {view === 'admin' && ADMIN_UID && currentUser?.uid === ADMIN_UID ? <AdminDashboard /> : <>
+      {adminOpen && isAdmin ? <AdminDashboard onClose={() => setAdminOpen(false)} /> : <>
 
       <header className="hero">
         <div className="hero-content">

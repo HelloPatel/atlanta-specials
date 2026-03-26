@@ -21,27 +21,6 @@
   --badge-loc-text: #1565c0;
 }
 
-html.dark {
-  --bg: #0f0f13;
-  --bg-card: #1c1c24;
-  --bg-card-hover: #22222c;
-  --bg-preview: #18181f;
-  --bg-today: #1a1500;
-  --text: #f0f0f0;
-  --text-secondary: #d0d0d0;
-  --text-muted: #aaa;
-  --text-faint: #666;
-  --text-xfaint: #555;
-  --border: #2e2e3a;
-  --border-input: #3a3a48;
-  --border-light: #252530;
-  --accent: #e8534a;
-  --accent-light: #2d1a19;
-  --badge-cuisine-bg: #2d2500;
-  --badge-cuisine-text: #d4a820;
-  --badge-loc-bg: #0d1e30;
-  --badge-loc-text: #5a9fd4;
-}
 
 /* ===== Reset & Base ===== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -780,11 +759,6 @@ body {
 
 .top-nav-btn:hover {
   background: rgba(255,255,255,0.28);
-}
-
-.theme-toggle {
-  font-size: 1rem;
-  padding: 5px 10px;
 }
 
 /* ===== Card Rating Row ===== */
