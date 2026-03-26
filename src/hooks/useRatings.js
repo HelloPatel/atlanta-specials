@@ -5,6 +5,7 @@ import {
   doc,
   runTransaction,
   setDoc,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -100,4 +101,45 @@ export function useRatings(currentUser) {
   }, [currentUser]);
 
   return { ratings, loading, submitRating };
+}
+
+export function useReviews(restaurantName) {
+  const [reviews, setReviews] = useState([]);
+
+  useEffect(() => {
+    if (!restaurantName) return;
+    const key = toRestaurantKey(restaurantName);
+    getDocs(collection(db, 'reviews'))
+      .then((snap) => {
+        const docSnap = snap.docs.find((d) => d.id === key);
+        if (!docSnap) return;
+        const data = docSnap.data();
+        const list = Object.values(data)
+          .filter((r) => r.text)
+          .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
+          .slice(0, 3);
+        setReviews(list);
+      })
+      .catch(console.error);
+  }, [restaurantName]);
+
+  return reviews;
+}
+
+export async function submitReview(currentUser, restaurantName, stars, text) {
+  if (!currentUser || !text.trim()) return;
+  const key = toRestaurantKey(restaurantName);
+  const ref = doc(db, 'reviews', key);
+  await setDoc(
+    ref,
+    {
+      [currentUser.uid]: {
+        stars,
+        text: text.trim(),
+        displayName: currentUser.displayName || 'Anonymous',
+        createdAt: serverTimestamp(),
+      },
+    },
+    { merge: true }
+  );
 }

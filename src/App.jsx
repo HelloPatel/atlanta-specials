@@ -2,12 +2,13 @@ import { useState, useMemo, useRef, useEffect, useCallback, useDeferredValue, us
 import Select from 'react-select';
 import './App.css';
 import { useAuth } from './contexts/AuthContext';
-import { useRatings, toRestaurantKey } from './hooks/useRatings';
+import { useRatings, toRestaurantKey, useReviews, submitReview } from './hooks/useRatings';
 import { useBookmarks } from './hooks/useBookmarks';
 import { useAutoDeals } from './hooks/useAutoDeals';
 import StarRating from './components/StarRating';
 import AuthModal from './components/AuthModal';
 import SubmitDealModal from './components/SubmitDealModal';
+import AdminDashboard from './components/AdminDashboard';
 import {
   daysOfWeek,
   locationOptions,
@@ -198,6 +199,20 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
   const [expanded, setExpanded] = useState(false);
   const [cardRef, visible] = useReveal();
   const [showingAuto, setShowingAuto] = useState(true);
+  const [justRated, setJustRated] = useState(false);
+  const [reviewText, setReviewText] = useState('');
+  const reviews = useReviews(expanded ? restaurant.name : null);
+
+  function handleRate(restaurantName, stars) {
+    onRate(restaurantName, stars);
+    setJustRated(true);
+  }
+
+  async function handleSubmitReview() {
+    await submitReview(currentUser, restaurant.name, rating?.userRating || 0, reviewText);
+    setReviewText('');
+    setJustRated(false);
+  }
 
   const displaySpecials = (isAutoUpdated && !showingAuto)
     ? restaurant._staticSpecials
@@ -301,13 +316,26 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
               averageRating={rating?.averageRating || 0}
               totalRatings={rating?.totalRatings || 0}
               userRating={rating?.userRating || 0}
-              onRate={(stars) => onRate(restaurant.name, stars)}
+              onRate={(stars) => handleRate(restaurant.name, stars)}
               readOnly={!currentUser}
             />
             {!currentUser && (
               <button className="rate-prompt" onClick={onSignInClick}>Sign in to rate</button>
             )}
           </div>
+          {justRated && currentUser && (
+            <div className="review-input-row" onClick={(e) => e.stopPropagation()}>
+              <input
+                className="review-input"
+                placeholder="Add a note (optional)"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+                maxLength={200}
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmitReview()}
+              />
+              <button className="review-submit-btn" onClick={handleSubmitReview}>→</button>
+            </div>
+          )}
         </div>
 
         {/* Toggle tabs — only for auto-updated cards */}
@@ -334,19 +362,35 @@ function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClic
 
       {/* Expanded specials list — always show all days */}
       {expanded && (
-        <div className="specials-list">
-          {allSpecialDays.map((day) => (
-            <div
-              key={day}
-              className={`special-row ${day === TODAY ? 'today' : ''}`}
-            >
-              <span className={`day-chip ${day === TODAY ? 'today-chip' : ''}`}>
-                {day === TODAY ? 'TODAY' : day.slice(0, 3).toUpperCase()}
-              </span>
-              <span className="special-text">{displaySpecials[day]}</span>
+        <>
+          <div className="specials-list">
+            {allSpecialDays.map((day) => (
+              <div
+                key={day}
+                className={`special-row ${day === TODAY ? 'today' : ''}`}
+              >
+                <span className={`day-chip ${day === TODAY ? 'today-chip' : ''}`}>
+                  {day === TODAY ? 'TODAY' : day.slice(0, 3).toUpperCase()}
+                </span>
+                <span className="special-text">{displaySpecials[day]}</span>
+              </div>
+            ))}
+          </div>
+          {reviews.length > 0 && (
+            <div className="reviews-section">
+              <p className="reviews-heading">Reviews</p>
+              {reviews.map((r, i) => (
+                <div key={i} className="review-row">
+                  <div className="review-meta">
+                    <span className="review-stars">{'★'.repeat(r.stars)}</span>
+                    <span className="review-name">{r.displayName}</span>
+                  </div>
+                  <span className="review-text">{r.text}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -360,6 +404,20 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [savedOnly, setSavedOnly] = useState(false);
+  const [openNowOnly, setOpenNowOnly] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+    localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
+  const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
+  const [view, setView] = useState(() => window.location.hash === '#admin' ? 'admin' : 'main');
+  useEffect(() => {
+    const handler = () => setView(window.location.hash === '#admin' ? 'admin' : 'main');
+    window.addEventListener('hashchange', handler);
+    return () => window.removeEventListener('hashchange', handler);
+  }, []);
   const [toast, setToast] = useState('');
   const [locationFilter, setLocationFilter] = useState([]);  // {value, label}[]
   const [cuisineFilter, setCuisineFilter] = useState([]);    // {value, label}[]
@@ -426,7 +484,11 @@ export default function App() {
           selectedDay.length === 0 ||
           selectedDay.some((o) => r.specials[o.value]);
         const matchSaved = !savedOnly || isBookmarked(r.name);
-        return matchLoc && matchCuisine && matchSearch && matchDay && matchSaved;
+        const matchOpenNow = !openNowOnly || (() => {
+          const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
+          return getLiveInfo(r.specials[TODAY], nowMin) !== null;
+        })();
+        return matchLoc && matchCuisine && matchSearch && matchDay && matchSaved && matchOpenNow;
       })
       .sort((a, b) => {
         const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
@@ -483,8 +545,13 @@ export default function App() {
           ) : (
             <button className="top-nav-btn" onClick={() => setAuthModalOpen(true)}>Sign In</button>
           )}
+          <button className="top-nav-btn theme-toggle" onClick={() => setDarkMode(d => !d)} aria-label="Toggle dark mode">
+            {darkMode ? '☀️' : '🌙'}
+          </button>
         </div>
       </nav>
+
+      {view === 'admin' && currentUser?.uid === ADMIN_UID ? <AdminDashboard /> : <>
 
       <header className="hero">
         <div className="hero-content">
@@ -508,7 +575,7 @@ export default function App() {
 
         <div className="hero-wave">
           <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-            <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="white"/>
+            <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" />
           </svg>
         </div>
       </header>
@@ -525,6 +592,13 @@ export default function App() {
             {hasFilters && <span className="filters-active-dot" />}
           </div>
           <div className="filters-header-right">
+            <button
+              className={`saved-filter-btn${openNowOnly ? ' saved-filter-active' : ''}`}
+              onClick={() => setOpenNowOnly(o => !o)}
+            >
+              <span className="open-now-dot" />
+              Open Now
+            </button>
             {currentUser && (
               <button
                 className={`saved-filter-btn${savedOnly ? ' saved-filter-active' : ''}`}
@@ -626,11 +700,6 @@ export default function App() {
         </div>
       </main>
 
-      {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
-      {submitModalOpen && <SubmitDealModal onClose={() => setSubmitModalOpen(false)} currentUser={currentUser} onSignInClick={() => setAuthModalOpen(true)} />}
-
-      {toast && <div className="toast">{toast}</div>}
-
       <footer className="footer">
         <p className="footer-cta">Know a spot we&apos;re missing?</p>
         <p className="footer-sub">Help us keep Atlanta Specials up to date.</p>
@@ -640,6 +709,12 @@ export default function App() {
         <p className="footer-fine">Always verify deals directly with the restaurant before visiting &mdash; specials may change without notice.</p>
         <p className="footer-fine">Atlanta Specials &mdash; Updated regularly &mdash; Free to use, forever.</p>
       </footer>
+
+      </>}
+
+      {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
+      {submitModalOpen && <SubmitDealModal onClose={() => setSubmitModalOpen(false)} currentUser={currentUser} onSignInClick={() => setAuthModalOpen(true)} />}
+      {toast && <div className="toast">{toast}</div>}
     </div>
   );
 }
