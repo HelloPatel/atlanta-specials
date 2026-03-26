@@ -551,7 +551,7 @@ export default function App() {
         </div>
       </nav>
 
-      {view === 'admin' && currentUser?.uid === ADMIN_UID ? <AdminDashboard /> : <>
+      {view === 'admin' && ADMIN_UID && currentUser?.uid === ADMIN_UID ? <AdminDashboard /> : <>
 
       <header className="hero">
         <div className="hero-content">
