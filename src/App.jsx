@@ -413,7 +413,7 @@ export default function App() {
   const [cuisineFilter, setCuisineFilter] = useState([]);    // {value, label}[]
   const [selectedDay, setSelectedDay] = useState([]);
   const [search, setSearch] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const deferredSearch = useDeferredValue(search);
 
