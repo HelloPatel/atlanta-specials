@@ -1,710 +1,1117 @@
-import { useState, useMemo, useRef, useEffect, useCallback, useDeferredValue, useTransition } from 'react';
-import Select from 'react-select';
-import './App.css';
-import { useAuth } from './contexts/AuthContext';
-import { useRatings, toRestaurantKey, useReviews, submitReview } from './hooks/useRatings';
-import { useBookmarks } from './hooks/useBookmarks';
-import { useAutoDeals } from './hooks/useAutoDeals';
-import StarRating from './components/StarRating';
-import AuthModal from './components/AuthModal';
-import SubmitDealModal from './components/SubmitDealModal';
-import AdminDashboard from './components/AdminDashboard';
+import { useState, useEffect } from 'react';
+import { db } from './firebase';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import {
-  daysOfWeek,
-  locationOptions,
-  cuisineOptions,
-  restaurantsList,
-} from './common/commonComponents';
+  Camera,
+  Plus,
+  Check,
+  X,
+  ChevronUp,
+  ChevronDown,
+  Play,
+  RotateCcw,
+  Eye,
+  Settings,
+  Clock,
+  Trash2,
+  Edit3,
+  Heart,
+  Wifi,
+} from 'lucide-react';
 
-const locationOptionsFormatted = locationOptions.filter(o => o !== 'All').map(o => ({ value: o, label: o }));
-const cuisineOptionsFormatted = cuisineOptions.filter(o => o !== 'All').map(o => ({ value: o, label: o }));
+// ─── Firestore ─────────────────────────────────────────────────────────────
+const QUEUE_DOC = doc(db, 'wedding', 'photoQueue');
 
-const selectStyles = {
-  control: (b, s) => ({
-    ...b,
-    minHeight: 42,
-    borderColor: s.isFocused ? '#e8534a' : '#e0e0e0',
-    borderWidth: 2,
-    borderRadius: 8,
-    boxShadow: 'none',
-    '&:hover': { borderColor: '#e8534a' },
-    fontSize: 16,
-  }),
-  option: (b, s) => ({
-    ...b,
-    fontSize: 16,
-    backgroundColor: s.isSelected ? '#e8534a' : s.isFocused ? '#fde9e8' : 'white',
-    color: s.isSelected ? 'white' : '#1a1a2e',
-  }),
-  multiValue: (b) => ({ ...b, backgroundColor: '#fde9e8', borderRadius: 4 }),
-  multiValueLabel: (b) => ({ ...b, color: '#e8534a', fontSize: 14, fontWeight: 600 }),
-  multiValueRemove: (b) => ({ ...b, color: '#e8534a', '&:hover': { background: '#e8534a', color: 'white' } }),
-  placeholder: (b) => ({ ...b, color: '#aaa', fontSize: 16 }),
-  indicatorSeparator: () => ({ display: 'none' }),
-  dropdownIndicator: (b) => ({ ...b, color: '#ccc', padding: '0 6px' }),
-  menu: (b) => ({ ...b, fontSize: 16, zIndex: 9999 }),
-  menuPortal: (b) => ({ ...b, zIndex: 9999 }),
+const DEFAULT_STATE = {
+  groups: [],
+  currentId: null,
+  completedIds: [],
+  coupleNames: '',
+  initialized: false,
 };
 
-const TODAY = daysOfWeek[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
-
-// ─── Live deal time parsing ───────────────────────────────────────────────────
-function toMin24(h, m, mer) {
-  let h24 = parseInt(h, 10);
-  if (mer === 'PM' && h24 !== 12) h24 += 12;
-  if (mer === 'AM' && h24 === 12) h24 = 0;
-  return h24 * 60 + parseInt(m || '0', 10);
+async function persistState(newState) {
+  await setDoc(QUEUE_DOC, newState, { merge: false });
 }
 
-function parseTimeRanges(text) {
-  if (!text) return [];
-  const results = [];
-  // "4–6 PM", "4:30-7:30 PM", "11–2:30 PM"
-  const re1 = /(\d{1,2})(?::(\d{2}))?\s*[–\-]\s*(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/gi;
-  let m;
-  while ((m = re1.exec(text)) !== null) {
-    const mer = m[5].toUpperCase();
-    const startH = parseInt(m[1], 10), endH = parseInt(m[3], 10);
-    // If start hour > end hour in 12h (e.g. 11–2 PM), start must be AM
-    const startMer = startH > endH ? 'AM' : mer;
-    results.push({ start: toMin24(startH, m[2], startMer), end: toMin24(endH, m[4], mer) });
-  }
-  // "11 AM to 4 PM", "7 PM to 9 PM"
-  const re2 = /(\d{1,2})(?::(\d{2}))?\s*(AM|PM)\s+to\s+(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/gi;
-  while ((m = re2.exec(text)) !== null) {
-    results.push({
-      start: toMin24(m[1], m[2], m[3].toUpperCase()),
-      end: toMin24(m[4], m[5], m[6].toUpperCase()),
-    });
-  }
-  return results;
-}
+const uid = () => Math.random().toString(36).slice(2, 10);
 
-function getLiveInfo(text, nowMin) {
-  if (!text) return null;
-  if (/all.?day/i.test(text)) return 'All day';
-  const active = parseTimeRanges(text).find(r => nowMin >= r.start && nowMin < r.end);
-  if (!active) return null;
-  const rem = active.end - nowMin;
-  const h = Math.floor(rem / 60), min = rem % 60;
-  return h > 0 ? (min > 0 ? `Ends in ${h}h ${min}m` : `Ends in ${h}h`) : `Ends in ${min}m`;
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DAY_FULL = {
-  Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday',
-  Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday',
-};
-
-function DayTabs({ selected, onChange }) {
-  const tabRefs = useRef({});
-  const [marker, setMarker] = useState({ left: 0, width: 0 });
-  const [markerVisible, setMarkerVisible] = useState(false);
-
-  const selectedKey = selected.length > 0 ? selected[0].value.slice(0, 3) : null;
-
-  const getPos = useCallback((key) => {
-    const el = tabRefs.current[key];
-    if (!el) return null;
-    return { left: el.offsetLeft, width: el.offsetWidth };
-  }, []);
+// ─── Shared real-time hook ─────────────────────────────────────────────────
+function useQueueState() {
+  const [state, setState] = useState(DEFAULT_STATE);
+  const [loading, setLoading] = useState(true);
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    if (selectedKey) {
-      const pos = getPos(selectedKey);
-      if (pos) { setMarker(pos); setMarkerVisible(true); }
-    } else {
-      setMarkerVisible(false);
-    }
-  }, [selectedKey, getPos]);
-
-  useEffect(() => {
-    let t;
-    const onResize = () => {
-      clearTimeout(t);
-      t = setTimeout(() => {
-        if (selectedKey) {
-          const pos = getPos(selectedKey);
-          if (pos) setMarker(pos);
-        }
-      }, 150);
-    };
-    window.addEventListener('resize', onResize);
-    return () => { window.removeEventListener('resize', onResize); clearTimeout(t); };
-  }, [selectedKey, getPos]);
-
-  const handleClick = (key) => {
-    const full = DAY_FULL[key];
-    onChange(selected.some(d => d.value === full) ? [] : [{ value: full, label: full }]);
-  };
-
-  const handleMouseEnter = (key) => {
-    const pos = getPos(key);
-    if (pos) { setMarker(pos); setMarkerVisible(true); }
-  };
-
-  const handleMouseLeave = () => {
-    if (selectedKey) {
-      const pos = getPos(selectedKey);
-      if (pos) setMarker(pos);
-    } else {
-      setMarkerVisible(false);
-    }
-  };
-
-  return (
-    <div className="day-tabs" onMouseLeave={handleMouseLeave}>
-      {markerVisible && (
-        <div className="day-tabs-marker" style={{ left: marker.left, width: marker.width }} />
-      )}
-      {DAY_SHORT.map((key) => {
-        const isActive = selected.some(d => d.value === DAY_FULL[key]);
-        const isToday = DAY_FULL[key] === TODAY;
-        return (
-          <button
-            key={key}
-            ref={(el) => { tabRefs.current[key] = el; }}
-            className={`day-tab${isActive ? ' day-tab-active' : ''}${isToday ? ' day-tab-today' : ''}`}
-            onClick={() => handleClick(key)}
-            onMouseEnter={() => handleMouseEnter(key)}
-          >
-            {key}
-            {isToday && <span className="day-tab-dot" />}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// Intersection Observer — fade cards in as they enter the viewport
-function useReveal() {
-  const ref = useRef(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); observer.disconnect(); } },
-      { threshold: 0.08 }
+    const unsub = onSnapshot(
+      QUEUE_DOC,
+      (snap) => {
+        setState(snap.exists() ? { ...DEFAULT_STATE, ...snap.data() } : DEFAULT_STATE);
+        setLoading(false);
+        setConnected(true);
+      },
+      () => {
+        setLoading(false);
+        setConnected(false);
+      }
     );
-    observer.observe(el);
-    return () => observer.disconnect();
+    return unsub;
   }, []);
-  return [ref, visible];
+
+  return { state, loading, connected };
 }
 
-function RestaurantCard({ restaurant, selectedDays, rating, onRate, onSignInClick, currentUser, isBookmarked, onBookmark, onShare, nowMinutes, isAutoUpdated }) {
-  const [expanded, setExpanded] = useState(false);
-  const [cardRef, visible] = useReveal();
-  const [showingAuto, setShowingAuto] = useState(true);
-  const [justRated, setJustRated] = useState(false);
-  const [reviewText, setReviewText] = useState('');
-  const reviews = useReviews(expanded ? restaurant.name : null);
+// ─── Hash-based view routing ───────────────────────────────────────────────
+function useView() {
+  const getView = () => {
+    const h = window.location.hash.replace('#', '').toLowerCase();
+    return ['public', 'display'].includes(h) ? h : 'admin';
+  };
+  const [view, setView] = useState(getView);
+  useEffect(() => {
+    const onHash = () => setView(getView());
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
+  return view;
+}
 
-  function handleRate(restaurantName, stars) {
-    onRate(restaurantName, stars);
-    setJustRated(true);
-  }
+// ─── Root ──────────────────────────────────────────────────────────────────
+export default function App() {
+  const view = useView();
+  const { state, loading, connected } = useQueueState();
 
-  async function handleSubmitReview() {
-    await submitReview(currentUser, restaurant.name, rating?.userRating || 0, reviewText);
-    setReviewText('');
-    setJustRated(false);
-  }
+  if (loading) return <LoadingScreen />;
+  if (view === 'public') return <PublicView state={state} connected={connected} />;
+  if (view === 'display') return <DisplayView state={state} />;
+  return <AdminView state={state} />;
+}
 
-  const displaySpecials = (isAutoUpdated && !showingAuto)
-    ? restaurant._staticSpecials
-    : restaurant.specials;
-
-  // Days matching the filter (used to decide if card shows at all + preview)
-  const filteredDays = daysOfWeek.filter(
-    (day) => displaySpecials[day] &&
-      (selectedDays.length === 0 || selectedDays.some((d) => d.value === day))
-  );
-
-  // All days with specials (shown when expanded)
-  const allSpecialDays = daysOfWeek.filter((day) => displaySpecials[day]);
-
-  if (filteredDays.length === 0) return null;
-
-  // In collapsed mode: show today's special or the first matching day as preview
-  const previewDay = filteredDays.includes(TODAY) ? TODAY : filteredDays[0];
-  const previewText = displaySpecials[previewDay];
-  const otherCount = allSpecialDays.length - 1;
-  const liveText = getLiveInfo(displaySpecials[TODAY], nowMinutes);
-
+// ─── Shared frame ──────────────────────────────────────────────────────────
+function PageFrame({ children, dark = false, className = '' }) {
   return (
-    <div ref={cardRef} className={`card${expanded ? ' card-expanded' : ''}${visible ? ' card-visible' : ''}`}>
-      <button className="card-toggle" onClick={() => setExpanded(!expanded)}>
-        {restaurant.image && (
-          <div className="card-image-wrap">
-            <img
-              className="card-image"
-              src={restaurant.image}
-              alt={restaurant.name}
-              loading="lazy"
-              onError={(e) => { e.target.parentElement.style.display = 'none'; }}
-            />
-            {liveText && liveText !== 'All day' && (
-              <span className="live-badge">
-                <span className="live-dot" />
-                {`LIVE · ${liveText}`}
-              </span>
-            )}
-            {isAutoUpdated && showingAuto && (
-              <span className="limited-time-badge">LIMITED TIME</span>
-            )}
-          </div>
-        )}
-        <div className="card-top">
-          <div className="card-title-row">
-            <a
-              href={restaurant.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="restaurant-name"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {restaurant.name}
-              <svg className="link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-            </a>
-            <div className="card-actions" onClick={(e) => e.stopPropagation()}>
-              {/* Share */}
-              <button className="card-action-btn" onClick={() => onShare(restaurant, previewText)} aria-label="Share">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
-                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                </svg>
-              </button>
-              {/* Bookmark */}
-              {currentUser && (
-                <button
-                  className={`card-action-btn${isBookmarked ? ' bookmarked' : ''}`}
-                  onClick={() => onBookmark(restaurant.name)}
-                  aria-label={isBookmarked ? 'Remove bookmark' : 'Bookmark'}
-                >
-                  <svg viewBox="0 0 24 24" fill={isBookmarked ? '#e8534a' : 'none'} stroke={isBookmarked ? '#e8534a' : 'currentColor'} strokeWidth="2" width="15" height="15">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
-                  </svg>
-                </button>
-              )}
-            </div>
-            <svg
-              className={`chevron ${expanded ? 'chevron-up' : ''}`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </div>
-          <div className="card-meta">
-            <span className="badge cuisine">{restaurant.cuisine}</span>
-            {restaurant.location.map((loc) => (
-              <span key={loc} className="badge location">{loc}</span>
-            ))}
-          </div>
-          <div className="card-rating-row" onClick={(e) => e.stopPropagation()}>
-            <StarRating
-              averageRating={rating?.averageRating || 0}
-              totalRatings={rating?.totalRatings || 0}
-              userRating={rating?.userRating || 0}
-              onRate={(stars) => handleRate(restaurant.name, stars)}
-              readOnly={!currentUser}
-            />
-            {!currentUser && (
-              <button className="rate-prompt" onClick={onSignInClick}>Sign in to rate</button>
-            )}
-          </div>
-          {justRated && currentUser && (
-            <div className="review-input-row" onClick={(e) => e.stopPropagation()}>
-              <input
-                className="review-input"
-                placeholder="Add a note (optional)"
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                maxLength={200}
-                onKeyDown={(e) => e.key === 'Enter' && handleSubmitReview()}
-              />
-              <button className="review-submit-btn" onClick={handleSubmitReview}>→</button>
-            </div>
-          )}
-        </div>
-
-        {/* Toggle tabs — only for auto-updated cards */}
-        {isAutoUpdated && (
-          <div className="specials-toggle" onClick={(e) => { e.stopPropagation(); setShowingAuto((v) => !v); }}>
-            <span className={`specials-tab${showingAuto ? ' specials-tab-active' : ''}`}>This Week</span>
-            <span className={`specials-tab${!showingAuto ? ' specials-tab-active' : ''}`}>Regular</span>
-          </div>
-        )}
-
-        {/* Preview row — always visible */}
-        {!expanded && (
-          <div className="card-preview">
-            <span className={`day-chip ${previewDay === TODAY ? 'today-chip' : ''}`}>
-              {previewDay === TODAY ? 'TODAY' : previewDay.slice(0, 3).toUpperCase()}
-            </span>
-            <span className="preview-text">{previewText}</span>
-            {otherCount > 0 && (
-              <span className="more-badge">+{otherCount} more</span>
-            )}
-          </div>
-        )}
-      </button>
-
-      {/* Expanded specials list — always show all days */}
-      {expanded && (
-        <>
-          <div className="specials-list">
-            {allSpecialDays.map((day) => (
-              <div
-                key={day}
-                className={`special-row ${day === TODAY ? 'today' : ''}`}
-              >
-                <span className={`day-chip ${day === TODAY ? 'today-chip' : ''}`}>
-                  {day === TODAY ? 'TODAY' : day.slice(0, 3).toUpperCase()}
-                </span>
-                <span className="special-text">{displaySpecials[day]}</span>
-              </div>
-            ))}
-          </div>
-          {reviews.length > 0 && (
-            <div className="reviews-section">
-              <p className="reviews-heading">Reviews</p>
-              {reviews.map((r, i) => (
-                <div key={i} className="review-row">
-                  <div className="review-meta">
-                    <span className="review-stars">{'★'.repeat(r.stars)}</span>
-                    <span className="review-name">{r.displayName}</span>
-                  </div>
-                  <span className="review-text">{r.text}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
+    <div
+      className={`min-h-screen w-full ${
+        dark ? 'bg-stone-950 text-stone-100' : 'bg-[#f5efe6] text-stone-900'
+      } ${className}`}
+      style={{ fontFamily: '"Cormorant Garamond", Georgia, serif' }}
+    >
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap"
+      />
+      {children}
     </div>
   );
 }
 
-export default function App() {
-  const { currentUser, logout } = useAuth();
-  const { ratings, submitRating } = useRatings(currentUser);
-  const { isBookmarked, toggleBookmark } = useBookmarks(currentUser);
-  const autoDeals = useAutoDeals();
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [submitModalOpen, setSubmitModalOpen] = useState(false);
-  const [savedOnly, setSavedOnly] = useState(false);
-  const [openNowOnly, setOpenNowOnly] = useState(false);
-  const ADMIN_UID = import.meta.env.VITE_ADMIN_UID;
-  const isAdmin = ADMIN_UID && currentUser?.uid === ADMIN_UID;
-  const [adminOpen, setAdminOpen] = useState(false);
-  const [toast, setToast] = useState('');
-  const [locationFilter, setLocationFilter] = useState([]);  // {value, label}[]
-  const [cuisineFilter, setCuisineFilter] = useState([]);    // {value, label}[]
-  const [selectedDay, setSelectedDay] = useState([]);
-  const [search, setSearch] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
-  const deferredSearch = useDeferredValue(search);
+function LoadingScreen() {
+  return (
+    <PageFrame>
+      <div className="flex items-center justify-center min-h-screen">
+        <Heart className="w-7 h-7 animate-pulse text-rose-600" />
+      </div>
+    </PageFrame>
+  );
+}
 
-  // Re-sort every minute so LIVE badges stay accurate
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 60000);
-    return () => clearInterval(id);
-  }, []);
-
-  const todayIndex = daysOfWeek.indexOf(TODAY);
-  const daysUntilNextSpecial = (r) => {
-    for (let i = 0; i <= 6; i++) {
-      if (r.specials[daysOfWeek[(todayIndex + i) % 7]]) return i;
-    }
-    return 7;
-  };
-
-  const handleShare = useCallback((restaurant, previewText) => {
-    const url = 'https://www.atlantaspecials.com';
-    const text = `${restaurant.name} has a deal on Atlanta Specials!\n${previewText}`;
-    if (navigator.share) {
-      navigator.share({ title: restaurant.name, text, url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
-        setToast('Link copied!');
-        setTimeout(() => setToast(''), 2000);
-      });
-    }
-  }, []);
-
-  const filtered = useMemo(() => {
-    const q = deferredSearch.trim().toLowerCase();
-    return restaurantsList
-      .map((r) => {
-        const key = toRestaurantKey(r.name);
-        const autoSpecials = autoDeals.get(key);
-        if (!autoSpecials) return r;
-        // Merge auto-detected specials over static ones (auto wins where non-empty)
-        const mergedSpecials = { ...r.specials };
-        for (const [day, text] of Object.entries(autoSpecials)) {
-          if (text) mergedSpecials[day] = text;
-        }
-        return { ...r, specials: mergedSpecials, _staticSpecials: r.specials, _autoUpdated: true };
-      })
-      .filter((r) => {
-        const matchLoc =
-          locationFilter.length === 0 ||
-          locationFilter.some((o) => r.location.includes(o.value));
-        const matchCuisine =
-          cuisineFilter.length === 0 ||
-          cuisineFilter.some((o) => o.value === r.cuisine);
-        const matchSearch =
-          q === '' ||
-          r.name.toLowerCase().includes(q) ||
-          Object.values(r.specials).some((s) => s && s.toLowerCase().includes(q));
-        const matchDay =
-          selectedDay.length === 0 ||
-          selectedDay.some((o) => r.specials[o.value]);
-        const matchSaved = !savedOnly || isBookmarked(r.name);
-        const matchOpenNow = !openNowOnly || (() => {
-          const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
-          return getLiveInfo(r.specials[TODAY], nowMin) !== null;
-        })();
-        return matchLoc && matchCuisine && matchSearch && matchDay && matchSaved && matchOpenNow;
-      })
-      .sort((a, b) => {
-        const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
-
-        function getSortKey(r) {
-          const todayText = r.specials[TODAY];
-          const liveResult = getLiveInfo(todayText, nowMin);
-          if (liveResult && liveResult !== 'All day') {
-            // Tier 1: countdown LIVE — sort by most time remaining first (most actionable)
-            const match = liveResult.match(/(\d+)h(?:\s*(\d+)m)?|(\d+)m/);
-            let rem = 0;
-            if (match) rem = match[3] ? parseInt(match[3]) : (parseInt(match[1]) || 0) * 60 + (parseInt(match[2]) || 0);
-            return [0, -rem];
-          }
-          if (liveResult === 'All day') return [1, 0]; // Tier 2: all-day deal
-          if (todayText) return [2, 0];                // Tier 3: today's special but not active now
-          return [3, daysUntilNextSpecial(r)];          // Tier 4: upcoming
-        }
-
-        const [aTier, aSecondary] = getSortKey(a);
-        const [bTier, bSecondary] = getSortKey(b);
-        if (aTier !== bTier) return aTier - bTier;
-        if (aSecondary !== bSecondary) return aSecondary - bSecondary;
-        return a.name.localeCompare(b.name);
-      });
-  }, [locationFilter, cuisineFilter, selectedDay, deferredSearch, savedOnly, isBookmarked, tick, autoDeals]);
-
-  const clearAll = () => {
-    setLocationFilter([]);
-    setCuisineFilter([]);
-    setSelectedDay([]);
-    setSearch('');
-  };
-
-  const hasFilters =
-    locationFilter.length > 0 ||
-    cuisineFilter.length > 0 ||
-    selectedDay.length > 0 ||
-    search.trim() !== '';
-
-  // Restaurants with a special today
-  const todayCount = restaurantsList.filter((r) => r.specials[TODAY]).length;
+// ═══════════════════════════════════════════════════════════════════════════
+// PUBLIC VIEW — mobile-first, read-only
+// ═══════════════════════════════════════════════════════════════════════════
+function PublicView({ state, connected }) {
+  const current = state.groups.find((g) => g.id === state.currentId);
+  const upcoming = state.groups.filter(
+    (g) => g.id !== state.currentId && !state.completedIds.includes(g.id)
+  );
+  const completedCount = state.completedIds.length;
+  const onDeck = upcoming[0];
+  const afterOnDeck = upcoming.slice(1, 4);
+  const remaining = upcoming.length - afterOnDeck.length - 1;
+  const allDone = completedCount > 0 && !current && upcoming.length === 0;
 
   return (
-    <div className="app">
-      <nav className="top-nav">
-        <span className="top-nav-logo">Atlanta Specials</span>
-        <div className="top-nav-auth">
-          {currentUser ? (
-            <>
-              <span className="top-nav-username">👋 {currentUser.displayName || currentUser.email}</span>
-              <button className="top-nav-btn" onClick={logout}>Sign Out</button>
-            </>
-          ) : (
-            <button className="top-nav-btn" onClick={() => setAuthModalOpen(true)}>Sign In</button>
-          )}
-          {isAdmin && (
-            <button className="top-nav-btn" onClick={() => setAdminOpen(true)}>Admin</button>
-          )}
-        </div>
-      </nav>
-
-      {adminOpen && isAdmin ? <AdminDashboard onClose={() => setAdminOpen(false)} /> : <>
-
-      <header className="hero">
-        <div className="hero-content">
-          <p className="hero-eyebrow">Atlanta&apos;s Best Deals</p>
-          <h1>Atlanta<br />Specials</h1>
-          <p className="subtitle">Daily restaurant deals, curated for you</p>
-          <div className="hero-stat">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-            </svg>
-            <strong>{todayCount} restaurants</strong>&nbsp;with deals today ({TODAY})
+    <PageFrame>
+      {/* Sticky header */}
+      <header className="sticky top-0 z-10 bg-[#f5efe6]/95 backdrop-blur-sm border-b border-stone-200 px-5 py-4">
+        <div className="flex items-center justify-between max-w-lg mx-auto">
+          <div>
+            <p
+              className="text-[10px] uppercase tracking-[0.3em] text-stone-400"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              Photo Queue
+            </p>
+            <h1 className="text-xl font-medium italic leading-tight">
+              {state.coupleNames || 'Wedding Photos'}
+            </h1>
           </div>
-        </div>
-
-        <a className="scroll-hint" href="#explore">
-          <span>Explore deals</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </a>
-
-        <div className="hero-wave">
-          <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-            <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" />
-          </svg>
+          <div className="flex items-center gap-1.5">
+            <Wifi
+              className={`w-3.5 h-3.5 ${connected ? 'text-emerald-600' : 'text-stone-300'}`}
+            />
+            <span
+              className={`text-[10px] ${connected ? 'text-emerald-600' : 'text-stone-400'}`}
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              {connected ? 'Live' : 'Connecting…'}
+            </span>
+          </div>
         </div>
       </header>
 
-      {/* Sticky filter bar */}
-      <div id="explore" className={`filters-section${filtersOpen ? '' : ' filters-collapsed'}`}>
-        {/* Collapse toggle row */}
-        <div className="filters-header">
-          <div className="filters-header-left">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-              <line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/>
-            </svg>
-            <span>Filters</span>
-            {hasFilters && <span className="filters-active-dot" />}
-          </div>
-          <div className="filters-header-right">
-            <button
-              className={`saved-filter-btn${openNowOnly ? ' saved-filter-active' : ''}`}
-              onClick={() => setOpenNowOnly(o => !o)}
-            >
-              <span className="open-now-dot" />
-              Open Now
-            </button>
-            {currentUser && (
-              <button
-                className={`saved-filter-btn${savedOnly ? ' saved-filter-active' : ''}`}
-                onClick={() => setSavedOnly(o => !o)}
-              >
-                <svg viewBox="0 0 24 24" fill={savedOnly ? '#e8534a' : 'none'} stroke={savedOnly ? '#e8534a' : 'currentColor'} strokeWidth="2" width="13" height="13">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
-                </svg>
-                Saved
-              </button>
-            )}
-            <span className="results-count">
-              {filtered.length === restaurantsList.length
-                ? `${filtered.length} restaurants`
-                : `${filtered.length} / ${restaurantsList.length}`}
-            </span>
-            <button className="filters-toggle-btn" onClick={() => setFiltersOpen(o => !o)}>
-              <svg
-                className={`filters-chevron${filtersOpen ? ' filters-chevron-up' : ''}`}
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                width="16" height="16"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-          </div>
-        </div>
+      <main className="max-w-lg mx-auto px-4 pt-6 pb-16">
+        {/* ── NOW ON STAGE ── */}
+        <section className="mb-6">
+          <p
+            className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-3 flex items-center gap-2"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+            Now on Stage
+          </p>
 
-        {/* Collapsible body */}
-        <div className="filters-body">
-          <div className="filters-search-row">
-            <input
-              className="search-input"
-              type="text"
-              placeholder="Search by name or deal…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {hasFilters && (
-              <button className="clear-btn" onClick={clearAll}>Clear</button>
-            )}
-          </div>
-          <div className="filters-controls-row">
-            <div className="filters-selects">
-              <Select
-                options={locationOptionsFormatted}
-                value={locationFilter}
-                onChange={(v) => startTransition(() => setLocationFilter(v))}
-                isMulti
-                isSearchable={false}
-                placeholder="Location"
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                closeMenuOnScroll={true}
+          {current ? (
+            <div className="bg-stone-900 text-stone-50 rounded-2xl px-6 py-8 relative overflow-hidden">
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    'radial-gradient(circle at 25% 20%, rgba(212,175,116,0.25) 0%, transparent 60%)',
+                }}
               />
-              <Select
-                options={cuisineOptionsFormatted}
-                value={cuisineFilter}
-                onChange={(v) => startTransition(() => setCuisineFilter(v))}
-                isMulti
-                isSearchable={false}
-                placeholder="Cuisine"
-                styles={selectStyles}
-                menuPortalTarget={document.body}
-                menuPosition="fixed"
-                closeMenuOnScroll={true}
-              />
+              <div className="relative">
+                <Camera className="w-7 h-7 mx-auto mb-4 text-stone-400" />
+                <h2 className="text-4xl font-medium italic text-center leading-tight mb-3">
+                  {current.name}
+                </h2>
+                {current.members.length > 0 && (
+                  <p
+                    className="text-center text-stone-300 text-base leading-relaxed"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    {current.members.join(' · ')}
+                  </p>
+                )}
+              </div>
             </div>
-            <DayTabs selected={selectedDay} onChange={setSelectedDay} />
-          </div>
-        </div>
-      </div>
-
-      <main className="main">
-        <div className={`cards-grid${isPending ? ' grid-pending' : ''}`}>
-          {filtered.map((r) => (
-            <RestaurantCard
-              key={r.name}
-              restaurant={r}
-              selectedDays={selectedDay}
-              rating={ratings.get(toRestaurantKey(r.name))}
-              onRate={submitRating}
-              onSignInClick={() => setAuthModalOpen(true)}
-              currentUser={currentUser}
-              isBookmarked={isBookmarked(r.name)}
-              onBookmark={toggleBookmark}
-              onShare={handleShare}
-              nowMinutes={new Date().getHours() * 60 + new Date().getMinutes()}
-              isAutoUpdated={!!r._autoUpdated}
-            />
-          ))}
-          {filtered.length === 0 && (
-            <div className="empty-state">
-              <p>No restaurants match your filters.</p>
-              <button className="clear-btn" onClick={clearAll}>Clear filters</button>
+          ) : (
+            <div className="rounded-2xl border border-stone-300 px-6 py-10 text-center">
+              {allDone ? (
+                <>
+                  <Heart className="w-8 h-8 mx-auto mb-3 text-rose-400" />
+                  <p className="text-2xl italic text-stone-600">All photos complete</p>
+                </>
+              ) : (
+                <p className="text-xl italic text-stone-500">Starting soon…</p>
+              )}
             </div>
           )}
-        </div>
+        </section>
+
+        {/* ── ON DECK ── */}
+        {onDeck && (
+          <section className="mb-4">
+            <p
+              className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-3"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              On Deck
+            </p>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-5">
+              <div className="flex items-center gap-3 mb-1">
+                <span
+                  className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full uppercase tracking-wider"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  Next up
+                </span>
+              </div>
+              <h3 className="text-3xl font-medium italic leading-tight">{onDeck.name}</h3>
+              {onDeck.members.length > 0 && (
+                <p
+                  className="text-stone-600 text-base mt-1.5 leading-relaxed"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  {onDeck.members.join(' · ')}
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ── COMING UP ── */}
+        {afterOnDeck.length > 0 && (
+          <section className="mb-4">
+            <p
+              className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-3"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              Coming Up
+            </p>
+            <div className="space-y-2">
+              {afterOnDeck.map((g, i) => (
+                <div
+                  key={g.id}
+                  className="bg-white/70 border border-stone-200 rounded-xl px-4 py-4 flex items-start gap-3"
+                >
+                  <span
+                    className="text-xs text-stone-400 mt-0.5 w-5 text-right flex-shrink-0"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    #{i + 2}
+                  </span>
+                  <div>
+                    <p className="text-xl italic font-medium leading-tight">{g.name}</p>
+                    {g.members.length > 0 && (
+                      <p
+                        className="text-stone-500 text-sm mt-1 leading-relaxed"
+                        style={{ fontFamily: 'Inter, sans-serif' }}
+                      >
+                        {g.members.join(' · ')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {remaining > 0 && (
+                <p
+                  className="text-center text-sm text-stone-400 italic py-2"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  + {remaining} more group{remaining === 1 ? '' : 's'} after that
+                </p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ── PROGRESS ── */}
+        {(completedCount > 0 || state.groups.length > 0) && (
+          <div className="mt-6 pt-5 border-t border-stone-200 flex justify-center gap-8">
+            <div className="text-center">
+              <p className="text-2xl font-medium italic">{completedCount}</p>
+              <p
+                className="text-[10px] uppercase tracking-wider text-stone-400"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Done
+              </p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-medium italic">{upcoming.length}</p>
+              <p
+                className="text-[10px] uppercase tracking-wider text-stone-400"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Waiting
+              </p>
+            </div>
+          </div>
+        )}
       </main>
+    </PageFrame>
+  );
+}
 
-      <footer className="footer">
-        <p className="footer-cta">Know a spot we&apos;re missing?</p>
-        <p className="footer-sub">Help us keep Atlanta Specials up to date.</p>
-        <button className="footer-suggest-btn" onClick={() => setSubmitModalOpen(true)}>
-          Submit a Deal
+// ═══════════════════════════════════════════════════════════════════════════
+// DISPLAY VIEW — venue TV / projector
+// ═══════════════════════════════════════════════════════════════════════════
+function DisplayView({ state }) {
+  const current = state.groups.find((g) => g.id === state.currentId);
+  const upcoming = state.groups.filter(
+    (g) => g.id !== state.currentId && !state.completedIds.includes(g.id)
+  );
+  const nextThree = upcoming.slice(0, 3);
+
+  return (
+    <PageFrame dark>
+      <div className="min-h-screen flex flex-col p-10 sm:p-16">
+        <header className="text-center mb-10">
+          <p
+            className="text-xs uppercase tracking-[0.5em] text-stone-400 mb-3"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Photo Queue
+          </p>
+          <h1
+            className="text-5xl sm:text-7xl italic font-medium"
+            style={{ color: '#e8d9b8' }}
+          >
+            {state.coupleNames || 'Our Wedding'}
+          </h1>
+        </header>
+
+        <section className="flex-1 flex items-center justify-center">
+          {current ? (
+            <div className="text-center">
+              <div className="flex items-center gap-3 justify-center mb-6">
+                <span className="w-3 h-3 rounded-full bg-rose-500 animate-pulse" />
+                <p
+                  className="text-sm uppercase tracking-[0.5em] text-stone-400"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  Now on Stage
+                </p>
+              </div>
+              <h2
+                className="text-6xl sm:text-8xl italic font-medium leading-tight mb-5"
+                style={{ color: '#f5e9d3' }}
+              >
+                {current.name}
+              </h2>
+              {current.members.length > 0 && (
+                <p
+                  className="text-xl sm:text-2xl text-stone-300 max-w-3xl mx-auto leading-relaxed"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  {current.members.join('  ·  ')}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="text-center">
+              <Heart className="w-16 h-16 mx-auto mb-6 text-rose-400" />
+              <h2
+                className="text-5xl sm:text-7xl italic"
+                style={{ color: '#d6cfc4' }}
+              >
+                {state.completedIds.length > 0 && upcoming.length === 0
+                  ? 'Thank you all'
+                  : 'Beginning shortly'}
+              </h2>
+            </div>
+          )}
+        </section>
+
+        {nextThree.length > 0 && (
+          <section className="mt-10 pt-8 border-t border-stone-800">
+            <p
+              className="text-xs uppercase tracking-[0.5em] text-stone-500 text-center mb-6"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              Coming Up
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+              {nextThree.map((g, i) => (
+                <div
+                  key={g.id}
+                  className={`p-5 rounded-xl border ${
+                    i === 0
+                      ? 'border-amber-700/50 bg-amber-950/30'
+                      : 'border-stone-800 bg-stone-900/40'
+                  }`}
+                >
+                  <p
+                    className={`text-xs uppercase tracking-wider mb-2 ${
+                      i === 0 ? 'text-amber-300' : 'text-stone-500'
+                    }`}
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    {i === 0 ? 'On Deck' : i === 1 ? 'Then' : 'After that'}
+                  </p>
+                  <h3
+                    className="text-2xl italic font-medium leading-tight mb-1"
+                    style={{ color: i === 0 ? '#f5e9d3' : '#d6cfc4' }}
+                  >
+                    {g.name}
+                  </h3>
+                  {g.members.length > 0 && (
+                    <p
+                      className="text-sm text-stone-400 leading-relaxed"
+                      style={{ fontFamily: 'Inter, sans-serif' }}
+                    >
+                      {g.members.slice(0, 4).join(' · ')}
+                      {g.members.length > 4 && ` +${g.members.length - 4}`}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </PageFrame>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN VIEW — full control
+// ═══════════════════════════════════════════════════════════════════════════
+function AdminView({ state }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [showSetup, setShowSetup] = useState(!state.initialized);
+  const [showLinks, setShowLinks] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const upcoming = state.groups.filter(
+    (g) => g.id !== state.currentId && !state.completedIds.includes(g.id)
+  );
+  const current = state.groups.find((g) => g.id === state.currentId);
+  const completed = state.completedIds
+    .map((id) => state.groups.find((g) => g.id === id))
+    .filter(Boolean);
+
+  const save = async (next) => {
+    setSaving(true);
+    try {
+      await persistState(next);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addGroup = async (name, members) => {
+    const g = {
+      id: uid(),
+      name: name.trim(),
+      members: members
+        .split(/[,\n]/)
+        .map((m) => m.trim())
+        .filter(Boolean),
+    };
+    await save({ ...state, groups: [...state.groups, g], initialized: true });
+  };
+
+  const editGroup = async (id, name, members) => {
+    await save({
+      ...state,
+      groups: state.groups.map((g) =>
+        g.id === id
+          ? {
+              ...g,
+              name: name.trim(),
+              members: members
+                .split(/[,\n]/)
+                .map((m) => m.trim())
+                .filter(Boolean),
+            }
+          : g
+      ),
+    });
+  };
+
+  const deleteGroup = async (id) => {
+    await save({
+      ...state,
+      groups: state.groups.filter((g) => g.id !== id),
+      currentId: state.currentId === id ? null : state.currentId,
+      completedIds: state.completedIds.filter((c) => c !== id),
+    });
+  };
+
+  const startGroup = async (id) => {
+    await save({ ...state, currentId: id });
+  };
+
+  const completeCurrent = async () => {
+    if (!state.currentId) return;
+    const nextUpcoming = state.groups.filter(
+      (g) => g.id !== state.currentId && !state.completedIds.includes(g.id)
+    );
+    await save({
+      ...state,
+      currentId: nextUpcoming[0]?.id ?? null,
+      completedIds: [...state.completedIds, state.currentId],
+    });
+  };
+
+  const startQueue = async () => {
+    if (state.groups.length === 0) return;
+    await save({ ...state, currentId: state.groups[0].id, completedIds: [] });
+  };
+
+  const resetQueue = async () => {
+    if (!confirm('Reset the entire queue? All groups move back to upcoming.')) return;
+    await save({ ...state, currentId: null, completedIds: [] });
+  };
+
+  const moveGroup = async (id, dir) => {
+    const idx = state.groups.findIndex((g) => g.id === id);
+    const newIdx = dir === 'up' ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= state.groups.length) return;
+    const gs = [...state.groups];
+    [gs[idx], gs[newIdx]] = [gs[newIdx], gs[idx]];
+    await save({ ...state, groups: gs });
+  };
+
+  const undoComplete = async (id) => {
+    await save({ ...state, completedIds: state.completedIds.filter((c) => c !== id) });
+  };
+
+  const finishSetup = async (coupleNames) => {
+    await save({ ...state, coupleNames, initialized: true });
+    setShowSetup(false);
+  };
+
+  if (showSetup) return <SetupModal onComplete={finishSetup} />;
+
+  return (
+    <PageFrame>
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-7 pb-20">
+        {/* Header */}
+        <header className="mb-8">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <p
+                className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-1"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Admin · Photo Queue
+              </p>
+              <h1 className="text-3xl sm:text-4xl font-medium italic">
+                {state.coupleNames || 'Our Wedding'}
+              </h1>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                onClick={() => setShowLinks(true)}
+                className="flex items-center gap-1.5 px-3 py-2 border border-stone-300 hover:bg-stone-100 rounded-lg text-sm transition"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                <Eye className="w-4 h-4" /> Share
+              </button>
+              <button
+                onClick={() => setShowSetup(true)}
+                className="p-2 border border-stone-300 hover:bg-stone-100 rounded-lg transition"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <div className="mt-5 h-px bg-gradient-to-r from-transparent via-stone-300 to-transparent" />
+        </header>
+
+        {saving && (
+          <div
+            className="mb-4 text-xs text-stone-500 italic text-right"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Saving…
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {[
+            { label: 'Upcoming', value: upcoming.length, icon: <Clock className="w-4 h-4" /> },
+            { label: 'On Stage', value: current ? 1 : 0, icon: <Camera className="w-4 h-4" />, hi: true },
+            { label: 'Done', value: completed.length, icon: <Check className="w-4 h-4" /> },
+          ].map(({ label, value, icon, hi }) => (
+            <div
+              key={label}
+              className={`p-4 rounded-xl border ${
+                hi
+                  ? 'bg-stone-900 text-stone-50 border-stone-900'
+                  : 'bg-white/60 border-stone-200'
+              }`}
+            >
+              <div
+                className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider opacity-60 mb-1"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                {icon} {label}
+              </div>
+              <div className="text-3xl font-medium italic">{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Current group */}
+        {current ? (
+          <section className="mb-8">
+            <Label>Now on Stage</Label>
+            <div className="bg-stone-900 text-stone-50 rounded-xl p-6 relative overflow-hidden">
+              <div
+                className="absolute top-0 right-0 w-32 h-32 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle, rgba(212,175,116,0.7) 0%, transparent 70%)',
+                }}
+              />
+              <div className="flex items-center gap-2 mb-2">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                <span
+                  className="text-[10px] uppercase tracking-[0.3em] text-stone-400"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  Photographing
+                </span>
+              </div>
+              <h2 className="text-3xl italic font-medium mb-2">{current.name}</h2>
+              {current.members.length > 0 && (
+                <p
+                  className="text-stone-300 text-sm mb-5 leading-relaxed"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  {current.members.join(' · ')}
+                </p>
+              )}
+              <button
+                onClick={completeCurrent}
+                className="flex items-center gap-2 px-5 py-2.5 bg-stone-50 text-stone-900 hover:bg-stone-200 rounded-lg text-sm font-medium transition"
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                <Check className="w-4 h-4" /> Mark Done & Call Next
+              </button>
+            </div>
+          </section>
+        ) : (
+          state.groups.length > 0 &&
+          completed.length === 0 && (
+            <section className="mb-8">
+              <button
+                onClick={startQueue}
+                className="w-full py-8 border-2 border-dashed border-stone-300 hover:border-stone-500 hover:bg-stone-100/50 rounded-xl transition text-stone-600"
+              >
+                <Play className="w-7 h-7 mx-auto mb-2" />
+                <p className="text-lg italic">Start Queue</p>
+                <p
+                  className="text-xs text-stone-400 mt-1"
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  Calls the first group
+                </p>
+              </button>
+            </section>
+          )
+        )}
+
+        {/* Upcoming */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <Label>Upcoming · {upcoming.length}</Label>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1 text-sm text-stone-600 hover:text-stone-900"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              <Plus className="w-4 h-4" /> Add Group
+            </button>
+          </div>
+
+          {upcoming.length === 0 ? (
+            <p className="text-center py-10 text-stone-400 italic text-sm">
+              {state.groups.length === 0
+                ? 'No groups yet — add your first one above.'
+                : 'All groups completed.'}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {upcoming.map((g, i) => (
+                <GroupCard
+                  key={g.id}
+                  group={g}
+                  position={i + 1}
+                  isEditing={editingId === g.id}
+                  onEdit={() => setEditingId(g.id)}
+                  onCancelEdit={() => setEditingId(null)}
+                  onSaveEdit={async (name, members) => {
+                    await editGroup(g.id, name, members);
+                    setEditingId(null);
+                  }}
+                  onDelete={() => {
+                    if (confirm(`Delete "${g.name}"?`)) deleteGroup(g.id);
+                  }}
+                  onStart={() => startGroup(g.id)}
+                  canMoveUp={state.groups.indexOf(g) > 0}
+                  canMoveDown={state.groups.indexOf(g) < state.groups.length - 1}
+                  onMoveUp={() => moveGroup(g.id, 'up')}
+                  onMoveDown={() => moveGroup(g.id, 'down')}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Completed */}
+        {completed.length > 0 && (
+          <section className="mb-8">
+            <Label>Completed · {completed.length}</Label>
+            <div className="space-y-1">
+              {completed.map((g) => (
+                <div
+                  key={g.id}
+                  className="flex items-center justify-between px-4 py-3 bg-stone-100/60 rounded-lg group"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                    <span className="italic line-through text-stone-400 text-sm truncate">
+                      {g.name}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => undoComplete(g.id)}
+                    className="text-xs text-stone-500 hover:text-stone-900 opacity-0 group-hover:opacity-100 transition ml-3 flex-shrink-0"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    Undo
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={resetQueue}
+              className="mt-4 flex items-center gap-1.5 text-xs text-stone-400 hover:text-stone-700"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Reset entire queue
+            </button>
+          </section>
+        )}
+      </div>
+
+      {showAdd && (
+        <AddGroupModal
+          onClose={() => setShowAdd(false)}
+          onAdd={async (name, members) => {
+            await addGroup(name, members);
+            setShowAdd(false);
+          }}
+        />
+      )}
+      {showLinks && <ShareLinksModal onClose={() => setShowLinks(false)} />}
+    </PageFrame>
+  );
+}
+
+// ─── Admin sub-components ──────────────────────────────────────────────────
+function Label({ children }) {
+  return (
+    <p
+      className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-3"
+      style={{ fontFamily: 'Inter, sans-serif' }}
+    >
+      {children}
+    </p>
+  );
+}
+
+function GroupCard({
+  group,
+  position,
+  isEditing,
+  onEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
+  onStart,
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+}) {
+  const [name, setName] = useState(group.name);
+  const [members, setMembers] = useState(group.members.join(', '));
+
+  useEffect(() => {
+    setName(group.name);
+    setMembers(group.members.join(', '));
+  }, [group, isEditing]);
+
+  if (isEditing) {
+    return (
+      <div className="p-4 bg-white border border-stone-300 rounded-xl">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full text-lg italic bg-transparent border-b border-stone-200 pb-1 mb-3 focus:outline-none focus:border-stone-700"
+          placeholder="Group name"
+        />
+        <textarea
+          value={members}
+          onChange={(e) => setMembers(e.target.value)}
+          className="w-full text-sm bg-transparent border border-stone-200 rounded-lg p-2 focus:outline-none focus:border-stone-500 mb-3 resize-none"
+          rows={2}
+          placeholder="Names (comma or line separated)"
+          style={{ fontFamily: 'Inter, sans-serif' }}
+        />
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={onCancelEdit}
+            className="px-3 py-1.5 text-sm text-stone-500 hover:text-stone-900"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onSaveEdit(name, members)}
+            className="px-4 py-1.5 text-sm bg-stone-900 text-stone-50 hover:bg-stone-700 rounded-lg"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 bg-white/70 border border-stone-200 rounded-xl flex items-start gap-2 hover:bg-white transition group">
+      <div className="flex flex-col gap-0.5 pt-0.5">
+        <button
+          onClick={onMoveUp}
+          disabled={!canMoveUp}
+          className="text-stone-300 hover:text-stone-700 disabled:opacity-20"
+        >
+          <ChevronUp className="w-4 h-4" />
         </button>
-        <p className="footer-fine">Always verify deals directly with the restaurant before visiting &mdash; specials may change without notice.</p>
-        <p className="footer-fine">Atlanta Specials &mdash; Updated regularly &mdash; Free to use, forever.</p>
-      </footer>
+        <button
+          onClick={onMoveDown}
+          disabled={!canMoveDown}
+          className="text-stone-300 hover:text-stone-700 disabled:opacity-20"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-baseline gap-2">
+          <span
+            className="text-xs text-stone-400"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            #{position}
+          </span>
+          <h4 className="text-lg italic font-medium truncate">{group.name}</h4>
+        </div>
+        {group.members.length > 0 && (
+          <p
+            className="text-xs text-stone-400 mt-0.5 leading-relaxed"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            {group.members.join(' · ')}
+          </p>
+        )}
+      </div>
+      <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition">
+        <button
+          onClick={onStart}
+          className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg"
+          title="Call this group now"
+        >
+          <Play className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onEdit}
+          className="p-1.5 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded-lg"
+        >
+          <Edit3 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
-      </>}
+function AddGroupModal({ onClose, onAdd }) {
+  const [name, setName] = useState('');
+  const [members, setMembers] = useState('');
 
-      {authModalOpen && <AuthModal onClose={() => setAuthModalOpen(false)} />}
-      {submitModalOpen && <SubmitDealModal onClose={() => setSubmitModalOpen(false)} currentUser={currentUser} onSignInClick={() => setAuthModalOpen(true)} />}
-      {toast && <div className="toast">{toast}</div>}
+  return (
+    <Modal onClose={onClose}>
+      <h2 className="text-2xl italic mb-5">Add a Group</h2>
+      <label
+        className="block text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-1.5"
+        style={{ fontFamily: 'Inter, sans-serif' }}
+      >
+        Group Name
+      </label>
+      <input
+        autoFocus
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && name.trim() && onAdd(name, members)}
+        placeholder="e.g. Bride's Immediate Family"
+        className="w-full text-xl italic bg-transparent border-b border-stone-300 pb-1.5 mb-5 focus:outline-none focus:border-stone-700"
+      />
+      <label
+        className="block text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-1.5"
+        style={{ fontFamily: 'Inter, sans-serif' }}
+      >
+        Names{' '}
+        <span className="opacity-50 normal-case tracking-normal">
+          (optional · comma or line separated)
+        </span>
+      </label>
+      <textarea
+        value={members}
+        onChange={(e) => setMembers(e.target.value)}
+        rows={3}
+        placeholder="Mom, Dad, Sister…"
+        className="w-full text-sm bg-transparent border border-stone-200 rounded-lg p-3 focus:outline-none focus:border-stone-500 resize-none"
+        style={{ fontFamily: 'Inter, sans-serif' }}
+      />
+      <div className="flex justify-end gap-2 mt-5">
+        <button
+          onClick={onClose}
+          className="px-4 py-2 text-sm text-stone-500 hover:text-stone-900"
+          style={{ fontFamily: 'Inter, sans-serif' }}
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => name.trim() && onAdd(name, members)}
+          disabled={!name.trim()}
+          className="px-5 py-2 text-sm bg-stone-900 text-stone-50 hover:bg-stone-700 disabled:opacity-40 rounded-lg"
+          style={{ fontFamily: 'Inter, sans-serif' }}
+        >
+          Add Group
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function SetupModal({ onComplete }) {
+  const [coupleNames, setCoupleNames] = useState('');
+  return (
+    <PageFrame>
+      <div className="flex items-center justify-center min-h-screen p-5">
+        <div className="max-w-sm w-full bg-white/90 border border-stone-200 rounded-2xl p-8 sm:p-10">
+          <Heart className="w-7 h-7 text-rose-600 mx-auto mb-5" />
+          <h1 className="text-3xl italic font-medium text-center mb-1">Welcome</h1>
+          <p
+            className="text-center text-stone-500 text-sm mb-7"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Let's set up your photo queue.
+          </p>
+          <label
+            className="block text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-2"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Couple Names
+          </label>
+          <input
+            autoFocus
+            value={coupleNames}
+            onChange={(e) => setCoupleNames(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onComplete(coupleNames || 'Our Wedding')}
+            placeholder="e.g. Sarah & James"
+            className="w-full text-xl italic bg-transparent border-b-2 border-stone-200 pb-2 mb-7 focus:outline-none focus:border-stone-900"
+          />
+          <button
+            onClick={() => onComplete(coupleNames || 'Our Wedding')}
+            className="w-full py-3 bg-stone-900 text-stone-50 hover:bg-stone-700 rounded-xl text-sm transition"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </PageFrame>
+  );
+}
+
+function ShareLinksModal({ onClose }) {
+  const base = window.location.href.split('#')[0];
+  const [copied, setCopied] = useState(null);
+
+  const copy = async (url, key) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    } catch {}
+  };
+
+  return (
+    <Modal onClose={onClose}>
+      <h2 className="text-2xl italic mb-1">Share Links</h2>
+      <p
+        className="text-sm text-stone-500 mb-5"
+        style={{ fontFamily: 'Inter, sans-serif' }}
+      >
+        Send to guests or display on a venue screen.
+      </p>
+
+      {[
+        {
+          key: 'guest',
+          label: 'Guest View',
+          desc: 'Mobile-friendly, read-only queue for guests',
+          url: `${base}#public`,
+        },
+        {
+          key: 'display',
+          label: 'Venue Display',
+          desc: 'Large text for a TV or projector',
+          url: `${base}#display`,
+        },
+      ].map(({ key, label, desc, url }) => (
+        <div key={key} className="mb-3 p-4 border border-stone-200 rounded-xl bg-white/60">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <span
+              className="text-sm font-medium"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              {label}
+            </span>
+            <button
+              onClick={() => copy(url, key)}
+              className={`text-xs px-3 py-1 rounded-lg transition ${
+                copied === key
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-stone-900 text-stone-50 hover:bg-stone-700'
+              }`}
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              {copied === key ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <p
+            className="text-xs text-stone-400 mb-2"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            {desc}
+          </p>
+          <code className="block text-xs text-stone-600 bg-stone-100 px-2 py-1 rounded-lg break-all">
+            {url}
+          </code>
+        </div>
+      ))}
+
+      <div className="flex justify-end mt-5">
+        <button
+          onClick={onClose}
+          className="px-5 py-2 text-sm bg-stone-900 text-stone-50 hover:bg-stone-700 rounded-lg"
+          style={{ fontFamily: 'Inter, sans-serif' }}
+        >
+          Done
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
+function Modal({ children, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-stone-950/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-lg bg-[#faf6ee] border border-stone-200 rounded-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1 text-stone-400 hover:text-stone-900"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        {children}
+      </div>
     </div>
   );
 }
