@@ -139,6 +139,7 @@ function LoadingScreen() {
 // ═══════════════════════════════════════════════════════════════════════════
 function PublicView({ state, connected }) {
   const [search, setSearch] = useState('');
+  const [showAll, setShowAll] = useState(false);
 
   const current = state.groups.find((g) => g.id === state.currentId);
   const upcoming = state.groups.filter(
@@ -434,6 +435,78 @@ function PublicView({ state, connected }) {
               </p>
             </div>
           </div>
+        )}
+
+        {/* ── FULL QUEUE ── */}
+        {state.groups.length > 0 && (
+          <section className="mt-6">
+            <button
+              onClick={() => setShowAll((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3.5 bg-white/70 border border-stone-200 rounded-2xl text-stone-600 hover:bg-white transition"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              <span className="text-sm font-medium">
+                {showAll ? 'Hide full queue' : `See full queue · ${state.groups.length} groups`}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-stone-400 transition-transform ${showAll ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {showAll && (
+              <div className="mt-2 space-y-1">
+                {state.groups.map((g, i) => {
+                  const isDone = state.completedIds.includes(g.id);
+                  const isCurrent = g.id === state.currentId;
+                  const upcomingIndex = upcoming.findIndex((u) => u.id === g.id);
+                  const isOnDeck = upcomingIndex === 0;
+
+                  return (
+                    <div
+                      key={g.id}
+                      className={`px-4 py-3 rounded-xl flex items-start gap-3 ${
+                        isCurrent
+                          ? 'bg-stone-900 text-stone-50'
+                          : isOnDeck
+                          ? 'bg-amber-50 border border-amber-200'
+                          : isDone
+                          ? 'bg-stone-50 border border-stone-100'
+                          : 'bg-white/70 border border-stone-200'
+                      }`}
+                    >
+                      <span
+                        className={`text-xs mt-0.5 w-14 flex-shrink-0 ${
+                          isCurrent ? 'text-stone-400' : isDone ? 'text-stone-300' : 'text-stone-400'
+                        }`}
+                        style={{ fontFamily: 'Inter, sans-serif' }}
+                      >
+                        {isCurrent ? '📸 Now' : isOnDeck ? '⏳ Next' : isDone ? '✓ Done' : `#${upcomingIndex + 1}`}
+                      </span>
+                      <div className="min-w-0">
+                        <p
+                          className={`text-base italic font-medium leading-tight ${
+                            isDone && !isCurrent ? 'line-through text-stone-400' : ''
+                          }`}
+                        >
+                          {g.name}
+                        </p>
+                        {g.members.length > 0 && (
+                          <p
+                            className={`text-xs mt-0.5 leading-relaxed ${
+                              isCurrent ? 'text-stone-300' : 'text-stone-400'
+                            }`}
+                            style={{ fontFamily: 'Inter, sans-serif' }}
+                          >
+                            {g.members.join(' · ')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         )}
       </main>
     </PageFrame>
@@ -1058,7 +1131,7 @@ function GroupCard({
           </p>
         )}
       </div>
-      <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition">
+      <div className="flex items-center gap-0.5 flex-shrink-0">
         <button
           onClick={onStart}
           className="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg"
