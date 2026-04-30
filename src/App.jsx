@@ -11,7 +11,6 @@ import {
   Play,
   RotateCcw,
   Eye,
-  Settings,
   Clock,
   Trash2,
   Edit3,
@@ -26,9 +25,11 @@ const DEFAULT_STATE = {
   groups: [],
   currentId: null,
   completedIds: [],
-  coupleNames: '',
-  initialized: false,
+  coupleNames: 'Brijal & Rushi',
+  initialized: true,
 };
+
+const ADMIN_PASSWORD = 'br2026';
 
 async function persistState(newState) {
   await setDoc(QUEUE_DOC, newState, { merge: false });
@@ -65,7 +66,9 @@ function useQueueState() {
 function useView() {
   const getView = () => {
     const h = window.location.hash.replace('#', '').toLowerCase();
-    return ['public', 'display'].includes(h) ? h : 'admin';
+    if (h === 'admin') return 'admin';
+    if (h === 'display') return 'display';
+    return 'public'; // bare URL → guest view
   };
   const [view, setView] = useState(getView);
   useEffect(() => {
@@ -76,15 +79,31 @@ function useView() {
   return view;
 }
 
+// ─── Admin password gate ───────────────────────────────────────────────────
+function useAdminAuth() {
+  const [authed, setAuthed] = useState(
+    () => sessionStorage.getItem('wq_admin') === '1'
+  );
+  const unlock = () => {
+    sessionStorage.setItem('wq_admin', '1');
+    setAuthed(true);
+  };
+  return { authed, unlock };
+}
+
 // ─── Root ──────────────────────────────────────────────────────────────────
 export default function App() {
   const view = useView();
   const { state, loading, connected } = useQueueState();
+  const { authed, unlock } = useAdminAuth();
 
   if (loading) return <LoadingScreen />;
-  if (view === 'public') return <PublicView state={state} connected={connected} />;
   if (view === 'display') return <DisplayView state={state} />;
-  return <AdminView state={state} />;
+  if (view === 'admin') {
+    if (!authed) return <AdminPasswordScreen onUnlock={unlock} />;
+    return <AdminView state={state} />;
+  }
+  return <PublicView state={state} connected={connected} />;
 }
 
 // ─── Shared frame ──────────────────────────────────────────────────────────
@@ -435,12 +454,74 @@ function DisplayView({ state }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// ADMIN PASSWORD SCREEN
+// ═══════════════════════════════════════════════════════════════════════════
+function AdminPasswordScreen({ onUnlock }) {
+  const [pw, setPw] = useState('');
+  const [error, setError] = useState(false);
+
+  const attempt = () => {
+    if (pw === ADMIN_PASSWORD) {
+      onUnlock();
+    } else {
+      setError(true);
+      setPw('');
+      setTimeout(() => setError(false), 1500);
+    }
+  };
+
+  return (
+    <PageFrame>
+      <div className="flex items-center justify-center min-h-screen p-5">
+        <div className="max-w-xs w-full bg-white/90 border border-stone-200 rounded-2xl p-8 text-center">
+          <Heart className="w-7 h-7 text-rose-600 mx-auto mb-5" />
+          <h1 className="text-2xl italic font-medium mb-1">Admin Access</h1>
+          <p
+            className="text-stone-400 text-sm mb-6"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Brijal & Rushi · Photo Queue
+          </p>
+          <input
+            type="password"
+            autoFocus
+            value={pw}
+            onChange={(e) => { setPw(e.target.value); setError(false); }}
+            onKeyDown={(e) => e.key === 'Enter' && attempt()}
+            placeholder="Password"
+            className={`w-full text-center text-lg bg-transparent border-b-2 pb-2 mb-2 focus:outline-none transition-colors ${
+              error ? 'border-rose-400 text-rose-600' : 'border-stone-200 focus:border-stone-700'
+            }`}
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          />
+          {error && (
+            <p
+              className="text-rose-500 text-xs mb-4"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              Incorrect password
+            </p>
+          )}
+          {!error && <div className="mb-4" />}
+          <button
+            onClick={attempt}
+            className="w-full py-2.5 bg-stone-900 text-stone-50 hover:bg-stone-700 rounded-xl text-sm transition"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Enter
+          </button>
+        </div>
+      </div>
+    </PageFrame>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // ADMIN VIEW — full control
 // ═══════════════════════════════════════════════════════════════════════════
 function AdminView({ state }) {
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [showSetup, setShowSetup] = useState(!state.initialized);
   const [showLinks, setShowLinks] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -539,13 +620,6 @@ function AdminView({ state }) {
     await save({ ...state, completedIds: state.completedIds.filter((c) => c !== id) });
   };
 
-  const finishSetup = async (coupleNames) => {
-    await save({ ...state, coupleNames, initialized: true });
-    setShowSetup(false);
-  };
-
-  if (showSetup) return <SetupModal onComplete={finishSetup} />;
-
   return (
     <PageFrame>
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-7 pb-20">
@@ -570,12 +644,6 @@ function AdminView({ state }) {
                 style={{ fontFamily: 'Inter, sans-serif' }}
               >
                 <Eye className="w-4 h-4" /> Share
-              </button>
-              <button
-                onClick={() => setShowSetup(true)}
-                className="p-2 border border-stone-300 hover:bg-stone-100 rounded-lg transition"
-              >
-                <Settings className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -966,46 +1034,6 @@ function AddGroupModal({ onClose, onAdd }) {
   );
 }
 
-function SetupModal({ onComplete }) {
-  const [coupleNames, setCoupleNames] = useState('');
-  return (
-    <PageFrame>
-      <div className="flex items-center justify-center min-h-screen p-5">
-        <div className="max-w-sm w-full bg-white/90 border border-stone-200 rounded-2xl p-8 sm:p-10">
-          <Heart className="w-7 h-7 text-rose-600 mx-auto mb-5" />
-          <h1 className="text-3xl italic font-medium text-center mb-1">Welcome</h1>
-          <p
-            className="text-center text-stone-500 text-sm mb-7"
-            style={{ fontFamily: 'Inter, sans-serif' }}
-          >
-            Let's set up your photo queue.
-          </p>
-          <label
-            className="block text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-2"
-            style={{ fontFamily: 'Inter, sans-serif' }}
-          >
-            Couple Names
-          </label>
-          <input
-            autoFocus
-            value={coupleNames}
-            onChange={(e) => setCoupleNames(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && onComplete(coupleNames || 'Our Wedding')}
-            placeholder="e.g. Sarah & James"
-            className="w-full text-xl italic bg-transparent border-b-2 border-stone-200 pb-2 mb-7 focus:outline-none focus:border-stone-900"
-          />
-          <button
-            onClick={() => onComplete(coupleNames || 'Our Wedding')}
-            className="w-full py-3 bg-stone-900 text-stone-50 hover:bg-stone-700 rounded-xl text-sm transition"
-            style={{ fontFamily: 'Inter, sans-serif' }}
-          >
-            Continue
-          </button>
-        </div>
-      </div>
-    </PageFrame>
-  );
-}
 
 function ShareLinksModal({ onClose }) {
   const base = window.location.href.split('#')[0];
@@ -1034,7 +1062,7 @@ function ShareLinksModal({ onClose }) {
           key: 'guest',
           label: 'Guest View',
           desc: 'Mobile-friendly, read-only queue for guests',
-          url: `${base}#public`,
+          url: base,
         },
         {
           key: 'display',
