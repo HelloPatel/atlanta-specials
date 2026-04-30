@@ -138,6 +138,8 @@ function LoadingScreen() {
 // PUBLIC VIEW — mobile-first, read-only
 // ═══════════════════════════════════════════════════════════════════════════
 function PublicView({ state, connected }) {
+  const [search, setSearch] = useState('');
+
   const current = state.groups.find((g) => g.id === state.currentId);
   const upcoming = state.groups.filter(
     (g) => g.id !== state.currentId && !state.completedIds.includes(g.id)
@@ -147,6 +149,36 @@ function PublicView({ state, connected }) {
   const afterOnDeck = upcoming.slice(1, 4);
   const remaining = upcoming.length - afterOnDeck.length - 1;
   const allDone = completedCount > 0 && !current && upcoming.length === 0;
+
+  // Search result: find which group contains the searched name
+  const q = search.trim().toLowerCase();
+  const searchResult = q.length >= 2 ? (() => {
+    // Check current group
+    if (current) {
+      const inName = current.name.toLowerCase().includes(q);
+      const inMembers = current.members.some((m) => m.toLowerCase().includes(q));
+      if (inName || inMembers) return { group: current, status: 'current', position: null };
+    }
+    // Check upcoming
+    for (let i = 0; i < upcoming.length; i++) {
+      const g = upcoming[i];
+      const inName = g.name.toLowerCase().includes(q);
+      const inMembers = g.members.some((m) => m.toLowerCase().includes(q));
+      if (inName || inMembers) {
+        const status = i === 0 ? 'ondeck' : 'upcoming';
+        return { group: g, status, position: i + 1 };
+      }
+    }
+    // Check completed
+    const done = state.groups.find(
+      (g) =>
+        state.completedIds.includes(g.id) &&
+        (g.name.toLowerCase().includes(q) ||
+          g.members.some((m) => m.toLowerCase().includes(q)))
+    );
+    if (done) return { group: done, status: 'done', position: null };
+    return null;
+  })() : null;
 
   return (
     <PageFrame>
@@ -179,6 +211,82 @@ function PublicView({ state, connected }) {
       </header>
 
       <main className="max-w-lg mx-auto px-4 pt-6 pb-16">
+        {/* ── SEARCH ── */}
+        <div className="mb-6 relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search your name…"
+            className="w-full bg-white/80 border border-stone-200 rounded-2xl px-4 py-3.5 text-base focus:outline-none focus:border-stone-400 focus:bg-white transition pr-10"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          />
+          {search ? (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300 hover:text-stone-600"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : (
+            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-300 text-lg">🔍</span>
+          )}
+        </div>
+
+        {/* ── SEARCH RESULT ── */}
+        {q.length >= 2 && (
+          <section className="mb-6">
+            {searchResult ? (
+              <div
+                className={`rounded-2xl px-5 py-5 border ${
+                  searchResult.status === 'current'
+                    ? 'bg-stone-900 text-stone-50 border-stone-900'
+                    : searchResult.status === 'ondeck'
+                    ? 'bg-amber-50 border-amber-300'
+                    : searchResult.status === 'done'
+                    ? 'bg-stone-100 border-stone-200'
+                    : 'bg-white border-stone-200'
+                }`}
+              >
+                <p
+                  className={`text-[10px] uppercase tracking-[0.3em] mb-2 ${
+                    searchResult.status === 'current'
+                      ? 'text-stone-400'
+                      : searchResult.status === 'done'
+                      ? 'text-stone-400'
+                      : 'text-stone-500'
+                  }`}
+                  style={{ fontFamily: 'Inter, sans-serif' }}
+                >
+                  {searchResult.status === 'current' && '📸 Now on Stage'}
+                  {searchResult.status === 'ondeck' && '⏳ You\'re next!'}
+                  {searchResult.status === 'upcoming' && `⏱ Position #${searchResult.position} in queue`}
+                  {searchResult.status === 'done' && '✓ Already photographed'}
+                </p>
+                <p className={`text-2xl italic font-medium ${searchResult.status === 'current' ? 'text-stone-50' : 'text-stone-800'}`}>
+                  {searchResult.group.name}
+                </p>
+                {searchResult.group.members.length > 0 && (
+                  <p
+                    className={`text-sm mt-1 leading-relaxed ${
+                      searchResult.status === 'current' ? 'text-stone-300' : 'text-stone-500'
+                    }`}
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    {searchResult.group.members.join(' · ')}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-stone-200 px-5 py-5 text-center bg-white/60">
+                <p className="text-stone-400 italic">No group found for "{search}"</p>
+                <p className="text-stone-400 text-xs mt-1" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  Try a different spelling or ask the coordinator
+                </p>
+              </div>
+            )}
+          </section>
+        )}
         {/* ── NOW ON STAGE ── */}
         <section className="mb-6">
           <p
