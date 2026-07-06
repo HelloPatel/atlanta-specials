@@ -763,6 +763,23 @@ export default function SeatingCanvas() {
             )}
           </div>
 
+          {/* Capacity summary bar */}
+          {tables.length > 0 && (
+            <div className="mb-3 flex items-center gap-3 text-xs text-gray-500">
+              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    assignedGuestIds.size > tables.reduce((s, t) => s + t.capacity, 0) ? 'bg-red-500' :
+                    assignedGuestIds.size === tables.reduce((s, t) => s + t.capacity, 0) ? 'bg-green-500' : 'bg-wine-500'
+                  }`}
+                  style={{ width: `${Math.min((assignedGuestIds.size / Math.max(tables.reduce((s, t) => s + t.capacity, 0), 1)) * 100, 100)}%` }}
+                />
+              </div>
+              <span>{assignedGuestIds.size}/{tables.reduce((s, t) => s + t.capacity, 0)} seats filled</span>
+              <span>• {tables.length} tables</span>
+            </div>
+          )}
+
           {/* Canvas */}
           {ruleEvaluation.violationCount > 0 && (
             <div className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
