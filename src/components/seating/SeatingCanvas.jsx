@@ -449,6 +449,7 @@ export default function SeatingCanvas() {
   if (!activeWedding) return null;
 
   // Mobile: view-only optimized layout
+  const [mobileZoom, setMobileZoom] = useState(0.35);
   const mobileViewContent = (
     <div className="md:hidden flex flex-col h-[calc(100vh-8rem)]">
       {/* Mobile header */}
@@ -463,15 +464,19 @@ export default function SeatingCanvas() {
           </select>
           <span className="text-xs text-gray-500">{tables.length} tables • {assignedGuestIds.size}/{guests.length} seated</span>
         </div>
-        {hasChanges && (
-          <Button size="sm" onClick={handleSave}><Save size={12} /> Save</Button>
-        )}
+        <div className="flex items-center gap-1">
+          <button onClick={() => setMobileZoom(z => Math.max(0.15, z - 0.05))} className="w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-sm font-bold">−</button>
+          <button onClick={() => setMobileZoom(z => Math.min(0.6, z + 0.05))} className="w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-sm font-bold">+</button>
+          {hasChanges && (
+            <Button size="sm" onClick={handleSave}><Save size={12} /> Save</Button>
+          )}
+        </div>
       </div>
 
       {/* Info banner */}
-      <div className="px-3 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-center gap-2">
-        <span>👁️</span>
-        <span>Tap a table to see guests. Use desktop to drag and assign.</span>
+      <div className="px-3 py-1.5 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-center gap-2">
+        <span>👆</span>
+        <span>Tap a table to see guests. Pinch +/− to zoom.</span>
       </div>
 
       {/* Zoomed-out canvas — tap tables to view guests */}
@@ -487,13 +492,14 @@ export default function SeatingCanvas() {
         ) : (
           <div
             style={{
-              transform: 'scale(0.35)',
+              transform: `scale(${mobileZoom})`,
               transformOrigin: '0 0',
               width: '3000px',
               height: '2000px',
               position: 'relative',
               minWidth: '3000px',
               minHeight: '2000px',
+              transition: 'transform 0.2s ease-out',
             }}
           >
             {venueImage && (
@@ -545,7 +551,7 @@ export default function SeatingCanvas() {
                     onRemove={() => {}}
                     onDrag={() => {}}
                     onRemoveGuest={() => {}}
-                    zoom={0.35}
+                    zoom={mobileZoom}
                   />
                   {isSelected && (
                    <div className="absolute inset-0 rounded-xl ring-4 ring-wine-400/50 pointer-events-none" />

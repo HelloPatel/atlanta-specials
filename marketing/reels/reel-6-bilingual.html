@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Reel 6 — Bilingual RSVP</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: linear-gradient(180deg, #1a0a1e 0%, #2d1028 50%, #1a0a1e 100%);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+.top-text {
+  position: absolute; top: 7%; left: 0; right: 0; text-align: center;
+  padding: 0 24px;
+  animation: fadeSlideDown 0.6s ease-out forwards;
+  opacity: 0;
+}
+.top-text h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(26px, 6.5vw, 50px); color: #fff; margin-bottom: 8px;
+}
+.top-text p {
+  font-size: clamp(13px, 3.5vw, 20px); color: rgba(255,255,255,0.6); font-weight: 500;
+}
+
+.lang-switcher {
+  position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px;
+  animation: fadeIn 0.5s 0.5s ease-out forwards;
+  opacity: 0;
+}
+.lang-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: clamp(11px, 2.8vw, 14px);
+  font-weight: 600;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  transition: all 0.4s ease;
+}
+.lang-btn.active {
+  background: rgba(192, 132, 252, 0.2);
+  border-color: #c084fc;
+  color: #fff;
+}
+.lang-btn:nth-child(1) { animation: langSwitch 8s 1s ease infinite; }
+.lang-btn:nth-child(2) { animation: langSwitch2 8s 1s ease infinite; }
+.lang-btn:nth-child(3) { animation: langSwitch3 8s 1s ease infinite; }
+
+@keyframes langSwitch {
+  0%, 30% { background: rgba(192, 132, 252, 0.2); border-color: #c084fc; color: #fff; }
+  35%, 65% { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+  70%, 100% { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+}
+@keyframes langSwitch2 {
+  0%, 30% { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+  35%, 65% { background: rgba(192, 132, 252, 0.2); border-color: #c084fc; color: #fff; }
+  70%, 100% { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+}
+@keyframes langSwitch3 {
+  0%, 65% { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); }
+  70%, 100% { background: rgba(192, 132, 252, 0.2); border-color: #c084fc; color: #fff; }
+}
+
+.card-area {
+  position: absolute; top: 28%; left: 8%; right: 8%; bottom: 20%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.rsvp-card {
+  width: 100%; max-width: 360px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 24px;
+  padding: 24px 20px;
+  backdrop-filter: blur(10px);
+  text-align: center;
+}
+
+.rsvp-card .greeting {
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: 700; color: #fff;
+  margin-bottom: 8px;
+  min-height: 2.5em;
+}
+
+.rsvp-card .subtext {
+  font-size: clamp(12px, 3vw, 16px);
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 20px;
+  min-height: 1.5em;
+}
+
+.event-btns {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.event-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  color: #fff;
+}
+.event-btn .name { font-size: clamp(12px, 3vw, 15px); font-weight: 600; }
+.event-btn .accept {
+  font-size: clamp(10px, 2.5vw, 12px);
+  padding: 4px 12px; border-radius: 16px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399; font-weight: 600;
+}
+
+/* Language morphing */
+.greeting-en { animation: langText 8s 1s ease infinite; }
+.greeting-hi { animation: langText2 8s 1s ease infinite; position: absolute; left: 0; right: 0; }
+.greeting-gu { animation: langText3 8s 1s ease infinite; position: absolute; left: 0; right: 0; }
+
+@keyframes langText {
+  0%, 28% { opacity: 1; transform: translateY(0); }
+  32%, 100% { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes langText2 {
+  0%, 30% { opacity: 0; transform: translateY(10px); }
+  35%, 63% { opacity: 1; transform: translateY(0); }
+  67%, 100% { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes langText3 {
+  0%, 65% { opacity: 0; transform: translateY(10px); }
+  70%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+.bottom-cta {
+  position: absolute; bottom: 5%; left: 0; right: 0; text-align: center;
+  animation: fadeSlideUp 0.6s 1s ease-out forwards;
+  opacity: 0;
+}
+.bottom-cta .brand {
+  font-size: clamp(26px, 7vw, 44px); font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #d8b4fe 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+.bottom-cta p { font-size: clamp(11px, 3vw, 18px); color: rgba(255,255,255,0.5); }
+
+@keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.glow { position: absolute; width: 60vw; height: 60vw; border-radius: 50%; pointer-events: none; }
+.glow.g1 { top: 10%; left: -20%; background: radial-gradient(circle, rgba(192, 132, 252, 0.12), transparent 70%); animation: pulse 4s ease-in-out infinite; }
+.glow.g2 { bottom: 15%; right: -20%; background: radial-gradient(circle, rgba(244, 114, 182, 0.1), transparent 70%); animation: pulse 4s 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+</style>
+</head>
+<body>
+  <div class="glow g1"></div>
+  <div class="glow g2"></div>
+
+  <div class="top-text">
+    <h1>Speak Their Language</h1>
+    <p>RSVP pages in English, Hindi & Gujarati</p>
+  </div>
+
+  <div class="lang-switcher">
+    <div class="lang-btn active">English</div>
+    <div class="lang-btn">हिंदी</div>
+    <div class="lang-btn">ગુજરાતી</div>
+  </div>
+
+  <div class="card-area">
+    <div class="rsvp-card">
+      <div style="position: relative;">
+        <div class="greeting greeting-en">Welcome, Sharma Family 🎉</div>
+        <div class="greeting greeting-hi" style="font-family: 'Noto Sans Devanagari', sans-serif;">शर्मा परिवार, स्वागत है 🎉</div>
+        <div class="greeting greeting-gu">શર્મા પરિવાર, સ્વાગત છે 🎉</div>
+      </div>
+      <div style="position: relative; margin-bottom: 20px;">
+        <div class="subtext greeting-en">Please RSVP to the events below</div>
+        <div class="subtext greeting-hi" style="font-family: 'Noto Sans Devanagari', sans-serif;">कृपया नीचे दिए गए कार्यक्रमों के लिए RSVP करें</div>
+        <div class="subtext greeting-gu">કૃપા કરી નીચેના કાર્યક્રમો માટે RSVP કરો</div>
+      </div>
+      <div class="event-btns">
+        <div class="event-btn">
+          <span class="name">Sangeet Night</span>
+          <span class="accept">Attending ✓</span>
+        </div>
+        <div class="event-btn">
+          <span class="name">Wedding Ceremony</span>
+          <span class="accept">Attending ✓</span>
+        </div>
+        <div class="event-btn">
+          <span class="name">Reception</span>
+          <span class="accept">Attending ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-cta">
+    <div class="brand">Phera</div>
+    <p>Every guest feels at home</p>
+  </div>
+</body>
+</html>
