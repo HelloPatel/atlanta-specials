@@ -10,6 +10,33 @@ import { db } from '../firebase';
 import { COLLECTIONS, DIETARY_OPTIONS, APP_NAME } from '../config/constants';
 import { Search, Check, X, ChevronRight, Heart, Users } from 'lucide-react';
 
+/**
+ * Simple fuzzy match: returns true if the query and target differ by ≤ 2 edits,
+ * or if the query is a prefix/suffix of the target (handles Indian name variants
+ * like Priya/Priyah, Rushi/Rushi, Patel/Patell).
+ */
+function fuzzyMatch(query, target) {
+  if (!query || !target) return false;
+  if (query.length < 3) return false; // too short to fuzzy match safely
+  if (target.startsWith(query) || query.startsWith(target)) return true;
+  // Levenshtein distance (simplified, max 2)
+  const maxDist = query.length <= 4 ? 1 : 2;
+  if (Math.abs(query.length - target.length) > maxDist) return false;
+  let prev = Array.from({ length: target.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= query.length; i++) {
+    const curr = [i];
+    for (let j = 1; j <= target.length; j++) {
+      curr[j] = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + (query[i - 1] === target[j - 1] ? 0 : 1),
+      );
+    }
+    prev = curr;
+  }
+  return prev[target.length] <= maxDist;
+}
+
 export default function PublicRSVP() {
   const { weddingId: rawParam } = useParams();
   const [weddingId, setWeddingId] = useState(null);
@@ -63,9 +90,23 @@ export default function PublicRSVP() {
     const matches = allGuests.filter((g) => {
       const full = `${g.firstName} ${g.lastName}`.toLowerCase();
       const phone = (g.phone || '').replace(/\D/g, '');
-      return full.includes(q) || q.includes(full)
-        || (g.familyName && g.familyName.toLowerCase().includes(q))
-        || (qDigits.length >= 4 && phone.includes(qDigits));
+      // Exact/substring match
+      if (full.includes(q) || q.includes(full)) return true;
+      if (g.familyName && g.familyName.toLowerCase().includes(q)) return true;
+      if (qDigits.length >= 4 && phone.includes(qDigits)) return true;
+      // Fuzzy: match if query is close to first or last name (handles typos/spelling variants)
+      if (fuzzyMatch(q, (g.firstName || '').toLowerCase())) return true;
+      if (fuzzyMatch(q, (g.lastName || '').toLowerCase())) return true;
+      return false;
+    });
+
+    // Sort: exact matches first, then fuzzy
+    matches.sort((a, b) => {
+      const aFull = `${a.firstName} ${a.lastName}`.toLowerCase();
+      const bFull = `${b.firstName} ${b.lastName}`.toLowerCase();
+      const aExact = aFull.includes(q) || q.includes(aFull) ? 0 : 1;
+      const bExact = bFull.includes(q) || q.includes(bFull) ? 0 : 1;
+      return aExact - bExact || aFull.localeCompare(bFull);
     });
 
     setSearchResults(matches);

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useWedding } from '../../contexts/WeddingContext';
-import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatch, importGuestsBatch } from '../../services/guestService';
+import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatch, importGuestsBatch, updateGuestsBatch } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
 import { Button, Input, Badge, Modal, useToast } from '../ui';
 import { Search, Plus, Upload, Download, Trash2, Edit3, Filter, Users, ChevronDown } from 'lucide-react';
@@ -129,8 +129,58 @@ export default function GuestList() {
 
       {/* Bulk actions */}
       {selected.size > 0 && (
-        <div className="flex items-center gap-3 rounded-lg bg-wine-50 px-4 py-2">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 rounded-lg bg-wine-50 px-4 py-2">
           <span className="text-sm font-medium text-wine-800">{selected.size} selected</span>
+          <select
+            defaultValue=""
+            onChange={async (e) => {
+              const side = e.target.value;
+              if (!side) return;
+              const updates = [...selected].map((id) => ({ id, side }));
+              await updateGuestsBatch(activeWedding.id, updates);
+              toast.success(`Moved ${selected.size} guests to ${side}'s side`);
+              e.target.value = '';
+            }}
+            className="rounded-md border border-wine-200 bg-white px-2 py-1 text-xs"
+          >
+            <option value="">Change Side...</option>
+            <option value="bride">Bride's Side</option>
+            <option value="groom">Groom's Side</option>
+          </select>
+          <select
+            defaultValue=""
+            onChange={async (e) => {
+              const dietary = e.target.value;
+              if (!dietary) return;
+              const updates = [...selected].map((id) => ({ id, dietary }));
+              await updateGuestsBatch(activeWedding.id, updates);
+              toast.success(`Updated dietary for ${selected.size} guests`);
+              e.target.value = '';
+            }}
+            className="rounded-md border border-wine-200 bg-white px-2 py-1 text-xs"
+          >
+            <option value="">Set Dietary...</option>
+            {DIETARY_OPTIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+          </select>
+          <select
+            defaultValue=""
+            onChange={async (e) => {
+              const tag = e.target.value;
+              if (!tag) return;
+              const selectedGuests = guests.filter((g) => selected.has(g.id));
+              const updates = selectedGuests.map((g) => ({
+                id: g.id,
+                tags: [...new Set([...(g.tags || []), tag])],
+              }));
+              await updateGuestsBatch(activeWedding.id, updates);
+              toast.success(`Added "${tag}" tag to ${selected.size} guests`);
+              e.target.value = '';
+            }}
+            className="rounded-md border border-wine-200 bg-white px-2 py-1 text-xs"
+          >
+            <option value="">Add Tag...</option>
+            {GUEST_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
           <Button variant="danger" size="sm" onClick={handleBulkDelete}>
             <Trash2 size={14} /> Delete
           </Button>
