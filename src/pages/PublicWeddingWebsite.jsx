@@ -28,6 +28,8 @@ export default function PublicWeddingWebsite() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [passwordUnlocked, setPasswordUnlocked] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
 
   useEffect(() => {
     if (!rawParam) return undefined;
@@ -85,6 +87,38 @@ export default function PublicWeddingWebsite() {
         title={`${coupleName} wedding website`}
         message="This wedding website is still being prepared. Please check back soon for celebration details and RSVP access."
       />
+    );
+  }
+
+  // Password protection gate
+  if (wedding.websitePassword && !passwordUnlocked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-wine-50 to-amber-50 px-4">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full text-center">
+          <Heart size={32} className="text-wine-600 mx-auto mb-4" />
+          <h2 className="text-xl font-display font-bold text-gray-900 mb-2">{coupleName}</h2>
+          <p className="text-sm text-gray-500 mb-6">This wedding website is password protected.</p>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (passwordInput === wedding.websitePassword) {
+              setPasswordUnlocked(true);
+            } else {
+              setPasswordInput('');
+            }
+          }}>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Enter password"
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-wine-600 focus:ring-1 focus:ring-wine-600 mb-4"
+            />
+            <button type="submit" className="w-full bg-wine-700 text-white rounded-lg py-3 text-sm font-medium hover:bg-wine-800 transition-colors">
+              View Website
+            </button>
+          </form>
+        </div>
+      </div>
     );
   }
 

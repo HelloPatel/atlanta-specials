@@ -451,6 +451,16 @@ export default function GuestList() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
+                      <button
+                        onClick={async () => {
+                          await updateGuest(activeWedding.id, guest.id, { checkedIn: !guest.checkedIn });
+                          toast.success(guest.checkedIn ? 'Checked out' : 'Checked in ✓');
+                        }}
+                        className={`rounded p-1.5 transition-colors ${guest.checkedIn ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`}
+                        title={guest.checkedIn ? 'Checked in — click to undo' : 'Mark as arrived'}
+                      >
+                        {guest.checkedIn ? '✓' : '○'}
+                      </button>
                       <button onClick={() => setEditingGuest(guest)} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                         <Edit3 size={16} />
                       </button>
