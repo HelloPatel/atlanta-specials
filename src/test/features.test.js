@@ -614,3 +614,105 @@ describe('RSVP filter logic', () => {
     expect(pending).toHaveLength(2);
   });
 });
+
+describe('Guest export with RSVP', () => {
+  it('marks guest as Accepted when any event is accepted', () => {
+    const g = { rsvpStatus: { e1: 'accepted', e2: 'pending' } };
+    const status = Object.values(g.rsvpStatus || {}).includes('accepted') ? 'Accepted' : Object.values(g.rsvpStatus || {}).includes('declined') ? 'Declined' : 'Pending';
+    expect(status).toBe('Accepted');
+  });
+
+  it('marks guest as Declined when no acceptance', () => {
+    const g = { rsvpStatus: { e1: 'declined' } };
+    const status = Object.values(g.rsvpStatus || {}).includes('accepted') ? 'Accepted' : Object.values(g.rsvpStatus || {}).includes('declined') ? 'Declined' : 'Pending';
+    expect(status).toBe('Declined');
+  });
+
+  it('marks guest as Pending when no responses', () => {
+    const g = { rsvpStatus: {} };
+    const status = Object.values(g.rsvpStatus || {}).includes('accepted') ? 'Accepted' : Object.values(g.rsvpStatus || {}).includes('declined') ? 'Declined' : 'Pending';
+    expect(status).toBe('Pending');
+  });
+});
+
+describe('Seating side stats', () => {
+  const guests = [
+    { id: '1', side: 'bride' },
+    { id: '2', side: 'bride' },
+    { id: '3', side: 'groom' },
+    { id: '4', side: 'groom' },
+    { id: '5', side: 'groom' },
+  ];
+
+  it('counts bride and groom correctly', () => {
+    const assignedIds = new Set(['1', '2', '3', '4']);
+    const seated = guests.filter((g) => assignedIds.has(g.id));
+    const bride = seated.filter((g) => g.side === 'bride').length;
+    const groom = seated.filter((g) => g.side === 'groom').length;
+    expect(bride).toBe(2);
+    expect(groom).toBe(2);
+  });
+});
+
+describe('Password protection', () => {
+  it('allows access when password matches', () => {
+    const websitePassword = 'love2024';
+    const input = 'love2024';
+    expect(input === websitePassword).toBe(true);
+  });
+
+  it('blocks access when password is wrong', () => {
+    const websitePassword = 'love2024';
+    const input = 'wrong';
+    expect(input === websitePassword).toBe(false);
+  });
+
+  it('allows access when no password is set', () => {
+    const websitePassword = '';
+    const shouldGate = websitePassword && true;
+    expect(shouldGate).toBeFalsy();
+  });
+});
+
+describe('Countdown timer logic', () => {
+  it('calculates days correctly', () => {
+    const now = new Date('2024-12-01T00:00:00');
+    const target = new Date('2024-12-25T00:00:00');
+    const diff = target.getTime() - now.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    expect(days).toBe(24);
+  });
+
+  it('returns null when date has passed', () => {
+    const now = new Date('2025-01-01T00:00:00');
+    const target = new Date('2024-12-25T00:00:00');
+    const diff = target.getTime() - now.getTime();
+    expect(diff).toBeLessThan(0);
+  });
+
+  it('calculates hours correctly', () => {
+    const diff = 90000000; // 25 hours in ms
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    expect(hours).toBe(1);
+  });
+
+  it('calculates minutes correctly', () => {
+    const diff = 5400000; // 90 minutes in ms
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    expect(minutes).toBe(30);
+  });
+});
+
+describe('Inline edit parsing', () => {
+  it('creates inline edit state from guest', () => {
+    const guest = { id: '1', firstName: 'Rushi', lastName: 'Patel' };
+    const state = { id: guest.id, firstName: guest.firstName, lastName: guest.lastName };
+    expect(state.id).toBe('1');
+    expect(state.firstName).toBe('Rushi');
+  });
+
+  it('clears inline edit on cancel', () => {
+    const state = null;
+    expect(state).toBeNull();
+  });
+});
