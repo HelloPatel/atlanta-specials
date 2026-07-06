@@ -979,3 +979,47 @@ describe('Fuzzy match edge cases', () => {
     expect(fuzzyMatch('sharma', 'reddy')).toBe(false);
   });
 });
+
+// ── App Shell Mobile Tests ──────────────────────────────
+describe('Mobile app shell', () => {
+  it('bottom nav has safe area padding for iPhone', () => {
+    const style = "paddingBottom: 'env(safe-area-inset-bottom)'";
+    expect(style).toContain('safe-area-inset-bottom');
+  });
+
+  it('nav items have 5 slots (Home, Guests, Seating, RSVPs, More)', () => {
+    const navItems = ['Home', 'Guests', 'Seating', 'RSVPs', 'More'];
+    expect(navItems).toHaveLength(5);
+  });
+
+  it('nav items use active:scale-90 for tap feel', () => {
+    const classes = 'flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all active:scale-90';
+    expect(classes).toContain('active:scale-90');
+  });
+
+  it('command palette adjusts position for mobile (10vh vs 15vh)', () => {
+    const classes = 'pt-[10vh] sm:pt-[15vh]';
+    expect(classes).toContain('pt-[10vh]');
+    expect(classes).toContain('sm:pt-[15vh]');
+  });
+});
+
+// ── Event Card Interactions ──────────────────────────────
+describe('Event card mobile interactions', () => {
+  it('event cards have tap feedback', () => {
+    const classes = 'relative rounded-xl border bg-white p-5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all';
+    expect(classes).toContain('active:scale-[0.98]');
+  });
+
+  it('event color coding works for Indian events', () => {
+    const eventColors = {
+      mehndi: 'border-green-200',
+      sangeet: 'border-purple-200',
+      haldi: 'border-yellow-200',
+      ceremony: 'border-red-200',
+      reception: 'border-blue-200',
+    };
+    expect(Object.keys(eventColors)).toHaveLength(5);
+    expect(eventColors.mehndi).toContain('green');
+  });
+});

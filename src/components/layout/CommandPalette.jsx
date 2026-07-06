@@ -96,7 +96,7 @@ export default function CommandPalette() {
   if (!open && !showShortcuts) return null;
 
   const commandPalette = open ? (
-    <div className="fixed inset-0 z-[90] flex items-start justify-center pt-[15vh]">
+    <div className="fixed inset-0 z-[90] flex items-start justify-center pt-[10vh] sm:pt-[15vh]">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
       <div className="relative w-full max-w-lg mx-4 rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden animate-fade-in">
         <div className="flex items-center gap-3 px-4 border-b border-gray-100">
