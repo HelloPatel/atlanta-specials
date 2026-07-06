@@ -1,6 +1,6 @@
 import { useDraggable } from '@dnd-kit/core';
 import { useDroppable } from '@dnd-kit/core';
-import { Search, Users } from 'lucide-react';
+import { Search, Users, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 export default function GuestSidebar({
@@ -13,8 +13,11 @@ export default function GuestSidebar({
   families,
   assignedCount,
   totalCount,
+  onQuickAdd,
 }) {
   const [search, setSearch] = useState('');
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickName, setQuickName] = useState('');
 
   const filtered = guests.filter((g) => {
     if (!search) return true;
@@ -38,8 +41,49 @@ export default function GuestSidebar({
       <div className="px-4 py-3 border-b border-gray-100">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-gray-900">Unassigned Guests</h3>
-          <span className="text-xs text-gray-400">{guests.length} left</span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">{guests.length} left</span>
+            {onQuickAdd && (
+              <button
+                onClick={() => setShowQuickAdd(!showQuickAdd)}
+                className="p-1 rounded-md hover:bg-gray-100 text-gray-500 hover:text-wine-600 transition-colors"
+                title="Quick add guest"
+              >
+                <Plus size={14} />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Quick add form */}
+        {showQuickAdd && onQuickAdd && (
+          <div className="mb-3 flex gap-1.5">
+            <input
+              type="text"
+              placeholder="First Last"
+              value={quickName}
+              onChange={(e) => setQuickName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && quickName.trim()) {
+                  const parts = quickName.trim().split(/\s+/);
+                  onQuickAdd({ firstName: parts[0], lastName: parts.slice(1).join(' ') || '' });
+                  setQuickName('');
+                }
+              }}
+              className="flex-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs focus:border-wine-600 focus:ring-1 focus:ring-wine-600"
+              autoFocus
+            />
+            <button
+              onClick={() => {
+                if (!quickName.trim()) return;
+                const parts = quickName.trim().split(/\s+/);
+                onQuickAdd({ firstName: parts[0], lastName: parts.slice(1).join(' ') || '' });
+                setQuickName('');
+              }}
+              className="rounded-lg bg-wine-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-wine-700"
+            >Add</button>
+          </div>
+        )}
 
         {/* Progress bar */}
         <div className="w-full h-1.5 bg-gray-100 rounded-full mb-3">

@@ -37,6 +37,72 @@ function fuzzyMatch(query, target) {
   return prev[target.length] <= maxDist;
 }
 
+const TRANSLATIONS = {
+  en: {
+    findFamily: 'Find your family',
+    searchPlaceholder: 'Enter your first or last name',
+    search: 'Search',
+    respondingFor: 'Responding for',
+    events: 'Events',
+    accept: 'Accept',
+    decline: 'Decline',
+    acceptAll: 'Accept all',
+    declineAll: 'Decline all',
+    dietary: 'Dietary preference',
+    message: 'Message to the couple (optional)',
+    submit: 'Submit RSVP',
+    submitting: 'Submitting...',
+    thankYou: 'Thank you!',
+    responseRecorded: 'Your response has been recorded.',
+    noResults: 'No match found. Try a different spelling or your phone number.',
+    enterPassword: 'Enter the password to access the RSVP',
+    unlock: 'Unlock',
+    wrongPassword: 'Incorrect password',
+  },
+  hi: {
+    findFamily: 'अपना परिवार खोजें',
+    searchPlaceholder: 'अपना नाम दर्ज करें',
+    search: 'खोजें',
+    respondingFor: 'जवाब दे रहे हैं',
+    events: 'कार्यक्रम',
+    accept: 'स्वीकार',
+    decline: 'अस्वीकार',
+    acceptAll: 'सभी स्वीकार',
+    declineAll: 'सभी अस्वीकार',
+    dietary: 'भोजन वरीयता',
+    message: 'जोड़े के लिए संदेश (वैकल्पिक)',
+    submit: 'RSVP जमा करें',
+    submitting: 'जमा हो रहा है...',
+    thankYou: 'धन्यवाद!',
+    responseRecorded: 'आपका जवाब दर्ज हो गया है।',
+    noResults: 'कोई मिलान नहीं मिला। कृपया अलग वर्तनी या फ़ोन नंबर आज़माएं।',
+    enterPassword: 'RSVP एक्सेस करने के लिए पासवर्ड दर्ज करें',
+    unlock: 'अनलॉक',
+    wrongPassword: 'गलत पासवर्ड',
+  },
+  gu: {
+    findFamily: 'તમારું કુટુંબ શોધો',
+    searchPlaceholder: 'તમારું નામ દાખલ કરો',
+    search: 'શોધો',
+    respondingFor: 'જવાબ આપી રહ્યા છો',
+    events: 'કાર્યક્રમો',
+    accept: 'સ્વીકાર',
+    decline: 'અસ્વીકાર',
+    acceptAll: 'બધા સ્વીકારો',
+    declineAll: 'બધા અસ્વીકારો',
+    dietary: 'ભોજન પસંદગી',
+    message: 'યુગલ માટે સંદેશ (વૈકલ્પિક)',
+    submit: 'RSVP સબમિટ કરો',
+    submitting: 'સબમિટ થઈ રહ્યું છે...',
+    thankYou: 'આભાર!',
+    responseRecorded: 'તમારો જવાબ નોંધાયો છે.',
+    noResults: 'કોઈ મેળ મળ્યો નથી. કૃપા કરી અલગ જોડણી અથવા ફોન નંબર અજમાવો.',
+    enterPassword: 'RSVP ઍક્સેસ કરવા માટે પાસવર્ડ દાખલ કરો',
+    unlock: 'અનલૉક',
+    wrongPassword: 'ખોટો પાસવર્ડ',
+  },
+};
+
 export default function PublicRSVP() {
   const { weddingId: rawParam } = useParams();
   const [weddingId, setWeddingId] = useState(null);
@@ -58,6 +124,9 @@ export default function PublicRSVP() {
   const [passwordUnlocked, setPasswordUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [lang, setLang] = useState('en'); // 'en' | 'hi' | 'gu'
+
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
 
   useEffect(() => {
     async function load() {
@@ -272,6 +341,20 @@ export default function PublicRSVP() {
     <div className="min-h-screen bg-gradient-to-br from-wine-50 via-white to-amber-50">
       {/* Header */}
       <header className="text-center pt-10 pb-6 px-4">
+        {/* Language toggle */}
+        <div className="flex justify-center gap-1.5 mb-4">
+          {[{ code: 'en', label: 'EN' }, { code: 'hi', label: 'हिं' }, { code: 'gu', label: 'ગુ' }].map(({ code, label }) => (
+            <button
+              key={code}
+              onClick={() => setLang(code)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                lang === code ? 'bg-wine-700 text-white' : 'bg-white/70 text-gray-600 hover:bg-wine-50'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="w-12 h-12 rounded-full bg-wine-100 text-wine-700 flex items-center justify-center mx-auto mb-3">
           <Heart size={24} />
         </div>
@@ -290,9 +373,9 @@ export default function PublicRSVP() {
         {/* ── STEP: Search ──────────────────────────────────────────── */}
         {step === 'search' && (
           <RsvpCard>
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Find Your Invitation</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">{t.findFamily}</h2>
             <p className="text-sm text-gray-500 mb-5">
-              Search for any family member — we'll pull up your whole household.
+              {lang === 'en' ? 'Search for any family member — we\'ll pull up your whole household.' : lang === 'hi' ? 'किसी भी सदस्य का नाम खोजें — हम पूरा परिवार दिखाएंगे।' : 'કોઈપણ સભ્યનું નામ શોધો — અમે આખું ઘર બતાવીશું.'}
             </p>
 
             <div className="flex gap-2 mb-5">
@@ -303,13 +386,13 @@ export default function PublicRSVP() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="First name, last name, or phone..."
+                  placeholder={t.searchPlaceholder}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-wine-600 focus:ring-2 focus:ring-wine-100 transition-all"
                   autoFocus
                 />
               </div>
               <button onClick={handleSearch} className="px-5 py-3 bg-wine-700 text-white rounded-xl text-sm font-medium hover:bg-wine-800 transition-colors flex-shrink-0">
-                Search
+                {t.search}
               </button>
             </div>
 
@@ -495,7 +578,7 @@ export default function PublicRSVP() {
               disabled={submitting}
               className="w-full py-4 bg-wine-700 text-white rounded-2xl font-semibold hover:bg-wine-800 transition-colors disabled:opacity-50 shadow-sm"
             >
-              {submitting ? 'Submitting...' : 'Submit RSVP'}
+              {submitting ? t.submitting : t.submit}
             </button>
           </div>
         )}
@@ -506,13 +589,9 @@ export default function PublicRSVP() {
             <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4">
               <Check size={32} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Thank You!</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{t.thankYou}</h2>
             <p className="text-gray-600 mb-6">
-              Your RSVP has been submitted
-              {selectedFamily[0]?.familyName
-                ? ` for the ${selectedFamily[0].familyName} family`
-                : ` for ${selectedFamily[0]?.firstName}`
-              }.
+              {t.responseRecorded}
             </p>
 
             {/* Summary */}

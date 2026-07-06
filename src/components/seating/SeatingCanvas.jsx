@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, pointerWithin } from '@dnd-kit/core';
 import { QRCodeSVG } from 'qrcode.react';
 import { useWedding } from '../../contexts/WeddingContext';
-import { subscribeToGuests } from '../../services/guestService';
+import { subscribeToGuests, addGuest } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating, saveSeating } from '../../services/seatingService';
 import { Button, Modal } from '../ui';
@@ -607,6 +607,11 @@ export default function SeatingCanvas() {
           families={families}
           assignedCount={assignedGuestIds.size}
           totalCount={guests.length}
+          onQuickAdd={async ({ firstName, lastName }) => {
+            if (!activeWedding) return;
+            await addGuest(activeWedding.id, { firstName, lastName });
+            toast.success(`Added ${firstName} ${lastName}`);
+          }}
         />
 
         {/* Main canvas */}
