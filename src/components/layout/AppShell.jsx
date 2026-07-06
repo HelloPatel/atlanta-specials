@@ -1,7 +1,7 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import Sidebar from './Sidebar';
-import { Menu } from 'lucide-react';
+import { Menu, LayoutDashboard, Users, Grid3X3, Mail, MoreHorizontal } from 'lucide-react';
 
 export default function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -35,11 +35,39 @@ export default function AppShell() {
         <Sidebar />
       </div>
 
-      <main className="flex-1 overflow-y-auto pt-14 md:pt-0">
+      <main className="flex-1 overflow-y-auto pt-14 pb-16 md:pt-0 md:pb-0">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-6 md:py-8">
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile bottom navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
+        <div className="flex items-center justify-around px-2 py-1.5">
+          <MobileNavItem to="/dashboard" icon={LayoutDashboard} label="Home" />
+          <MobileNavItem to="/guests" icon={Users} label="Guests" />
+          <MobileNavItem to="/seating" icon={Grid3X3} label="Seating" />
+          <MobileNavItem to="/rsvp" icon={Mail} label="RSVPs" />
+          <button onClick={() => setMobileOpen(true)} className="flex flex-col items-center gap-0.5 px-2 py-1 text-gray-400">
+            <MoreHorizontal size={20} />
+            <span className="text-[10px]">More</span>
+          </button>
+        </div>
+      </nav>
     </div>
+  );
+}
+
+function MobileNavItem({ to, icon: Icon, label }) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        `flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors ${isActive ? 'text-wine-700' : 'text-gray-400 hover:text-gray-600'}`
+      }
+    >
+      <Icon size={20} />
+      <span className="text-[10px] font-medium">{label}</span>
+    </NavLink>
   );
 }

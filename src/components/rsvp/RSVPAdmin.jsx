@@ -382,6 +382,25 @@ export default function RSVPAdmin() {
               <ExternalLink size={16} /> Preview RSVP Page
             </a>
           </div>
+
+          {/* Reminder templates */}
+          <div className="pt-3 border-t border-gray-100">
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">WhatsApp Reminder Templates</p>
+            <div className="space-y-2">
+              <ReminderTemplate
+                label="Gentle Reminder"
+                message={`🙏 Namaste! Just a gentle reminder to RSVP for ${activeWedding.coupleName1} & ${activeWedding.coupleName2}'s wedding. It helps us plan seating and food. Takes 30 seconds:\n${rsvpLink}`}
+              />
+              <ReminderTemplate
+                label="Final Call"
+                message={`⏰ Last call! We're finalizing guest lists for the wedding. If you haven't RSVP'd yet, please do so today:\n${rsvpLink}\nThank you! 🙏`}
+              />
+              <ReminderTemplate
+                label="Family Group"
+                message={`👨‍👩‍👧‍👦 Hi family! Please RSVP for ${activeWedding.coupleName1} & ${activeWedding.coupleName2}'s wedding when you get a chance. One person can RSVP for the whole family:\n${rsvpLink}`}
+              />
+            </div>
+          </div>
         </div>
       </Modal>
 
@@ -557,6 +576,27 @@ function RsvpSettingsForm({ settings, onSave }) {
       </div>
 
       <Button onClick={() => onSave(form)} className="w-full">Save Settings</Button>
+    </div>
+  );
+}
+
+function ReminderTemplate({ label, message }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(message);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-gray-100 px-3 py-2 bg-white hover:bg-gray-50 transition-colors">
+      <span className="text-sm text-gray-700 flex-1 truncate">{label}</span>
+      <button onClick={handleCopy} className="text-xs px-2 py-1 rounded border border-gray-200 hover:bg-gray-100 text-gray-600">
+        {copied ? '✓ Copied' : 'Copy'}
+      </button>
+      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded border border-green-200 bg-green-50 hover:bg-green-100 text-green-700">
+        Send
+      </a>
     </div>
   );
 }
