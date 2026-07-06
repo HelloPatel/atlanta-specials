@@ -285,7 +285,21 @@ export default function PublicRSVP() {
 
   // ─── Loading / Error / Closed states ─────────────────────────────
   if (loading) {
-    return <CenteredPage><div className="animate-pulse text-wine-700 text-lg">Loading...</div></CenteredPage>;
+    return (
+      <CenteredPage>
+        <div className="flex flex-col items-center gap-4 animate-fade-in">
+          <div className="w-12 h-12 rounded-full bg-wine-100 flex items-center justify-center">
+            <Heart size={20} className="text-wine-600 animate-pulse" />
+          </div>
+          <p className="text-wine-700 font-medium">Loading your invitation...</p>
+          <div className="flex gap-1">
+            <div className="w-2 h-2 rounded-full bg-wine-300 animate-bounce" style={{ animationDelay: '0s' }}></div>
+            <div className="w-2 h-2 rounded-full bg-wine-300 animate-bounce" style={{ animationDelay: '0.15s' }}></div>
+            <div className="w-2 h-2 rounded-full bg-wine-300 animate-bounce" style={{ animationDelay: '0.3s' }}></div>
+          </div>
+        </div>
+      </CenteredPage>
+    );
   }
   if (error && !weddingData) {
     return <CenteredPage><p className="text-red-600 text-lg mb-2">{error}</p><p className="text-gray-500 text-sm">This link may be invalid or expired.</p></CenteredPage>;
@@ -440,13 +454,13 @@ export default function PublicRSVP() {
             </div>
 
             {searchResults.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-2 animate-fade-in">
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-medium mb-1">Select your household</p>
                 {groupByFamily(searchResults, allGuests).map(({ familyName, members }) => (
                   <button
                     key={(familyName || '') + members[0].id}
                     onClick={() => handleSelectGuest(members[0])}
-                    className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:bg-wine-50 hover:border-wine-300 transition-all"
+                    className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:bg-wine-50 hover:border-wine-300 transition-all active:scale-[0.98]"
                   >
                     <div className="w-10 h-10 rounded-full bg-wine-100 text-wine-700 flex items-center justify-center flex-shrink-0">
                       {members.length > 1 ? <Users size={18} /> : <span className="text-sm font-bold">{members[0].firstName[0]}</span>}
