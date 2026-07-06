@@ -377,8 +377,8 @@ function AdminPhotoGroupManager({ wedding }) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6 min-w-0">
-          <div className="grid gap-4 grid-cols-3">
+        <div className="space-y-6 min-w-0 overflow-hidden">
+          <div className="grid gap-3 grid-cols-3 sm:gap-4">
             <Card className="border-wine-100">
               <p className="text-sm text-gray-500">Pending</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">{pendingGroups.filter((group) => group.status === 'pending').length}</p>

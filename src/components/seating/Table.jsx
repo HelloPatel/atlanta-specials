@@ -280,9 +280,22 @@ export default function TableComponent({ table, guests, warnings = [], onUpdate,
         ) : null}
 
         <span className="text-xs font-semibold text-gray-700 leading-tight">{table.name}</span>
-        <span className={`text-xs ${isOverCapacity ? 'text-red-600 font-bold' : 'text-gray-400'}`}>
-          {assignedGuests.length}/{table.capacity}
-        </span>
+        <div className="relative flex items-center justify-center">
+          <svg width="36" height="36" className="absolute">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="#e5e7eb" strokeWidth="2.5" />
+            <circle
+              cx="18" cy="18" r="15" fill="none"
+              strokeWidth="2.5"
+              stroke={isOverCapacity ? '#ef4444' : assignedGuests.length === table.capacity ? '#22c55e' : '#a855f7'}
+              strokeDasharray={`${(Math.min(assignedGuests.length / table.capacity, 1) * 94.25).toFixed(1)} 94.25`}
+              strokeLinecap="round"
+              transform="rotate(-90 18 18)"
+            />
+          </svg>
+          <span className={`text-[10px] font-bold ${isOverCapacity ? 'text-red-600' : 'text-gray-500'}`}>
+            {assignedGuests.length}/{table.capacity}
+          </span>
+        </div>
         {hasWarnings && (
           <span className="mt-1 px-2 text-center text-[10px] font-medium text-amber-700">
             Seating rule warning

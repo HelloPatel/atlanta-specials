@@ -6,6 +6,7 @@ import { subscribeToGuests } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating, saveSeating } from '../../services/seatingService';
 import { Button, Modal } from '../ui';
+import { useToast } from '../ui/Toast';
 import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2 } from 'lucide-react';
 import { TABLE_DEFAULTS, TABLE_PRESETS } from '../../config/constants';
 import TableComponent from './Table';
@@ -18,6 +19,7 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 export default function SeatingCanvas() {
   const { activeWedding } = useWedding();
+  const toast = useToast();
   const [guests, setGuests] = useState([]);
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(null);
@@ -109,9 +111,14 @@ export default function SeatingCanvas() {
   // Save to Firestore
   const handleSave = useCallback(async () => {
     if (!activeWedding || !selectedEventId) return;
-    await saveSeating(activeWedding.id, selectedEventId, { tables, rules, zones, venueImage: venueImage || null, venueOpacity });
-    setHasChanges(false);
-  }, [activeWedding, selectedEventId, tables, rules, zones, venueImage, venueOpacity]);
+    try {
+      await saveSeating(activeWedding.id, selectedEventId, { tables, rules, zones, venueImage: venueImage || null, venueOpacity });
+      setHasChanges(false);
+      toast.success('Seating chart saved');
+    } catch (err) {
+      toast.error('Failed to save: ' + err.message);
+    }
+  }, [activeWedding, selectedEventId, tables, rules, zones, venueImage, venueOpacity, toast]);
 
   const handleRulesChange = useCallback((nextRules) => {
     setRules(nextRules);
@@ -179,6 +186,7 @@ export default function SeatingCanvas() {
 
     pushUndo();
     const { assignments, overflow } = autoSuggestSeating(unassignedGuests, tables, rules);
+    const seatedCount = [...assignments.values()].reduce((sum, arr) => sum + arr.length, 0);
     const updatedTables = tables.map((t) => {
       const newGuests = assignments.get(t.id) || [];
       if (newGuests.length === 0) return t;
@@ -188,9 +196,11 @@ export default function SeatingCanvas() {
     setHasChanges(true);
 
     if (overflow.length > 0) {
-      window.alert(`${overflow.length} guest${overflow.length === 1 ? '' : 's'} could not be seated (not enough capacity or rule conflicts). They remain in the unassigned list.`);
+      toast.warning(`Seated ${seatedCount} guests. ${overflow.length} couldn't be placed — not enough capacity.`);
+    } else {
+      toast.success(`All ${seatedCount} guests auto-seated!`);
     }
-  }, [unassignedGuests, tables, rules, pushUndo]);
+  }, [unassignedGuests, tables, rules, pushUndo, toast]);
 
   // Auto-save on changes (debounced)
   useEffect(() => {
@@ -226,9 +236,10 @@ export default function SeatingCanvas() {
       const last = prev[prev.length - 1];
       setTables(JSON.parse(last));
       setHasChanges(true);
+      toast.info('Undone');
       return prev.slice(0, -1);
     });
-  }, []);
+  }, [toast]);
 
   // Add table — accepts a preset or custom config
   const addTable = (config) => {
