@@ -145,6 +145,8 @@ export function exportGuestsToExcel(guests, fileName = 'guest-list.xlsx') {
     'Relation': g.relation,
     'Dietary': g.dietary,
     'Tags': (g.tags || []).join(', '),
+    'RSVP': Object.values(g.rsvpStatus || {}).includes('accepted') ? 'Accepted' : Object.values(g.rsvpStatus || {}).includes('declined') ? 'Declined' : 'Pending',
+    'Checked In': g.checkedIn ? 'Yes' : 'No',
     'Notes': g.notes,
   }));
 

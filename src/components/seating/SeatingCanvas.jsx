@@ -795,6 +795,13 @@ export default function SeatingCanvas() {
               </div>
               <span>{assignedGuestIds.size}/{tables.reduce((s, t) => s + t.capacity, 0)} seats filled</span>
               <span>• {tables.length} tables</span>
+              {(() => {
+                const seated = guests.filter((g) => assignedGuestIds.has(g.id));
+                const bride = seated.filter((g) => g.side === 'bride').length;
+                const groom = seated.filter((g) => g.side === 'groom').length;
+                if (bride + groom === 0) return null;
+                return <span>• <span className="text-pink-600">{bride}B</span>/<span className="text-blue-600">{groom}G</span></span>;
+              })()}
             </div>
           )}
 
