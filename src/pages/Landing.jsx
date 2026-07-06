@@ -141,6 +141,85 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section className="px-6 py-20 max-w-5xl mx-auto">
+        <div className="text-center mb-14">
+          <h2 className="text-3xl font-display font-bold text-gray-900 mb-3">Simple pricing</h2>
+          <p className="text-gray-500">Start free. Upgrade when your guest list grows.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <PricingCard
+            name="Free"
+            price="$0"
+            period="forever"
+            description="Perfect for smaller celebrations or to try everything out."
+            features={[
+              'Up to 100 guests',
+              '3 events',
+              'Drag & drop seating',
+              'RSVP links',
+              'Photo group manager',
+              'Guest games',
+              'Excel import/export',
+            ]}
+            cta="Start Free"
+            ctaLink="/register"
+          />
+          <PricingCard
+            name="Premium"
+            price="$29"
+            period="one-time"
+            description="For the full Indian wedding experience. No subscriptions."
+            features={[
+              'Unlimited guests',
+              'Unlimited events',
+              'Auto-suggest seating',
+              'Place card PDF export',
+              'Custom wedding website',
+              'QR code table finder',
+              'WhatsApp RSVP links',
+              'Priority support',
+            ]}
+            highlighted
+            cta="Get Premium"
+            ctaLink="/register"
+          />
+        </div>
+      </section>
+
+      {/* Comparison table */}
+      <section className="px-6 py-20 max-w-4xl mx-auto">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-display font-bold text-gray-900 mb-3">Why Phera over the rest</h2>
+          <p className="text-gray-500">Built specifically for Indian wedding complexity.</p>
+        </div>
+        <div className="overflow-x-auto rounded-2xl border border-gray-200/80 shadow-card">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50/50">
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Feature</th>
+                <th className="py-3 px-4 font-display font-bold text-wine-700">Phera</th>
+                <th className="py-3 px-4 font-semibold text-gray-500">Zola</th>
+                <th className="py-3 px-4 font-semibold text-gray-500">WithJoy</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              <ComparisonRow feature="Multi-event (Mehndi, Sangeet, etc.)" phera={true} zola={false} withjoy="Partial" />
+              <ComparisonRow feature="Different guest list per event" phera={true} zola={false} withjoy={false} />
+              <ComparisonRow feature="500+ guest import" phera={true} zola={true} withjoy={true} />
+              <ComparisonRow feature="Family-group RSVPs" phera={true} zola={false} withjoy={false} />
+              <ComparisonRow feature="Variable table sizes (10-12+)" phera={true} zola={false} withjoy="Partial" />
+              <ComparisonRow feature="Auto-suggest seating" phera={true} zola={false} withjoy={false} />
+              <ComparisonRow feature="Keep-apart / keep-together rules" phera={true} zola={false} withjoy={false} />
+              <ComparisonRow feature="QR code table finder" phera={true} zola={false} withjoy={false} />
+              <ComparisonRow feature="Place card PDF export" phera={true} zola={false} withjoy={false} />
+              <ComparisonRow feature="WhatsApp-friendly RSVP" phera={true} zola={false} withjoy={false} />
+              <ComparisonRow feature="Photo group shot list" phera={true} zola={false} withjoy={false} />
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       {/* FAQ — warm cream */}
       <section className="px-6 py-20 max-w-3xl mx-auto section-warm">
         <h2 className="text-3xl font-display font-bold text-gray-900 text-center mb-12">
@@ -252,5 +331,50 @@ function FAQItem({ question, answer }) {
         </div>
       )}
     </div>
+  );
+}
+
+function PricingCard({ name, price, period, description, features, highlighted, cta, ctaLink }) {
+  return (
+    <div className={`rounded-2xl border p-6 sm:p-8 transition-all duration-300 ${highlighted ? 'border-wine-300 bg-gradient-to-b from-wine-50/60 to-white shadow-lifted ring-1 ring-wine-200' : 'border-gray-200/80 bg-white shadow-card hover:shadow-lifted'}`}>
+      {highlighted && (
+        <span className="inline-block text-[10px] font-bold text-wine-700 uppercase tracking-wider bg-wine-100 px-2.5 py-1 rounded-full mb-4">Most Popular</span>
+      )}
+      <h3 className="text-lg font-display font-bold text-gray-900">{name}</h3>
+      <div className="mt-2 mb-1">
+        <span className="text-4xl font-display font-bold text-gray-900">{price}</span>
+        <span className="text-sm text-gray-500 ml-1.5">/ {period}</span>
+      </div>
+      <p className="text-sm text-gray-500 mb-6">{description}</p>
+      <Link to={ctaLink}>
+        <Button className="w-full" variant={highlighted ? 'primary' : 'outline'} tabIndex={-1}>
+          {cta} <ArrowRight size={14} />
+        </Button>
+      </Link>
+      <ul className="mt-6 space-y-2.5">
+        {features.map((feature, i) => (
+          <li key={i} className="flex items-center gap-2.5 text-sm text-gray-700">
+            <Check size={14} className="text-green-600 shrink-0" />
+            {feature}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ComparisonRow({ feature, phera, zola, withjoy }) {
+  const renderCell = (value) => {
+    if (value === true) return <span className="text-green-600 font-bold">✓</span>;
+    if (value === false) return <span className="text-gray-300">✗</span>;
+    return <span className="text-amber-600 text-xs font-medium">{value}</span>;
+  };
+  return (
+    <tr className="hover:bg-gray-50/50">
+      <td className="py-2.5 px-4 text-gray-700">{feature}</td>
+      <td className="py-2.5 px-4 text-center">{renderCell(phera)}</td>
+      <td className="py-2.5 px-4 text-center">{renderCell(zola)}</td>
+      <td className="py-2.5 px-4 text-center">{renderCell(withjoy)}</td>
+    </tr>
   );
 }
