@@ -39,6 +39,7 @@ export default function SeatingCanvas() {
   const [filterFamily, setFilterFamily] = useState('all');
   const [hasChanges, setHasChanges] = useState(false);
   const [copiedFinderLink, setCopiedFinderLink] = useState(false);
+  const [mobileSelectedTable, setMobileSelectedTable] = useState(null);
   const canvasScrollRef = useRef(null);
   const qrPrintRef = useRef(null);
 
@@ -343,10 +344,10 @@ export default function SeatingCanvas() {
       {/* Info banner */}
       <div className="px-3 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-center gap-2">
         <span>👁️</span>
-        <span>View-only on mobile. Use desktop to drag tables and assign guests.</span>
+        <span>Tap a table to see guests. Use desktop to drag and assign.</span>
       </div>
 
-      {/* Zoomed-out canvas — read-only, pinch-friendly */}
+      {/* Zoomed-out canvas — tap tables to view guests */}
       <div className="flex-1 overflow-auto bg-gray-50 relative">
         {events.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-400 text-sm">
@@ -366,7 +367,6 @@ export default function SeatingCanvas() {
               position: 'relative',
               minWidth: '3000px',
               minHeight: '2000px',
-              pointerEvents: 'none',
             }}
           >
             {venueImage && (
@@ -388,27 +388,88 @@ export default function SeatingCanvas() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexDirection: 'column',
+                pointerEvents: 'none',
               }}>
                 <span className="text-2xl">{(ZONE_PRESETS.find(z => z.type === zone.type)?.icon) || '📐'}</span>
                 <span className="text-xs font-semibold text-gray-600">{zone.label}</span>
               </div>
             ))}
-            {tables.map((table) => (
-              <TableComponent
-                key={table.id}
-                table={table}
-                guests={guests}
-                warnings={ruleEvaluation.tableWarnings[table.id] || []}
-                onUpdate={() => {}}
-                onRemove={() => {}}
-                onDrag={() => {}}
-                onRemoveGuest={() => {}}
-                zoom={0.35}
-              />
-            ))}
+            {tables.map((table) => {
+              const isSelected = mobileSelectedTable?.id === table.id;
+              return (
+                <div
+                  key={table.id}
+                  onClick={() => setMobileSelectedTable(isSelected ? null : table)}
+                  style={{
+                    position: 'absolute',
+                    left: table.x,
+                    top: table.y,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <TableComponent
+                    table={table}
+                    guests={guests}
+                    warnings={ruleEvaluation.tableWarnings[table.id] || []}
+                    onUpdate={() => {}}
+                    onRemove={() => {}}
+                    onDrag={() => {}}
+                    onRemoveGuest={() => {}}
+                    zoom={0.35}
+                    highlight={isSelected}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Mobile table detail bottom sheet */}
+      {mobileSelectedTable && (
+        <div className="border-t border-gray-200 bg-white max-h-[40vh] overflow-auto">
+          <div className="sticky top-0 bg-white px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-gray-900">{mobileSelectedTable.name}</h3>
+              <p className="text-xs text-gray-500">
+                {(mobileSelectedTable.assignedGuests || []).length}/{mobileSelectedTable.capacity} seats filled
+                {mobileSelectedTable.shape && ` • ${mobileSelectedTable.shape}`}
+              </p>
+            </div>
+            <button
+              onClick={() => setMobileSelectedTable(null)}
+              className="text-gray-400 hover:text-gray-600 p-1"
+            >✕</button>
+          </div>
+          <div className="px-4 py-2">
+            {(mobileSelectedTable.assignedGuests || []).length === 0 ? (
+              <p className="text-sm text-gray-400 py-3 text-center">No guests assigned yet</p>
+            ) : (
+              <ul className="divide-y divide-gray-50">
+                {(mobileSelectedTable.assignedGuests || []).map((gId) => {
+                  const g = guests.find(gu => gu.id === gId);
+                  if (!g) return null;
+                  return (
+                    <li key={gId} className="py-2 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{g.firstName} {g.lastName}</p>
+                        {g.family && <p className="text-xs text-gray-500">{g.family}</p>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {g.dietaryPreference && g.dietaryPreference !== 'none' && (
+                          <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{g.dietaryPreference}</span>
+                        )}
+                        {g.tags?.includes('elderly') && <span className="text-xs">👴</span>}
+                        {g.tags?.includes('child') && <span className="text-xs">👶</span>}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Mobile summary footer */}
       <div className="px-3 py-2 border-t border-gray-200 bg-white flex items-center justify-between text-xs text-gray-600">

@@ -3,12 +3,14 @@ import {
   doc,
   addDoc,
   getDoc,
+  getDocs,
   updateDoc,
   deleteDoc,
   serverTimestamp,
   query,
   where,
   onSnapshot,
+  limit,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
@@ -64,4 +66,23 @@ export function subscribeToWeddings(userId, callback) {
     const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     callback(list);
   });
+}
+
+// Resolve a slug (e.g. "rushi-and-priya") to a wedding document ID
+export async function getWeddingBySlug(slug) {
+  const q = query(weddingsRef, where('slug', '==', slug), limit(1));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  const d = snap.docs[0];
+  return { id: d.id, ...d.data() };
+}
+
+// Determine if a param is a Firestore doc ID or a slug, and resolve to wedding ID
+export async function resolveWeddingId(param) {
+  // Firestore IDs are typically 20 alphanum chars; slugs contain hyphens and are longer
+  if (!param.includes('-')) {
+    return param; // likely a doc ID
+  }
+  const wedding = await getWeddingBySlug(param);
+  return wedding ? wedding.id : null;
 }

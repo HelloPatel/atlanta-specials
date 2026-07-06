@@ -4,13 +4,15 @@ import {
   getPublicWeddingData,
   submitRsvpResponse,
 } from '../services/rsvpService';
+import { resolveWeddingId } from '../services/weddingService';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS, DIETARY_OPTIONS, APP_NAME } from '../config/constants';
 import { Search, Check, X, ChevronRight, Heart, Users } from 'lucide-react';
 
 export default function PublicRSVP() {
-  const { weddingId } = useParams();
+  const { weddingId: rawParam } = useParams();
+  const [weddingId, setWeddingId] = useState(null);
   const [weddingData, setWeddingData] = useState(null);
   const [allGuests, setAllGuests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,11 +35,14 @@ export default function PublicRSVP() {
   useEffect(() => {
     async function load() {
       try {
-        const data = await getPublicWeddingData(weddingId);
+        const resolvedId = await resolveWeddingId(rawParam);
+        if (!resolvedId) { setError('Wedding not found'); setLoading(false); return; }
+        setWeddingId(resolvedId);
+        const data = await getPublicWeddingData(resolvedId);
         if (!data) { setError('Wedding not found'); setLoading(false); return; }
         setWeddingData(data);
         const guestsSnap = await getDocs(
-          collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.GUESTS)
+          collection(db, COLLECTIONS.WEDDINGS, resolvedId, COLLECTIONS.GUESTS)
         );
         setAllGuests(guestsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       } catch (err) {
@@ -47,7 +52,7 @@ export default function PublicRSVP() {
       setLoading(false);
     }
     load();
-  }, [weddingId]);
+  }, [rawParam]);
 
   // Search — match by name/phone/family, then group by family
   const handleSearch = () => {

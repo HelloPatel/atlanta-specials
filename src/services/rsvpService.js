@@ -126,12 +126,13 @@ export async function lookupGuestForRsvp(weddingId, { phone, name }) {
 
 // ─── Generate shareable RSVP link ───────────────────────────────────────────
 
-export function getRsvpLink(weddingId) {
-  return `${window.location.origin}/rsvp/${weddingId}`;
+export function getRsvpLink(weddingId, slug) {
+  const identifier = slug || weddingId;
+  return `${window.location.origin}/rsvp/${identifier}`;
 }
 
-export function getWhatsAppRsvpLink(weddingId, coupleName) {
-  const rsvpUrl = getRsvpLink(weddingId);
+export function getWhatsAppRsvpLink(weddingId, coupleName, slug) {
+  const rsvpUrl = getRsvpLink(weddingId, slug);
   const message = encodeURIComponent(
     `🎉 You're invited to ${coupleName}'s wedding! Please RSVP here: ${rsvpUrl}`
   );

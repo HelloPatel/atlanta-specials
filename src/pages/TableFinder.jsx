@@ -6,10 +6,11 @@ import { Button, Input } from '../components/ui';
 import { COLLECTIONS, APP_NAME } from '../config/constants';
 import { db } from '../firebase';
 import { getGuestTable } from '../services/seatingService';
-import { getWedding } from '../services/weddingService';
+import { getWedding, resolveWeddingId } from '../services/weddingService';
 
 export default function TableFinder() {
-  const { weddingId, eventId } = useParams();
+  const { weddingId: rawParam, eventId } = useParams();
+  const [weddingId, setWeddingId] = useState(null);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [wedding, setWedding] = useState(null);
@@ -24,9 +25,13 @@ export default function TableFinder() {
 
     async function loadPageMeta() {
       try {
+        const resolvedId = await resolveWeddingId(rawParam);
+        if (!mounted || !resolvedId) { setError('Wedding not found'); setLoading(false); return; }
+        setWeddingId(resolvedId);
+
         const [weddingData, eventsSnapshot] = await Promise.all([
-          getWedding(weddingId),
-          getDocs(collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.EVENTS)),
+          getWedding(resolvedId),
+          getDocs(collection(db, COLLECTIONS.WEDDINGS, resolvedId, COLLECTIONS.EVENTS)),
         ]);
 
         if (!mounted) return;

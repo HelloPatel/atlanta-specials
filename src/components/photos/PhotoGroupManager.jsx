@@ -223,7 +223,7 @@ function PhotoGroupAdminCard({
       <div className="flex items-start gap-3">
         <button
           type="button"
-          className="mt-1 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-1 hidden sm:block text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
           {...attributes}
           {...listeners}
           disabled={!canEdit}
@@ -234,14 +234,26 @@ function PhotoGroupAdminCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-gray-400">#{index + 1}</span>
-            <h3 className="text-lg font-semibold text-gray-900">{group.name}</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 break-words">{group.name}</h3>
             <Badge variant={statusVariant}>{group.status}</Badge>
           </div>
           {group.members?.length > 0 && (
-            <p className="mt-2 text-sm leading-relaxed text-gray-500">{group.members.join(' · ')}</p>
+            <p className="mt-2 text-sm leading-relaxed text-gray-500 break-words">{group.members.join(' · ')}</p>
           )}
+          <div className="mt-2 flex flex-wrap gap-1 sm:hidden">
+            <Button size="sm" variant="outline" onClick={onSetCurrent} disabled={!canEdit || group.status === 'completed'}>
+              <Camera size={14} />
+              {group.status === 'current' ? 'Live' : 'Set'}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onEdit} disabled={!canEdit}>
+              <Pencil size={14} />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onDelete} disabled={!canEdit} className="text-red-600 hover:bg-red-50 hover:text-red-700">
+              <Trash2 size={14} />
+            </Button>
+          </div>
         </div>
-        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+        <div className="hidden sm:flex shrink-0 flex-col gap-2 sm:flex-row">
           <div className="flex gap-1">
             <Button size="sm" variant="ghost" onClick={onMoveUp} disabled={!canEdit || index === 0}>
               <ChevronUp size={16} />
@@ -341,16 +353,16 @@ function AdminPhotoGroupManager({ wedding }) {
           <h1 className="text-2xl font-bold text-gray-900">Photo Groups</h1>
           <p className="mt-1 text-sm text-gray-500">Run a live queue for photographers, the MC, guests, and the venue display.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.open(queueLink, '_blank')} disabled={!wedding?.id}>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => window.open(queueLink, '_blank')} disabled={!wedding?.id}>
             <Users size={16} />
-            Guest queue
+            <span className="hidden sm:inline">Guest</span> queue
           </Button>
-          <Button variant="outline" onClick={() => window.open(displayLink, '_blank')} disabled={!wedding?.id}>
+          <Button size="sm" variant="outline" onClick={() => window.open(displayLink, '_blank')} disabled={!wedding?.id}>
             <MonitorPlay size={16} />
-            Display view
+            <span className="hidden sm:inline">Display</span> view
           </Button>
-          <Button onClick={() => { setEditingGroup(null); setModalOpen(true); }} disabled={!canEdit}>
+          <Button size="sm" onClick={() => { setEditingGroup(null); setModalOpen(true); }} disabled={!canEdit}>
             <Plus size={16} />
             Add group
           </Button>
@@ -364,8 +376,8 @@ function AdminPhotoGroupManager({ wedding }) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-3">
+        <div className="space-y-6 min-w-0">
+          <div className="grid gap-4 grid-cols-3">
             <Card className="border-wine-100">
               <p className="text-sm text-gray-500">Pending</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">{pendingGroups.filter((group) => group.status === 'pending').length}</p>

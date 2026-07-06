@@ -267,16 +267,16 @@ function AdminBetsManager({ wedding }) {
           <h1 className="text-2xl font-bold text-gray-900">Bets & Games</h1>
           <p className="mt-1 text-sm text-gray-500">Create custom questions, collect live votes, and reveal answers in real time.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => window.open(guestLink, '_blank')}>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" onClick={() => window.open(guestLink, '_blank')}>
             <Users size={16} />
-            Guest voting
+            <span className="hidden sm:inline">Guest</span> voting
           </Button>
-          <Button variant="outline" onClick={() => window.open(leaderboardLink, '_blank')}>
+          <Button size="sm" variant="outline" onClick={() => window.open(leaderboardLink, '_blank')}>
             <BarChart3 size={16} />
             Leaderboard
           </Button>
-          <Button onClick={() => { setEditingQuestion(null); setQuestionModalOpen(true); }} disabled={!canEdit}>
+          <Button size="sm" onClick={() => { setEditingQuestion(null); setQuestionModalOpen(true); }} disabled={!canEdit}>
             <Plus size={16} />
             Add question
           </Button>
@@ -289,7 +289,7 @@ function AdminBetsManager({ wedding }) {
         </Card>
       )}
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card className="border-wine-100">
           <p className="text-sm text-gray-500">Questions</p>
           <p className="mt-2 text-3xl font-bold text-gray-900">{betsConfig.questions.length}</p>

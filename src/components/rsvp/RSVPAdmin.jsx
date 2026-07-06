@@ -116,15 +116,15 @@ export default function RSVPAdmin() {
 
   // Copy RSVP link
   const handleCopyLink = async () => {
-    const link = getRsvpLink(activeWedding.id);
+    const link = getRsvpLink(activeWedding.id, activeWedding.slug);
     await navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const rsvpLink = activeWedding ? getRsvpLink(activeWedding.id) : '';
+  const rsvpLink = activeWedding ? getRsvpLink(activeWedding.id, activeWedding.slug) : '';
   const whatsappLink = activeWedding
-    ? getWhatsAppRsvpLink(activeWedding.id, activeWedding.coupleName || 'Our')
+    ? getWhatsAppRsvpLink(activeWedding.id, activeWedding.coupleName || 'Our', activeWedding.slug)
     : '';
 
   const isOpen = rsvpSettings?.isOpen || false;
