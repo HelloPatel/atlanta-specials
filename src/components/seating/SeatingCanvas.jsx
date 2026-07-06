@@ -7,7 +7,7 @@ import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating, saveSeating } from '../../services/seatingService';
 import { Button, Modal } from '../ui';
 import { useToast } from '../ui/Toast';
-import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2 } from 'lucide-react';
+import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2, Printer } from 'lucide-react';
 import { TABLE_DEFAULTS, TABLE_PRESETS } from '../../config/constants';
 import TableComponent from './Table';
 import GuestSidebar from './GuestSidebar';
@@ -636,7 +636,7 @@ export default function SeatingCanvas() {
         {/* Main canvas */}
         <div className="flex-1 flex flex-col min-h-0">
           {/* Toolbar */}
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <div className="no-print flex items-center gap-2 mb-3 flex-wrap">
             {/* Event selector */}
             <select
               value={selectedEventId || ''}
@@ -721,6 +721,9 @@ export default function SeatingCanvas() {
             <Button variant="outline" size="sm" onClick={handleScreenshot} disabled={tables.length === 0}>
               <Image size={14} /> Screenshot
             </Button>
+            <Button variant="outline" size="sm" onClick={() => window.print()} disabled={tables.length === 0}>
+              <Printer size={14} /> Print
+            </Button>
 
             {/* Venue floor plan */}
             <label className="cursor-pointer">
@@ -795,7 +798,7 @@ export default function SeatingCanvas() {
             </div>
           )}
 
-          <div ref={canvasScrollRef} className="flex-1 rounded-xl border border-gray-200 bg-white overflow-auto relative">
+          <div ref={canvasScrollRef} className="seating-print-area flex-1 rounded-xl border border-gray-200 bg-white overflow-auto relative">
             {events.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
                 <p>Add events first to start seating</p>

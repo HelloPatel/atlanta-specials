@@ -55,7 +55,27 @@ body {
   background-color: #fff5f7;
 }
 .section-cream {
-  background-color: #fefdfb;
+  background-color: #fffcf5;
+}
+
+/* Print styles for seating chart */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .seating-print-area,
+  .seating-print-area * {
+    visibility: visible;
+  }
+  .seating-print-area {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    background: white;
+  }
+  .no-print {
+    display: none !important;
+  }
 }
 
 /* Mandala rotation for invitation ornaments */

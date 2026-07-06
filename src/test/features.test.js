@@ -320,3 +320,69 @@ describe('RSVP translations', () => {
     expect(t.search).toBe('શોધો');
   });
 });
+
+describe('Guest list sorting', () => {
+  const guests = [
+    { id: '1', firstName: 'Zara', lastName: 'Williams', side: 'bride', familyName: 'Williams' },
+    { id: '2', firstName: 'Ankit', lastName: 'Patel', side: 'groom', familyName: 'Patel' },
+    { id: '3', firstName: 'Maya', lastName: 'Shah', side: 'bride', familyName: 'Shah' },
+  ];
+
+  function sortGuests(list, field, dir) {
+    return [...list].sort((a, b) => {
+      const aVal = (a[field] || '').toString().toLowerCase();
+      const bVal = (b[field] || '').toString().toLowerCase();
+      const cmp = aVal.localeCompare(bVal);
+      return dir === 'asc' ? cmp : -cmp;
+    });
+  }
+
+  it('sorts by firstName ascending', () => {
+    const sorted = sortGuests(guests, 'firstName', 'asc');
+    expect(sorted[0].firstName).toBe('Ankit');
+    expect(sorted[2].firstName).toBe('Zara');
+  });
+
+  it('sorts by firstName descending', () => {
+    const sorted = sortGuests(guests, 'firstName', 'desc');
+    expect(sorted[0].firstName).toBe('Zara');
+    expect(sorted[2].firstName).toBe('Ankit');
+  });
+
+  it('sorts by side', () => {
+    const sorted = sortGuests(guests, 'side', 'asc');
+    expect(sorted[0].side).toBe('bride');
+    expect(sorted[2].side).toBe('groom');
+  });
+
+  it('sorts by familyName', () => {
+    const sorted = sortGuests(guests, 'familyName', 'asc');
+    expect(sorted[0].familyName).toBe('Patel');
+    expect(sorted[2].familyName).toBe('Williams');
+  });
+});
+
+describe('Pagination logic', () => {
+  const PAGE_SIZE = 50;
+
+  it('calculates total pages correctly', () => {
+    expect(Math.ceil(120 / PAGE_SIZE)).toBe(3);
+    expect(Math.ceil(50 / PAGE_SIZE)).toBe(1);
+    expect(Math.ceil(51 / PAGE_SIZE)).toBe(2);
+  });
+
+  it('slices correctly for first page', () => {
+    const items = Array.from({ length: 120 }, (_, i) => i);
+    const page0 = items.slice(0 * PAGE_SIZE, (0 + 1) * PAGE_SIZE);
+    expect(page0).toHaveLength(50);
+    expect(page0[0]).toBe(0);
+    expect(page0[49]).toBe(49);
+  });
+
+  it('slices correctly for last page', () => {
+    const items = Array.from({ length: 120 }, (_, i) => i);
+    const page2 = items.slice(2 * PAGE_SIZE, (2 + 1) * PAGE_SIZE);
+    expect(page2).toHaveLength(20);
+    expect(page2[0]).toBe(100);
+  });
+});
