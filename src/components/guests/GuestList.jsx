@@ -46,6 +46,21 @@ export default function GuestList() {
     families: new Set(guests.map((g) => g.familyName).filter(Boolean)).size,
   }), [guests]);
 
+  // Detect potential duplicates within existing guest list
+  const duplicates = useMemo(() => {
+    const seen = new Map();
+    const dupes = [];
+    guests.forEach((g) => {
+      const key = `${(g.firstName || '').toLowerCase().trim()}_${(g.lastName || '').toLowerCase().trim()}`;
+      if (seen.has(key)) {
+        dupes.push({ original: seen.get(key), duplicate: g });
+      } else {
+        seen.set(key, g);
+      }
+    });
+    return dupes;
+  }, [guests]);
+
   const toggleSelect = (id) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -126,6 +141,33 @@ export default function GuestList() {
           <Download size={16} /> Export
         </Button>
       </div>
+
+      {/* Duplicate warning */}
+      {duplicates.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-medium text-amber-800 mb-2">⚠️ {duplicates.length} potential duplicate{duplicates.length > 1 ? 's' : ''} found</p>
+          <div className="space-y-1 max-h-32 overflow-y-auto">
+            {duplicates.slice(0, 5).map((d, i) => (
+              <div key={i} className="flex items-center justify-between text-xs">
+                <span className="text-amber-700">
+                  {d.duplicate.firstName} {d.duplicate.lastName}
+                  {d.duplicate.familyName && ` (${d.duplicate.familyName})`}
+                </span>
+                <button
+                  onClick={() => {
+                    if (confirm(`Remove duplicate "${d.duplicate.firstName} ${d.duplicate.lastName}"?`)) {
+                      deleteGuest(activeWedding.id, d.duplicate.id);
+                      toast.success('Duplicate removed');
+                    }
+                  }}
+                  className="text-red-600 hover:text-red-800 font-medium"
+                >Remove</button>
+              </div>
+            ))}
+            {duplicates.length > 5 && <p className="text-xs text-amber-600">...and {duplicates.length - 5} more</p>}
+          </div>
+        </div>
+      )}
 
       {/* Bulk actions */}
       {selected.size > 0 && (

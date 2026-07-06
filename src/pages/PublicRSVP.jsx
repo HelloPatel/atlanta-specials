@@ -125,8 +125,11 @@ export default function PublicRSVP() {
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [lang, setLang] = useState('en'); // 'en' | 'hi' | 'gu'
+  const [seniorMode, setSeniorMode] = useState(false);
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  const textScale = seniorMode ? 'text-lg' : 'text-sm';
+  const headingScale = seniorMode ? 'text-2xl' : 'text-lg';
 
   useEffect(() => {
     async function load() {
@@ -354,6 +357,16 @@ export default function PublicRSVP() {
               {label}
             </button>
           ))}
+          <span className="w-px bg-gray-300 mx-1" />
+          <button
+            onClick={() => setSeniorMode(!seniorMode)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              seniorMode ? 'bg-wine-700 text-white' : 'bg-white/70 text-gray-600 hover:bg-wine-50'
+            }`}
+            title="Large text mode for easier reading"
+          >
+            {seniorMode ? 'Aa−' : 'Aa+'}
+          </button>
         </div>
         <div className="w-12 h-12 rounded-full bg-wine-100 text-wine-700 flex items-center justify-center mx-auto mb-3">
           <Heart size={24} />
@@ -373,8 +386,8 @@ export default function PublicRSVP() {
         {/* ── STEP: Search ──────────────────────────────────────────── */}
         {step === 'search' && (
           <RsvpCard>
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">{t.findFamily}</h2>
-            <p className="text-sm text-gray-500 mb-5">
+            <h2 className={`${headingScale} font-semibold text-gray-900 mb-1`}>{t.findFamily}</h2>
+            <p className={`${textScale} text-gray-500 mb-5`}>
               {lang === 'en' ? 'Search for any family member — we\'ll pull up your whole household.' : lang === 'hi' ? 'किसी भी सदस्य का नाम खोजें — हम पूरा परिवार दिखाएंगे।' : 'કોઈપણ સભ્યનું નામ શોધો — અમે આખું ઘર બતાવીશું.'}
             </p>
 
@@ -387,11 +400,11 @@ export default function PublicRSVP() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                   placeholder={t.searchPlaceholder}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-wine-600 focus:ring-2 focus:ring-wine-100 transition-all"
+                  className={`w-full pl-10 pr-4 ${seniorMode ? 'py-4 text-lg' : 'py-3 text-sm'} rounded-xl border border-gray-200 focus:border-wine-600 focus:ring-2 focus:ring-wine-100 transition-all`}
                   autoFocus
                 />
               </div>
-              <button onClick={handleSearch} className="px-5 py-3 bg-wine-700 text-white rounded-xl text-sm font-medium hover:bg-wine-800 transition-colors flex-shrink-0">
+              <button onClick={handleSearch} className={`${seniorMode ? 'px-6 py-4 text-base' : 'px-5 py-3 text-sm'} bg-wine-700 text-white rounded-xl font-medium hover:bg-wine-800 transition-colors flex-shrink-0`}>
                 {t.search}
               </button>
             </div>

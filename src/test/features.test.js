@@ -242,3 +242,81 @@ describe('WhatsApp share message builder', () => {
     expect(msg).toContain('Head Table');
   });
 });
+
+describe('Duplicate guest detection', () => {
+  function findDuplicatesInList(guests) {
+    const seen = new Map();
+    const dupes = [];
+    guests.forEach((g) => {
+      const key = `${(g.firstName || '').toLowerCase().trim()}_${(g.lastName || '').toLowerCase().trim()}`;
+      if (seen.has(key)) {
+        dupes.push({ original: seen.get(key), duplicate: g });
+      } else {
+        seen.set(key, g);
+      }
+    });
+    return dupes;
+  }
+
+  it('detects exact name duplicates', () => {
+    const guests = [
+      { id: '1', firstName: 'Rushi', lastName: 'Patel' },
+      { id: '2', firstName: 'Brijal', lastName: 'Shah' },
+      { id: '3', firstName: 'Rushi', lastName: 'Patel' },
+    ];
+    const dupes = findDuplicatesInList(guests);
+    expect(dupes).toHaveLength(1);
+    expect(dupes[0].original.id).toBe('1');
+    expect(dupes[0].duplicate.id).toBe('3');
+  });
+
+  it('is case-insensitive', () => {
+    const guests = [
+      { id: '1', firstName: 'RUSHI', lastName: 'PATEL' },
+      { id: '2', firstName: 'rushi', lastName: 'patel' },
+    ];
+    expect(findDuplicatesInList(guests)).toHaveLength(1);
+  });
+
+  it('returns empty for no duplicates', () => {
+    const guests = [
+      { id: '1', firstName: 'Rushi', lastName: 'Patel' },
+      { id: '2', firstName: 'Brijal', lastName: 'Shah' },
+    ];
+    expect(findDuplicatesInList(guests)).toHaveLength(0);
+  });
+
+  it('handles multiple duplicates', () => {
+    const guests = [
+      { id: '1', firstName: 'Rushi', lastName: 'Patel' },
+      { id: '2', firstName: 'Rushi', lastName: 'Patel' },
+      { id: '3', firstName: 'Brijal', lastName: 'Shah' },
+      { id: '4', firstName: 'Brijal', lastName: 'Shah' },
+    ];
+    expect(findDuplicatesInList(guests)).toHaveLength(2);
+  });
+});
+
+describe('RSVP translations', () => {
+  const TRANSLATIONS = {
+    en: { findFamily: 'Find your family', search: 'Search', submit: 'Submit RSVP' },
+    hi: { findFamily: 'अपना परिवार खोजें', search: 'खोजें', submit: 'RSVP जमा करें' },
+    gu: { findFamily: 'તમારું કુટુંબ શોધો', search: 'શોધો', submit: 'RSVP સબમિટ કરો' },
+  };
+
+  it('returns English translations by default', () => {
+    const t = TRANSLATIONS['en'];
+    expect(t.findFamily).toBe('Find your family');
+    expect(t.submit).toBe('Submit RSVP');
+  });
+
+  it('returns Hindi translations', () => {
+    const t = TRANSLATIONS['hi'];
+    expect(t.findFamily).toBe('अपना परिवार खोजें');
+  });
+
+  it('returns Gujarati translations', () => {
+    const t = TRANSLATIONS['gu'];
+    expect(t.search).toBe('શોધો');
+  });
+});
