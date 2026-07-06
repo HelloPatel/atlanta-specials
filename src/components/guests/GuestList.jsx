@@ -100,6 +100,28 @@ export default function GuestList() {
         <StatCard label="Families" value={stats.families} />
       </div>
 
+      {/* Quick filter chips */}
+      {guests.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {GUEST_TAGS.filter((tag) => guests.some((g) => (g.tags || []).includes(tag))).map((tag) => {
+            const count = guests.filter((g) => (g.tags || []).includes(tag)).length;
+            const isActive = filterTag === tag;
+            return (
+              <button
+                key={tag}
+                onClick={() => setFilterTag(isActive ? 'all' : tag)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  isActive ? 'bg-wine-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {tag}
+                <span className={`text-[10px] ${isActive ? 'text-wine-200' : 'text-gray-400'}`}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 md:gap-3">
         <div className="relative flex-1 min-w-[160px]">

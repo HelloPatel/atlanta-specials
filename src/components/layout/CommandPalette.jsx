@@ -16,19 +16,24 @@ const COMMANDS = [
 
 export default function CommandPalette() {
   const [open, setOpen] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef(null);
   const navigate = useNavigate();
 
-  // Ctrl+K / Cmd+K to open
+  // Ctrl+K / Cmd+K to open, ? for shortcuts
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
         setOpen((prev) => !prev);
       }
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        setShowShortcuts((prev) => !prev);
+      }
+      if (e.key === 'Escape') { setOpen(false); setShowShortcuts(false); }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -69,9 +74,9 @@ export default function CommandPalette() {
     }
   };
 
-  if (!open) return null;
+  if (!open && !showShortcuts) return null;
 
-  return (
+  const commandPalette = open ? (
     <div className="fixed inset-0 z-[90] flex items-start justify-center pt-[15vh]">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
       <div className="relative w-full max-w-lg mx-4 rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden animate-fade-in">
@@ -112,8 +117,44 @@ export default function CommandPalette() {
           <span>↑↓ Navigate</span>
           <span>↵ Open</span>
           <span>Esc Close</span>
+          <span className="ml-auto">? Shortcuts</span>
         </div>
       </div>
     </div>
+  ) : null;
+
+  const shortcutsModal = showShortcuts ? (
+    <div className="fixed inset-0 z-[90] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowShortcuts(false)} />
+      <div className="relative w-full max-w-sm mx-4 rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden animate-fade-in">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h2 className="text-sm font-semibold text-gray-900">Keyboard Shortcuts</h2>
+        </div>
+        <div className="px-5 py-4 space-y-3">
+          {[
+            { keys: 'Ctrl+K', desc: 'Open command palette' },
+            { keys: '?', desc: 'Show this help' },
+            { keys: 'Ctrl+S', desc: 'Save seating chart' },
+            { keys: 'Ctrl+Z', desc: 'Undo seating change' },
+            { keys: 'Esc', desc: 'Close modals' },
+          ].map(({ keys, desc }) => (
+            <div key={keys} className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">{desc}</span>
+              <kbd className="text-xs font-mono bg-gray-100 border border-gray-200 rounded px-2 py-0.5 text-gray-700">{keys}</kbd>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-gray-100 px-5 py-3">
+          <button onClick={() => setShowShortcuts(false)} className="text-xs text-gray-500 hover:text-gray-700">Press ? or Esc to close</button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <>
+      {commandPalette}
+      {shortcutsModal}
+    </>
   );
 }
