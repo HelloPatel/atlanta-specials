@@ -11,6 +11,7 @@ import { subscribeToGuests } from '../services/guestService';
 import { subscribeToEvents } from '../services/eventService';
 import { subscribeToRsvpSettings } from '../services/rsvpService';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
+import ActivityFeed from '../components/dashboard/ActivityFeed';
 
 export default function Dashboard() {
   const { activeWedding, weddings, loading } = useWedding();
@@ -101,6 +102,13 @@ export default function Dashboard() {
           </div>
         </Card>
       </div>
+
+      {/* Activity feed */}
+      {activeWedding && (
+        <Card title="Recent Activity" className="mt-6">
+          <ActivityFeed weddingId={activeWedding.id} />
+        </Card>
+      )}
 
       {/* Guest analytics — shows after guests are added */}
       {guestCount > 0 && (
