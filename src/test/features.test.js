@@ -515,3 +515,102 @@ describe('RSVP status display', () => {
     expect(statuses).toHaveLength(0);
   });
 });
+
+describe('Email validation', () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  it('accepts valid emails', () => {
+    expect(emailRegex.test('rushi@example.com')).toBe(true);
+    expect(emailRegex.test('test.user@domain.co.in')).toBe(true);
+  });
+
+  it('rejects invalid emails', () => {
+    expect(emailRegex.test('not-an-email')).toBe(false);
+    expect(emailRegex.test('@missing-local.com')).toBe(false);
+    expect(emailRegex.test('no-domain@')).toBe(false);
+    expect(emailRegex.test('')).toBe(false);
+  });
+
+  it('allows empty email (optional field)', () => {
+    const email = '';
+    const isValid = !email || emailRegex.test(email);
+    expect(isValid).toBe(true);
+  });
+});
+
+describe('Quick add guest name parsing', () => {
+  it('parses "First Last" correctly', () => {
+    const input = 'Rushi Patel, Brijal Shah, Ankit';
+    const names = input.split(',').map((n) => n.trim()).filter(Boolean);
+    const parsed = names.map((n) => {
+      const parts = n.split(/\s+/);
+      return { firstName: parts[0], lastName: parts.slice(1).join(' ') };
+    });
+    expect(parsed[0]).toEqual({ firstName: 'Rushi', lastName: 'Patel' });
+    expect(parsed[1]).toEqual({ firstName: 'Brijal', lastName: 'Shah' });
+    expect(parsed[2]).toEqual({ firstName: 'Ankit', lastName: '' });
+  });
+
+  it('handles multi-word last names', () => {
+    const name = 'Mary Jane Watson';
+    const parts = name.split(/\s+/);
+    expect(parts[0]).toBe('Mary');
+    expect(parts.slice(1).join(' ')).toBe('Jane Watson');
+  });
+});
+
+describe('Full-text guest search', () => {
+  const guests = [
+    { firstName: 'Rushi', lastName: 'Patel', email: 'rushi@test.com', dietary: 'vegetarian', tags: ['vip'] },
+    { firstName: 'Ankit', lastName: 'Shah', email: '', dietary: 'non-veg', tags: [] },
+  ];
+
+  function searchGuests(list, query) {
+    const q = query.toLowerCase();
+    return list.filter((g) => {
+      const searchable = `${g.firstName} ${g.lastName} ${g.email} ${g.dietary} ${(g.tags || []).join(' ')}`.toLowerCase();
+      return searchable.includes(q);
+    });
+  }
+
+  it('finds by email', () => {
+    expect(searchGuests(guests, 'rushi@test')).toHaveLength(1);
+  });
+
+  it('finds by dietary', () => {
+    expect(searchGuests(guests, 'non-veg')).toHaveLength(1);
+  });
+
+  it('finds by tag', () => {
+    expect(searchGuests(guests, 'vip')).toHaveLength(1);
+  });
+
+  it('finds by name still works', () => {
+    expect(searchGuests(guests, 'patel')).toHaveLength(1);
+  });
+});
+
+describe('RSVP filter logic', () => {
+  const guests = [
+    { id: '1', rsvpStatus: { e1: 'accepted' } },
+    { id: '2', rsvpStatus: { e1: 'declined' } },
+    { id: '3', rsvpStatus: {} },
+    { id: '4', rsvpStatus: { e1: 'pending' } },
+  ];
+
+  it('filters responded guests', () => {
+    const responded = guests.filter((g) => {
+      const statuses = Object.values(g.rsvpStatus || {});
+      return statuses.some((s) => s === 'accepted' || s === 'declined');
+    });
+    expect(responded).toHaveLength(2);
+  });
+
+  it('filters pending guests', () => {
+    const pending = guests.filter((g) => {
+      const statuses = Object.values(g.rsvpStatus || {});
+      return !statuses.some((s) => s === 'accepted' || s === 'declined');
+    });
+    expect(pending).toHaveLength(2);
+  });
+});
