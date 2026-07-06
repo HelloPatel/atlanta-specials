@@ -505,7 +505,7 @@ export default function GuestList() {
           </div>
         ) : (
           paginatedGuests.map((guest) => (
-            <div key={guest.id} className="rounded-xl border border-gray-200 bg-white px-4 py-3 flex items-center gap-3">
+            <div key={guest.id} className="rounded-xl border border-gray-200 bg-white px-4 py-3 flex items-center gap-3 active:scale-[0.98] transition-transform">
               <input type="checkbox" checked={selected.has(guest.id)} onChange={() => toggleSelect(guest.id)} className="rounded flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{guest.firstName} {guest.lastName}</p>
