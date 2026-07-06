@@ -172,6 +172,36 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Per-event RSVP response rates */}
+      {events.length > 0 && guestCount > 0 && (
+        <Card title="RSVP by Event" className="mt-6">
+          <div className="space-y-3">
+            {events.map((evt) => {
+              const invitedGuests = evt.inviteAll ? guests : guests.filter((g) => (evt.guestIds || []).includes(g.id));
+              const responded = invitedGuests.filter((g) => {
+                const status = (g.rsvpStatus || {})[evt.id];
+                return status === 'accepted' || status === 'declined';
+              });
+              const accepted = invitedGuests.filter((g) => (g.rsvpStatus || {})[evt.id] === 'accepted');
+              const rate = invitedGuests.length > 0 ? Math.round((responded.length / invitedGuests.length) * 100) : 0;
+              return (
+                <div key={evt.id}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium text-gray-700">{evt.name}</span>
+                    <span className="text-xs text-gray-500">
+                      {accepted.length} attending • {responded.length}/{invitedGuests.length} responded ({rate}%)
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${rate}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       <CreateWeddingModal open={showCreate} onClose={() => setShowCreate(false)} />
       <OnboardingTour show={!!activeWedding} />
     </div>

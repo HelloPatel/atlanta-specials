@@ -204,6 +204,25 @@ export default function SeatingCanvas() {
     toast.success('Seating chart exported');
   }, [tables, guests, unassignedGuests, selectedEventId, selectedEvent, toast]);
 
+  const handleScreenshot = useCallback(async () => {
+    if (!canvasScrollRef.current) return;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(canvasScrollRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        logging: false,
+      });
+      const link = document.createElement('a');
+      link.download = `seating-chart-${selectedEvent?.name || 'layout'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      toast.success('Screenshot downloaded');
+    } catch (err) {
+      toast.error('Screenshot failed: ' + err.message);
+    }
+  }, [selectedEvent, toast]);
+
   const handleFocusTable = useCallback((tableId) => {
     const table = tables.find((item) => item.id === tableId);
     if (!table || !canvasScrollRef.current) return;
@@ -697,6 +716,10 @@ export default function SeatingCanvas() {
 
             <Button variant="outline" size="sm" onClick={handleExportSeating} disabled={tables.length === 0}>
               <FileSpreadsheet size={14} /> Export
+            </Button>
+
+            <Button variant="outline" size="sm" onClick={handleScreenshot} disabled={tables.length === 0}>
+              <Image size={14} /> Screenshot
             </Button>
 
             {/* Venue floor plan */}
