@@ -53,8 +53,8 @@ export default function GuestList() {
 
   const filtered = useMemo(() => {
     const list = guests.filter((g) => {
-      const name = `${g.firstName} ${g.lastName} ${g.familyName}`.toLowerCase();
-      if (search && !name.includes(search.toLowerCase())) return false;
+      const searchable = `${g.firstName} ${g.lastName} ${g.familyName} ${g.email} ${g.phone} ${g.dietary} ${g.side} ${(g.tags || []).join(' ')} ${g.notes || ''}`.toLowerCase();
+      if (search && !searchable.includes(search.toLowerCase())) return false;
       if (filterSide !== 'all' && g.side !== filterSide) return false;
       if (filterDietary !== 'all' && g.dietary !== filterDietary) return false;
       if (filterTag !== 'all' && !(g.tags || []).includes(filterTag)) return false;
@@ -235,6 +235,21 @@ export default function GuestList() {
           toast.success(`Grouped ${updates.length} guests into ${multiGroups.length} families`);
         }} className="hidden md:inline-flex" title="Group guests by last name into families">
           <Users size={16} /> Auto-Group
+        </Button>
+        <Button variant="outline" onClick={async () => {
+          const input = prompt('Enter guest names (comma-separated):\nExample: Rushi Patel, Brijal Shah, Ankit Patel');
+          if (!input) return;
+          const names = input.split(',').map((n) => n.trim()).filter(Boolean);
+          const newGuests = names.map((n) => {
+            const parts = n.split(/\s+/);
+            const firstName = parts[0] || '';
+            const lastName = parts.slice(1).join(' ') || '';
+            return { firstName, lastName, side: 'bride', dietary: 'vegetarian', tags: [] };
+          });
+          await importGuestsBatch(activeWedding.id, newGuests);
+          toast.success(`Added ${newGuests.length} guests`);
+        }} className="hidden md:inline-flex" title="Quickly add multiple guests by name">
+          <Plus size={16} /> Quick Add
         </Button>
       </div>
 
