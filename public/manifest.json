@@ -1,0 +1,16 @@
+{
+  "name": "Phera — Indian Wedding Planning",
+  "short_name": "Phera",
+  "description": "The all-in-one Indian wedding planning platform for 500+ guests.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#881337",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { WeddingProvider } from './contexts/WeddingContext';
 import { ToastProvider } from './components/ui';
+import ErrorBoundary from './components/ErrorBoundary';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
@@ -43,6 +44,7 @@ function PageLoader() {
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
@@ -90,5 +92,6 @@ export default function App() {
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }
