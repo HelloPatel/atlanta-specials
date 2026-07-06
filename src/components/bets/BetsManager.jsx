@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { resolveWeddingId } from '../../services/weddingService';
 import {
   BarChart3,
   Copy,
@@ -774,11 +775,15 @@ export default function BetsManager() {
 }
 
 export function PublicBetsManager() {
-  const { weddingId } = useParams();
+  const { weddingId: rawParam } = useParams();
+  const [weddingId, setWeddingId] = useState(rawParam);
+  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId); }, [rawParam]);
   return <GuestBetsView weddingId={weddingId} />;
 }
 
 export function BetsLeaderboardView() {
-  const { weddingId } = useParams();
+  const { weddingId: rawParam } = useParams();
+  const [weddingId, setWeddingId] = useState(rawParam);
+  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId); }, [rawParam]);
   return <GuestBetsView weddingId={weddingId} leaderboardMode />;
 }

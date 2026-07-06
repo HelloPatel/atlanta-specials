@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { resolveWeddingId } from '../../services/weddingService';
 import {
   closestCenter,
   DndContext,
@@ -634,7 +635,9 @@ export default function PhotoGroupManager() {
 }
 
 export function PublicPhotoGroupQueue() {
-  const { weddingId } = useParams();
+  const { weddingId: rawParam } = useParams();
+  const [weddingId, setWeddingId] = useState(rawParam);
+  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId); }, [rawParam]);
   const wedding = useWeddingPublicData(weddingId);
   const { groups, loading } = usePhotoGroups(weddingId);
 
@@ -642,7 +645,9 @@ export function PublicPhotoGroupQueue() {
 }
 
 export function PhotoGroupDisplayView() {
-  const { weddingId } = useParams();
+  const { weddingId: rawParam } = useParams();
+  const [weddingId, setWeddingId] = useState(rawParam);
+  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId); }, [rawParam]);
   const wedding = useWeddingPublicData(weddingId);
   const { groups, loading } = usePhotoGroups(weddingId);
 
