@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatch, importGuestsBatch, updateGuestsBatch } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
+import { subscribeToSeating } from '../../services/seatingService';
 import { Button, Input, Badge, Modal, useToast } from '../ui';
 import { Search, Plus, Upload, Download, Trash2, Edit3, Filter, Users, ChevronDown } from 'lucide-react';
 import { parseFile, autoMapColumns, mapRowsToGuests, findDuplicates, exportGuestsToExcel, downloadGuestTemplate } from '../../utils/excelImport';
@@ -27,6 +28,22 @@ export default function GuestList() {
     const unsub2 = subscribeToEvents(activeWedding.id, setEvents);
     return () => { unsub1(); unsub2(); };
   }, [activeWedding]);
+
+  // Build guest-to-table mapping from all event seatings
+  const [tableMap, setTableMap] = useState({});
+  useEffect(() => {
+    if (!activeWedding || events.length === 0) return;
+    // Subscribe to seating for the first event that has seating
+    const eventId = events[0]?.id;
+    if (!eventId) return;
+    return subscribeToSeating(activeWedding.id, eventId, (data) => {
+      const map = {};
+      (data.tables || []).forEach((t) => {
+        (t.assignedGuests || []).forEach((gId) => { map[gId] = t.name; });
+      });
+      setTableMap(map);
+    });
+  }, [activeWedding, events]);
 
   const filtered = useMemo(() => {
     return guests.filter((g) => {
@@ -266,6 +283,7 @@ export default function GuestList() {
               <th className="px-4 py-3 text-left font-medium text-gray-600">Side</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Dietary</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Tags</th>
+              <th className="px-4 py-3 text-left font-medium text-gray-600">Table</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
@@ -294,6 +312,13 @@ export default function GuestList() {
                     <div className="flex flex-wrap gap-1">
                       {(guest.tags || []).map((tag) => <Badge key={tag}>{tag}</Badge>)}
                     </div>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-gray-500">
+                    {tableMap[guest.id] ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wine-50 text-wine-700 font-medium">
+                        {tableMap[guest.id]}
+                      </span>
+                    ) : '—'}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
@@ -327,6 +352,7 @@ export default function GuestList() {
                 <p className="text-xs text-gray-500 truncate">
                   {guest.familyName || 'No family'} · <span className="capitalize">{guest.side}</span>
                   {guest.dietary && guest.dietary !== 'vegetarian' ? ` · ${guest.dietary}` : ''}
+                  {tableMap[guest.id] ? ` · 📍${tableMap[guest.id]}` : ''}
                 </p>
               </div>
               <div className="flex gap-1 flex-shrink-0">
