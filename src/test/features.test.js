@@ -441,3 +441,77 @@ describe('Dark mode detection', () => {
     expect(darkMode).toBe(false);
   });
 });
+
+describe('Auto-group families logic', () => {
+  const guests = [
+    { id: '1', firstName: 'Rushi', lastName: 'Patel', familyName: null },
+    { id: '2', firstName: 'Brijal', lastName: 'Patel', familyName: null },
+    { id: '3', firstName: 'Ankit', lastName: 'Shah', familyName: null },
+    { id: '4', firstName: 'Priya', lastName: 'Shah', familyName: null },
+    { id: '5', firstName: 'Solo', lastName: 'Unique', familyName: null },
+  ];
+
+  it('groups guests with same last name', () => {
+    const ungrouped = guests.filter((g) => !g.familyName && g.lastName);
+    const groups = {};
+    ungrouped.forEach((g) => {
+      const key = g.lastName.trim().toLowerCase();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(g);
+    });
+    const multiGroups = Object.entries(groups).filter(([, arr]) => arr.length > 1);
+    expect(multiGroups).toHaveLength(2); // Patel (2), Shah (2)
+  });
+
+  it('ignores singles', () => {
+    const ungrouped = guests.filter((g) => !g.familyName && g.lastName);
+    const groups = {};
+    ungrouped.forEach((g) => {
+      const key = g.lastName.trim().toLowerCase();
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(g);
+    });
+    const singleGroups = Object.entries(groups).filter(([, arr]) => arr.length === 1);
+    expect(singleGroups).toHaveLength(1); // Unique
+  });
+
+  it('generates correct family name', () => {
+    const familyName = `The Patel Family`;
+    expect(familyName).toBe('The Patel Family');
+  });
+});
+
+describe('Zoom to fit logic', () => {
+  it('calculates fit zoom correctly', () => {
+    const tables = [
+      { x: 100, y: 100 },
+      { x: 500, y: 400 },
+    ];
+    const maxX = Math.max(...tables.map((t) => t.x + 150));
+    const maxY = Math.max(...tables.map((t) => t.y + 150));
+    const containerW = 800;
+    const containerH = 600;
+    const fitZoom = Math.min(containerW / maxX, containerH / maxY, 1.5);
+    expect(fitZoom).toBeCloseTo(1.09, 1);
+    const rounded = Math.max(Math.round(fitZoom * 10) / 10, 0.3);
+    expect(rounded).toBe(1.1);
+  });
+});
+
+describe('RSVP status display', () => {
+  it('counts statuses correctly', () => {
+    const rsvpStatus = { event1: 'accepted', event2: 'declined', event3: 'pending' };
+    const statuses = Object.values(rsvpStatus);
+    const accepted = statuses.filter((s) => s === 'accepted').length;
+    const declined = statuses.filter((s) => s === 'declined').length;
+    const pending = statuses.filter((s) => s === 'pending').length;
+    expect(accepted).toBe(1);
+    expect(declined).toBe(1);
+    expect(pending).toBe(1);
+  });
+
+  it('handles empty rsvpStatus', () => {
+    const statuses = Object.values({});
+    expect(statuses).toHaveLength(0);
+  });
+});

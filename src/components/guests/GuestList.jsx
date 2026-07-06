@@ -346,6 +346,7 @@ export default function GuestList() {
               <SortHeader field="dietary" label="Dietary" sortField={sortField} sortDir={sortDir} onSort={(f) => { setSortDir(sortField === f && sortDir === 'asc' ? 'desc' : 'asc'); setSortField(f); }} />
               <th className="px-4 py-3 text-left font-medium text-gray-600">Tags</th>
               <SortHeader field="table" label="Table" sortField={sortField} sortDir={sortDir} onSort={(f) => { setSortDir(sortField === f && sortDir === 'asc' ? 'desc' : 'asc'); setSortField(f); }} />
+              <th className="px-4 py-3 text-left font-medium text-gray-600">RSVP</th>
               <th className="px-4 py-3 text-left font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
@@ -400,6 +401,22 @@ export default function GuestList() {
                         {tableMap[guest.id]}
                       </span>
                     ) : '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const statuses = Object.values(guest.rsvpStatus || {});
+                      if (statuses.length === 0) return <span className="text-xs text-gray-400">—</span>;
+                      const accepted = statuses.filter((s) => s === 'accepted').length;
+                      const declined = statuses.filter((s) => s === 'declined').length;
+                      const pending = statuses.filter((s) => s === 'pending').length;
+                      return (
+                        <div className="flex gap-1 text-xs">
+                          {accepted > 0 && <span className="text-green-600" title={`${accepted} accepted`}>✓{accepted}</span>}
+                          {declined > 0 && <span className="text-red-500" title={`${declined} declined`}>✗{declined}</span>}
+                          {pending > 0 && <span className="text-gray-400" title={`${pending} pending`}>?{pending}</span>}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
