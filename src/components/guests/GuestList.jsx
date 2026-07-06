@@ -20,6 +20,10 @@ export default function GuestList() {
   const [selected, setSelected] = useState(new Set());
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [sortField, setSortField] = useState('firstName');
+  const [sortDir, setSortDir] = useState('asc');
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 50;
   const [editingGuest, setEditingGuest] = useState(null);
 
   useEffect(() => {
@@ -46,7 +50,7 @@ export default function GuestList() {
   }, [activeWedding, events]);
 
   const filtered = useMemo(() => {
-    return guests.filter((g) => {
+    const list = guests.filter((g) => {
       const name = `${g.firstName} ${g.lastName} ${g.familyName}`.toLowerCase();
       if (search && !name.includes(search.toLowerCase())) return false;
       if (filterSide !== 'all' && g.side !== filterSide) return false;
@@ -54,7 +58,25 @@ export default function GuestList() {
       if (filterTag !== 'all' && !(g.tags || []).includes(filterTag)) return false;
       return true;
     });
-  }, [guests, search, filterSide, filterDietary, filterTag]);
+    // Sort
+    list.sort((a, b) => {
+      let aVal = (a[sortField] || '').toString().toLowerCase();
+      let bVal = (b[sortField] || '').toString().toLowerCase();
+      if (sortField === 'table') {
+        aVal = tableMap[a.id] || 'zzz';
+        bVal = tableMap[b.id] || 'zzz';
+      }
+      const cmp = aVal.localeCompare(bVal);
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return list;
+  }, [guests, search, filterSide, filterDietary, filterTag, sortField, sortDir, tableMap]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginatedGuests = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // Reset page when filters change - use effect
+  useEffect(() => { setPage(0); }, [search, filterSide, filterDietary, filterTag]);
 
   const stats = useMemo(() => ({
     total: guests.length,
@@ -278,24 +300,24 @@ export default function GuestList() {
               <th className="px-4 py-3 text-left">
                 <input type="checkbox" checked={selected.size === filtered.length && filtered.length > 0} onChange={toggleSelectAll} className="rounded" />
               </th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Name</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Family</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Side</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Dietary</th>
+              <SortHeader field="firstName" label="Name" sortField={sortField} sortDir={sortDir} onSort={(f) => { setSortDir(sortField === f && sortDir === 'asc' ? 'desc' : 'asc'); setSortField(f); }} />
+              <SortHeader field="familyName" label="Family" sortField={sortField} sortDir={sortDir} onSort={(f) => { setSortDir(sortField === f && sortDir === 'asc' ? 'desc' : 'asc'); setSortField(f); }} />
+              <SortHeader field="side" label="Side" sortField={sortField} sortDir={sortDir} onSort={(f) => { setSortDir(sortField === f && sortDir === 'asc' ? 'desc' : 'asc'); setSortField(f); }} />
+              <SortHeader field="dietary" label="Dietary" sortField={sortField} sortDir={sortDir} onSort={(f) => { setSortDir(sortField === f && sortDir === 'asc' ? 'desc' : 'asc'); setSortField(f); }} />
               <th className="px-4 py-3 text-left font-medium text-gray-600">Tags</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-600">Table</th>
+              <SortHeader field="table" label="Table" sortField={sortField} sortDir={sortDir} onSort={(f) => { setSortDir(sortField === f && sortDir === 'asc' ? 'desc' : 'asc'); setSortField(f); }} />
               <th className="px-4 py-3 text-left font-medium text-gray-600">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
+                <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
                   {guests.length === 0 ? 'No guests yet. Add your first guest or import from Excel.' : 'No guests match your filters.'}
                 </td>
               </tr>
             ) : (
-              filtered.map((guest) => (
+              paginatedGuests.map((guest) => (
                 <tr key={guest.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <input type="checkbox" checked={selected.has(guest.id)} onChange={() => toggleSelect(guest.id)} className="rounded" />
@@ -335,6 +357,27 @@ export default function GuestList() {
             )}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3">
+            <span className="text-xs text-gray-500">
+              Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} of {filtered.length}
+            </span>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setPage(Math.max(0, page - 1))}
+                disabled={page === 0}
+                className="px-3 py-1 rounded-lg text-xs font-medium border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+              >← Prev</button>
+              <button
+                onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                disabled={page >= totalPages - 1}
+                className="px-3 py-1 rounded-lg text-xs font-medium border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
+              >Next →</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile card list */}
@@ -344,7 +387,7 @@ export default function GuestList() {
             {guests.length === 0 ? 'No guests yet. Tap + to add your first guest.' : 'No guests match your filters.'}
           </div>
         ) : (
-          filtered.map((guest) => (
+          paginatedGuests.map((guest) => (
             <div key={guest.id} className="rounded-xl border border-gray-200 bg-white px-4 py-3 flex items-center gap-3">
               <input type="checkbox" checked={selected.has(guest.id)} onChange={() => toggleSelect(guest.id)} className="rounded flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -716,5 +759,20 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
         </div>
       )}
     </Modal>
+  );
+}
+
+function SortHeader({ field, label, sortField, sortDir, onSort }) {
+  const isActive = sortField === field;
+  return (
+    <th
+      className="px-4 py-3 text-left font-medium text-gray-600 cursor-pointer select-none hover:text-gray-900 transition-colors"
+      onClick={() => onSort(field)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {isActive && <span className="text-wine-600">{sortDir === 'asc' ? '↑' : '↓'}</span>}
+      </span>
+    </th>
   );
 }
