@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LayoutDashboard, Users, Calendar, Grid3X3, Mail, Camera, Trophy, Globe, Printer } from 'lucide-react';
+import { Search, LayoutDashboard, Users, Calendar, Grid3X3, Mail, Camera, Trophy, Globe, Printer, User } from 'lucide-react';
+import { useWedding } from '../../contexts/WeddingContext';
+import { subscribeToGuests } from '../../services/guestService';
 
 const COMMANDS = [
   { id: 'dashboard', label: 'Go to Dashboard', icon: LayoutDashboard, path: '/dashboard', keywords: 'home overview' },
@@ -19,8 +21,16 @@ export default function CommandPalette() {
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [guests, setGuests] = useState([]);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const { activeWedding } = useWedding();
+
+  // Subscribe to guests for @ search
+  useEffect(() => {
+    if (!activeWedding) return;
+    return subscribeToGuests(activeWedding.id, setGuests);
+  }, [activeWedding]);
 
   // Ctrl+K / Cmd+K to open, ? for shortcuts
   useEffect(() => {
@@ -47,11 +57,20 @@ export default function CommandPalette() {
     }
   }, [open]);
 
-  const filtered = COMMANDS.filter((cmd) => {
+  const isGuestSearch = query.startsWith('@');
+  const guestQuery = isGuestSearch ? query.slice(1).toLowerCase().trim() : '';
+
+  const filteredGuests = isGuestSearch && guestQuery
+    ? guests.filter((g) => `${g.firstName} ${g.lastName}`.toLowerCase().includes(guestQuery)).slice(0, 8)
+    : [];
+
+  const filtered = isGuestSearch ? [] : COMMANDS.filter((cmd) => {
     if (!query) return true;
     const q = query.toLowerCase();
     return cmd.label.toLowerCase().includes(q) || cmd.keywords.includes(q);
   });
+
+  const allItems = [...filtered, ...filteredGuests.map((g) => ({ id: `guest-${g.id}`, label: `${g.firstName} ${g.lastName}`, icon: User, path: '/guests', keywords: '', isGuest: true }))];
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -65,12 +84,12 @@ export default function CommandPalette() {
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex((i) => Math.min(i + 1, filtered.length - 1));
+      setSelectedIndex((i) => Math.min(i + 1, allItems.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && filtered[selectedIndex]) {
-      handleSelect(filtered[selectedIndex]);
+    } else if (e.key === 'Enter' && allItems[selectedIndex]) {
+      handleSelect(allItems[selectedIndex]);
     }
   };
 
@@ -88,16 +107,16 @@ export default function CommandPalette() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search pages..."
+            placeholder="Search pages... (@ for guests)"
             className="flex-1 py-3.5 text-sm outline-none bg-transparent text-gray-900 placeholder-gray-400"
           />
           <kbd className="hidden sm:inline-block text-[10px] font-medium text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">ESC</kbd>
         </div>
         <div className="max-h-72 overflow-y-auto py-2">
-          {filtered.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-gray-400 text-center">No results found</p>
+          {allItems.length === 0 ? (
+            <p className="px-4 py-6 text-sm text-gray-400 text-center">{isGuestSearch ? 'No guests found' : 'No results found'}</p>
           ) : (
-            filtered.map((cmd, i) => {
+            allItems.map((cmd, i) => {
               const Icon = cmd.icon;
               return (
                 <button
@@ -107,6 +126,7 @@ export default function CommandPalette() {
                 >
                   <Icon size={16} className={i === selectedIndex ? 'text-wine-600' : 'text-gray-400'} />
                   <span className="flex-1">{cmd.label}</span>
+                  {cmd.isGuest && <span className="text-xs text-gray-400">Guest</span>}
                   {i === selectedIndex && <span className="text-xs text-wine-500">↵</span>}
                 </button>
               );

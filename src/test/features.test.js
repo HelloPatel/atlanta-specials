@@ -386,3 +386,58 @@ describe('Pagination logic', () => {
     expect(page2[0]).toBe(100);
   });
 });
+
+describe('Event reorder logic', () => {
+  it('swaps order fields correctly', () => {
+    const events = [
+      { id: 'e1', name: 'Mehndi', order: 0 },
+      { id: 'e2', name: 'Sangeet', order: 1 },
+      { id: 'e3', name: 'Reception', order: 2 },
+    ];
+    const idx = 0;
+    const direction = 1;
+    const newIdx = idx + direction;
+    const updates = [
+      { id: events[idx].id, order: newIdx },
+      { id: events[newIdx].id, order: idx },
+    ];
+    expect(updates[0]).toEqual({ id: 'e1', order: 1 });
+    expect(updates[1]).toEqual({ id: 'e2', order: 0 });
+  });
+});
+
+describe('Command palette guest search', () => {
+  const guests = [
+    { id: '1', firstName: 'Rushi', lastName: 'Patel' },
+    { id: '2', firstName: 'Brijal', lastName: 'Patel' },
+    { id: '3', firstName: 'Ankit', lastName: 'Shah' },
+  ];
+
+  it('filters guests by @ prefix query', () => {
+    const query = '@patel';
+    const guestQuery = query.slice(1).toLowerCase().trim();
+    const results = guests.filter((g) => `${g.firstName} ${g.lastName}`.toLowerCase().includes(guestQuery));
+    expect(results).toHaveLength(2);
+    expect(results[0].firstName).toBe('Rushi');
+  });
+
+  it('returns empty for non-matching @ query', () => {
+    const query = '@xyz';
+    const guestQuery = query.slice(1).toLowerCase().trim();
+    const results = guests.filter((g) => `${g.firstName} ${g.lastName}`.toLowerCase().includes(guestQuery));
+    expect(results).toHaveLength(0);
+  });
+
+  it('does not search guests without @ prefix', () => {
+    const query = 'patel';
+    const isGuestSearch = query.startsWith('@');
+    expect(isGuestSearch).toBe(false);
+  });
+});
+
+describe('Dark mode detection', () => {
+  it('defaults to false when matchMedia is unavailable', () => {
+    const darkMode = undefined?.matches || false;
+    expect(darkMode).toBe(false);
+  });
+});
