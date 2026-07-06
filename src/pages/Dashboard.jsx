@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useWedding } from '../contexts/WeddingContext';
-import { Button, Card, Modal, Input } from '../components/ui';
+import { Button, Card, Modal, Input, SkeletonDashboard } from '../components/ui';
 import { Plus, Users, Calendar, Grid3X3, Mail } from 'lucide-react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -41,11 +41,7 @@ export default function Dashboard() {
     : 0;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-wine-700 border-t-transparent" />
-      </div>
-    );
+    return <SkeletonDashboard />;
   }
 
   if (!activeWedding) {

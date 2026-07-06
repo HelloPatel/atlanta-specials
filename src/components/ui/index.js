@@ -4,3 +4,4 @@ export { default as Card } from './Card';
 export { default as Modal } from './Modal';
 export { default as Badge } from './Badge';
 export { ToastProvider, useToast } from './Toast';
+export { SkeletonLine, SkeletonCard, SkeletonStat, SkeletonTable, SkeletonDashboard } from './Skeleton';
