@@ -555,9 +555,9 @@ export default function PublicRSVP() {
                           <div className="flex gap-1">
                             <button
                               onClick={() => toggleRsvp(guest.id, evt.id, 'accepted')}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
                                 s === 'accepted'
-                                  ? 'bg-green-500 text-white shadow-sm'
+                                  ? 'bg-green-500 text-white shadow-sm scale-105'
                                   : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-700'
                               }`}
                             >
@@ -565,9 +565,9 @@ export default function PublicRSVP() {
                             </button>
                             <button
                               onClick={() => toggleRsvp(guest.id, evt.id, 'declined')}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
                                 s === 'declined'
-                                  ? 'bg-red-500 text-white shadow-sm'
+                                  ? 'bg-red-500 text-white shadow-sm scale-105'
                                   : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-700'
                               }`}
                             >
@@ -631,21 +631,29 @@ export default function PublicRSVP() {
           <RsvpCard className="text-center relative overflow-hidden">
             {/* Confetti celebration */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {Array.from({ length: 20 }).map((_, i) => (
+              {Array.from({ length: 30 }).map((_, i) => (
                 <div
                   key={i}
-                  className="absolute w-2 h-2 rounded-full animate-bounce"
+                  className="absolute rounded-sm"
                   style={{
                     left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 60}%`,
-                    backgroundColor: ['#ab204d', '#f59e0b', '#10b981', '#6366f1', '#ec4899'][i % 5],
-                    animationDelay: `${Math.random() * 2}s`,
-                    animationDuration: `${1 + Math.random() * 2}s`,
-                    opacity: 0.7,
+                    top: '-10%',
+                    width: `${6 + Math.random() * 6}px`,
+                    height: `${6 + Math.random() * 6}px`,
+                    backgroundColor: ['#ab204d', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#f97316'][i % 6],
+                    animation: `confettiFall ${2 + Math.random() * 3}s ${Math.random() * 2}s ease-in forwards`,
+                    transform: `rotate(${Math.random() * 360}deg)`,
+                    opacity: 0.85,
                   }}
                 />
               ))}
             </div>
+            <style>{`
+              @keyframes confettiFall {
+                0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+                100% { transform: translateY(500px) rotate(720deg); opacity: 0; }
+              }
+            `}</style>
             <div className="relative z-10">
             <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4">
               <Check size={32} />
