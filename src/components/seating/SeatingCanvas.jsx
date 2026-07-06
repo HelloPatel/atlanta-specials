@@ -565,7 +565,7 @@ export default function SeatingCanvas() {
 
       {/* Mobile table detail bottom sheet */}
       {mobileSelectedTable && (
-        <div className="border-t border-gray-200 bg-white max-h-[40vh] overflow-auto">
+        <div className="border-t border-gray-200 bg-white max-h-[40vh] overflow-auto animate-slide-up">
           <div className="sticky top-0 bg-white px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-gray-900">{mobileSelectedTable.name}</h3>

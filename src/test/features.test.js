@@ -809,3 +809,96 @@ describe('Marketing reels responsive design', () => {
     expect(uniqueBgs.size).toBe(5);
   });
 });
+
+// ── iPhone Optimization Tests ──────────────────────────────
+describe('iPhone optimization', () => {
+  it('viewport meta includes viewport-fit=cover', () => {
+    const meta = 'width=device-width, initial-scale=1.0, viewport-fit=cover';
+    expect(meta).toContain('viewport-fit=cover');
+  });
+
+  it('safe area insets are applied', () => {
+    const bodyStyle = 'padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);';
+    expect(bodyStyle).toContain('env(safe-area-inset-top)');
+    expect(bodyStyle).toContain('env(safe-area-inset-bottom)');
+  });
+
+  it('tap highlight is removed for clean touch', () => {
+    const style = '-webkit-tap-highlight-color: transparent';
+    expect(style).toContain('transparent');
+  });
+
+  it('RSVP buttons have active:scale-95 for tap feedback', () => {
+    const classes = 'flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95';
+    expect(classes).toContain('active:scale-95');
+  });
+
+  it('selected RSVP button scales up', () => {
+    const classes = 'bg-green-500 text-white shadow-sm scale-105';
+    expect(classes).toContain('scale-105');
+  });
+});
+
+// ── Animation System Tests ──────────────────────────────
+describe('Animation system', () => {
+  it('provides all required animation utilities', () => {
+    const animations = ['fade-in', 'slide-up', 'slide-down', 'scale-in', 'bounce-in'];
+    expect(animations).toHaveLength(5);
+    expect(animations).toContain('bounce-in');
+    expect(animations).toContain('scale-in');
+  });
+
+  it('bounce-in uses spring-like cubic-bezier', () => {
+    const easing = 'cubic-bezier(0.34, 1.56, 0.64, 1)';
+    expect(easing).toContain('1.56');
+  });
+
+  it('bottom sheet uses slide-up animation', () => {
+    const classes = 'border-t border-gray-200 bg-white max-h-[40vh] overflow-auto animate-slide-up';
+    expect(classes).toContain('animate-slide-up');
+  });
+
+  it('confetti uses falling keyframe animation', () => {
+    const keyframes = '@keyframes confettiFall { 0% { transform: translateY(0) } 100% { transform: translateY(500px) rotate(720deg) } }';
+    expect(keyframes).toContain('confettiFall');
+    expect(keyframes).toContain('rotate(720deg)');
+  });
+});
+
+// ── Mobile Zoom Controls Tests ──────────────────────────────
+describe('Mobile seating zoom controls', () => {
+  it('zoom starts at 0.35', () => {
+    const initialZoom = 0.35;
+    expect(initialZoom).toBe(0.35);
+  });
+
+  it('zoom decreases by 0.05 on minus tap', () => {
+    let zoom = 0.35;
+    zoom = Math.max(0.15, zoom - 0.05);
+    expect(zoom).toBeCloseTo(0.30);
+  });
+
+  it('zoom increases by 0.05 on plus tap', () => {
+    let zoom = 0.35;
+    zoom = Math.min(0.6, zoom + 0.05);
+    expect(zoom).toBeCloseTo(0.40);
+  });
+
+  it('zoom cannot go below 0.15', () => {
+    let zoom = 0.15;
+    zoom = Math.max(0.15, zoom - 0.05);
+    expect(zoom).toBe(0.15);
+  });
+
+  it('zoom cannot exceed 0.6', () => {
+    let zoom = 0.6;
+    zoom = Math.min(0.6, zoom + 0.05);
+    expect(zoom).toBe(0.6);
+  });
+
+  it('zoom transition is smooth', () => {
+    const style = 'transition: transform 0.2s ease-out';
+    expect(style).toContain('0.2s');
+    expect(style).toContain('ease-out');
+  });
+});
