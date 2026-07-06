@@ -197,6 +197,18 @@ export default function SeatingCanvas() {
     return () => clearTimeout(timer);
   }, [hasChanges, handleSave]);
 
+  // Ctrl+S to force save immediately
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (hasChanges) handleSave();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [hasChanges, handleSave]);
+
   // Add table — accepts a preset or custom config
   const addTable = (config) => {
     const defaults = TABLE_DEFAULTS[config.shape] || TABLE_DEFAULTS.round;
