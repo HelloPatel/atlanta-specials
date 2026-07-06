@@ -569,6 +569,10 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     try {
       if (isEdit) {
         await updateGuest(weddingId, guest.id, form);

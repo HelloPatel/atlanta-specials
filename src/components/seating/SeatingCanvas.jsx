@@ -41,6 +41,7 @@ export default function SeatingCanvas() {
   const [filterSide, setFilterSide] = useState('all');
   const [filterFamily, setFilterFamily] = useState('all');
   const [hasChanges, setHasChanges] = useState(false);
+  const [saveState, setSaveState] = useState('idle'); // idle | saving | saved
   const [copiedFinderLink, setCopiedFinderLink] = useState(false);
   const [mobileSelectedTable, setMobileSelectedTable] = useState(null);
   const [undoStack, setUndoStack] = useState([]);
@@ -111,11 +112,14 @@ export default function SeatingCanvas() {
   // Save to Firestore
   const handleSave = useCallback(async () => {
     if (!activeWedding || !selectedEventId) return;
+    setSaveState('saving');
     try {
       await saveSeating(activeWedding.id, selectedEventId, { tables, rules, zones, venueImage: venueImage || null, venueOpacity });
       setHasChanges(false);
-      toast.success('Seating chart saved');
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 2000);
     } catch (err) {
+      setSaveState('idle');
       toast.error('Failed to save: ' + err.message);
     }
   }, [activeWedding, selectedEventId, tables, rules, zones, venueImage, venueOpacity, toast]);
@@ -889,7 +893,9 @@ export default function SeatingCanvas() {
             <span>{tables.reduce((s, t) => s + t.capacity, 0)} total capacity</span>
             {rules.length > 0 && <span>{rules.length} rules</span>}
             {ruleEvaluation.violationCount > 0 && <span className="text-amber-600">{ruleEvaluation.violationCount} warnings</span>}
-            {hasChanges && <span className="text-amber-600">● Unsaved changes</span>}
+            {saveState === 'saving' && <span className="text-blue-600 animate-pulse">⏳ Saving...</span>}
+            {saveState === 'saved' && <span className="text-green-600">✓ Saved</span>}
+            {hasChanges && saveState === 'idle' && <span className="text-amber-600">● Unsaved changes</span>}
           </div>
         </div>
       </div>
