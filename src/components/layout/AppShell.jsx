@@ -1,6 +1,7 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import Sidebar from './Sidebar';
+import CommandPalette from './CommandPalette';
 import { Menu, LayoutDashboard, Users, Grid3X3, Mail, MoreHorizontal } from 'lucide-react';
 
 export default function AppShell() {
@@ -8,6 +9,7 @@ export default function AppShell() {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <CommandPalette />
       {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 shadow-sm">
         <button
