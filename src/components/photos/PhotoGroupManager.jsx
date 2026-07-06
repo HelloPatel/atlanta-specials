@@ -378,18 +378,18 @@ function AdminPhotoGroupManager({ wedding }) {
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
         <div className="space-y-6 min-w-0 overflow-hidden">
-          <div className="grid gap-3 grid-cols-3 sm:gap-4">
-            <Card className="border-wine-100">
-              <p className="text-sm text-gray-500">Pending</p>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{pendingGroups.filter((group) => group.status === 'pending').length}</p>
+          <div className="grid gap-2 grid-cols-3 sm:gap-4">
+            <Card className="border-wine-100 !p-3 sm:!p-4">
+              <p className="text-xs sm:text-sm text-gray-500">Pending</p>
+              <p className="mt-1 text-2xl sm:text-3xl font-bold text-gray-900">{pendingGroups.filter((group) => group.status === 'pending').length}</p>
             </Card>
-            <Card className="border-wine-100">
-              <p className="text-sm text-gray-500">Current</p>
-              <p className="mt-2 text-3xl font-bold text-wine-700">{currentGroup ? 1 : 0}</p>
+            <Card className="border-wine-100 !p-3 sm:!p-4">
+              <p className="text-xs sm:text-sm text-gray-500">Current</p>
+              <p className="mt-1 text-2xl sm:text-3xl font-bold text-wine-700">{currentGroup ? 1 : 0}</p>
             </Card>
-            <Card className="border-wine-100">
-              <p className="text-sm text-gray-500">Completed</p>
-              <p className="mt-2 text-3xl font-bold text-emerald-600">{completedGroups.length}</p>
+            <Card className="border-wine-100 !p-3 sm:!p-4">
+              <p className="text-xs sm:text-sm text-gray-500">Done</p>
+              <p className="mt-1 text-2xl sm:text-3xl font-bold text-emerald-600">{completedGroups.length}</p>
             </Card>
           </div>
 

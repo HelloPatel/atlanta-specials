@@ -2,192 +2,214 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reel 3 — Excel Chaos vs Phera</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Reel 3 — Excel vs Phera</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  width: 1080px; height: 1920px;
-  font-family: 'Inter', system-ui, sans-serif;
-  overflow: hidden; position: relative;
-}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* Split screen */
-.split { position: absolute; inset: 0; }
-
-/* LEFT: Excel chaos (shown first) */
-.chaos-side {
+.phase {
   position: absolute; inset: 0;
-  background: #f3f4f6;
-  animation: chaosPhase 7s ease-in-out infinite;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+/* CHAOS PHASE */
+.chaos-phase {
+  background: linear-gradient(135deg, #1a2e1a 0%, #0a1f0a 100%);
+  animation: chaosPhase 8s ease-in-out infinite;
 }
 @keyframes chaosPhase {
   0%, 45% { opacity: 1; }
   50%, 100% { opacity: 0; pointer-events: none; }
 }
 
-.chaos-header {
-  background: #217346; padding: 20px 30px;
-  display: flex; align-items: center; gap: 12px;
+.chaos-phase .title {
+  font-size: clamp(14px, 3.5vw, 22px); color: rgba(255,255,255,0.5);
+  font-weight: 600; margin-bottom: 16px; letter-spacing: 2px; text-transform: uppercase;
 }
-.chaos-header span { color: #fff; font-size: 18px; font-weight: 600; }
 
-.chaos-grid {
-  padding: 10px;
-  font-size: 11px;
+.spreadsheet {
+  width: 90%; max-width: 380px;
+  background: #1a3a1a;
+  border: 2px solid #2d5a2d;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: clamp(9px, 2.2vw, 12px);
+  animation: chaosScroll 8s ease-in-out infinite;
 }
-.chaos-grid table { width: 100%; border-collapse: collapse; }
-.chaos-grid th { background: #e5e7eb; padding: 8px 6px; text-align: left; font-size: 10px; color: #374151; border: 1px solid #d1d5db; }
-.chaos-grid td { padding: 7px 6px; border: 1px solid #d1d5db; font-size: 11px; color: #1f2937; white-space: nowrap; overflow: hidden; }
-.chaos-grid tr:nth-child(even) td { background: #f9fafb; }
-.chaos-grid .err { background: #fecaca !important; color: #991b1b; }
-.chaos-grid .dup { background: #fef3c7 !important; }
-
-/* Scrolling effect */
-.chaos-scroll {
-  animation: scrollDown 7s linear infinite;
-  transform: translateY(0);
-}
-@keyframes scrollDown {
+@keyframes chaosScroll {
   0% { transform: translateY(0); }
-  40% { transform: translateY(-600px); }
-  45%, 100% { transform: translateY(-600px); }
+  20% { transform: translateY(-5px); }
+  30% { transform: translateY(3px); }
+  40% { transform: translateY(-8px); }
+  45%, 100% { transform: translateY(0); }
 }
 
-/* Pain text overlay */
-.pain-text {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  text-align: center; z-index: 10;
-  animation: painIn 7s ease-in-out infinite;
-  opacity: 0;
+.spreadsheet .row {
+  display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr;
+  padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.7);
 }
-@keyframes painIn {
-  0%, 25% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-  30%, 44% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  45%, 100% { opacity: 0; }
+.spreadsheet .row.header {
+  background: #2d5a2d; color: #fff; font-weight: 600;
 }
-.pain-text h2 {
-  font-size: 72px; font-weight: 800; color: #dc2626;
-  text-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  background: #fff; padding: 20px 40px; border-radius: 20px;
+.spreadsheet .row .error {
+  color: #ef4444; font-weight: 600;
+}
+.spreadsheet .row .dup {
+  color: #f59e0b; text-decoration: line-through;
 }
 
-/* RIGHT: Phera clean (shown after) */
-.phera-side {
+.chaos-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, #1a0a0a, #2d1015);
-  animation: pheraPhase 7s ease-in-out infinite;
-  opacity: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.7);
+  animation: overlayFade 8s ease-in-out infinite;
+}
+@keyframes overlayFade {
+  0%, 25% { opacity: 0; }
+  30%, 45% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.chaos-overlay h2 {
+  font-size: clamp(22px, 6vw, 40px); color: #fff; font-weight: 800;
+  text-align: center; padding: 0 20px;
+}
+
+/* PHERA PHASE */
+.phera-phase {
+  background: linear-gradient(135deg, #1a0a0a 0%, #2d1015 50%, #1a0a0a 100%);
+  animation: pheraPhase 8s ease-in-out infinite;
 }
 @keyframes pheraPhase {
-  0%, 48% { opacity: 0; }
-  52%, 95% { opacity: 1; }
+  0%, 45% { opacity: 0; pointer-events: none; }
+  50%, 95% { opacity: 1; }
   100% { opacity: 0; }
 }
 
-.phera-content {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  text-align: center; width: 80%;
+.phera-phase .title {
+  font-size: clamp(14px, 3.5vw, 22px); color: rgba(255,255,255,0.5);
+  font-weight: 600; margin-bottom: 24px; letter-spacing: 2px; text-transform: uppercase;
 }
-.phera-content .brand {
-  font-size: 96px; font-weight: 800;
-  background: linear-gradient(135deg, #fff, #fda4af);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  margin-bottom: 40px;
+
+.features {
+  width: 85%; max-width: 360px;
+  display: flex; flex-direction: column; gap: 14px;
 }
-.phera-content h2 {
-  font-size: 52px; font-weight: 700; color: #fff; line-height: 1.3;
-  margin-bottom: 30px;
-}
-.phera-content .features {
-  display: flex; flex-direction: column; gap: 20px; align-items: center;
-}
-.phera-content .feat {
-  display: flex; align-items: center; gap: 16px;
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 16px; padding: 18px 28px;
-  font-size: 24px; color: rgba(255,255,255,0.9);
-  animation: featIn 7s ease-out infinite;
+
+.feature {
+  display: flex; align-items: center; gap: 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 14px 16px;
   opacity: 0;
+  transform: translateX(30px);
 }
-.feat:nth-child(1) { animation-delay: 0s; }
-.feat:nth-child(2) { animation-delay: 0.2s; }
-.feat:nth-child(3) { animation-delay: 0.4s; }
-.feat:nth-child(4) { animation-delay: 0.6s; }
+.feature:nth-child(1) { animation: featureIn 8s 4.2s ease-out infinite; }
+.feature:nth-child(2) { animation: featureIn 8s 4.5s ease-out infinite; }
+.feature:nth-child(3) { animation: featureIn 8s 4.8s ease-out infinite; }
+.feature:nth-child(4) { animation: featureIn 8s 5.1s ease-out infinite; }
+.feature:nth-child(5) { animation: featureIn 8s 5.4s ease-out infinite; }
 
-@keyframes featIn {
-  0%, 52% { opacity: 0; transform: translateX(-20px); }
-  57% { opacity: 1; transform: translateX(0); }
-  90% { opacity: 1; }
-  95%, 100% { opacity: 0; }
+@keyframes featureIn {
+  0%, 2% { opacity: 0; transform: translateX(30px); }
+  6%, 52% { opacity: 1; transform: translateX(0); }
+  56%, 100% { opacity: 0; transform: translateX(0); }
 }
 
-.feat .icon { font-size: 28px; }
-.feat .check { color: #22c55e; font-weight: 700; margin-left: auto; }
-
-.bottom-tag {
-  position: absolute; bottom: 100px; left: 0; right: 0; text-align: center;
-  font-size: 28px; color: rgba(255,255,255,0.5);
-  animation: pheraPhase 7s ease-in-out infinite; opacity: 0;
+.feature .icon {
+  width: clamp(32px, 9vw, 44px); height: clamp(32px, 9vw, 44px);
+  border-radius: 12px;
+  background: rgba(190, 18, 60, 0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(16px, 4vw, 22px); flex-shrink: 0;
 }
+.feature .text h3 {
+  font-size: clamp(12px, 3vw, 16px); color: #fff; font-weight: 600;
+}
+.feature .text p {
+  font-size: clamp(10px, 2.5vw, 13px); color: rgba(255,255,255,0.5); margin-top: 2px;
+}
+
+.bottom-cta {
+  position: absolute; bottom: 5%; left: 0; right: 0; text-align: center;
+  z-index: 10;
+}
+.bottom-cta .brand {
+  font-size: clamp(26px, 7vw, 44px); font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #fda4af 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+.bottom-cta p { font-size: clamp(11px, 3vw, 18px); color: rgba(255,255,255,0.5); }
+
+.glow { position: absolute; width: 50vw; height: 50vw; border-radius: 50%; pointer-events: none; }
+.glow.g1 { top: 30%; left: -15%; background: radial-gradient(circle, rgba(190, 18, 60, 0.12), transparent 70%); animation: pulse 4s ease-in-out infinite; }
+.glow.g2 { bottom: 20%; right: -15%; background: radial-gradient(circle, rgba(190, 18, 60, 0.1), transparent 70%); animation: pulse 4s 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
 </style>
 </head>
 <body>
-  <!-- EXCEL CHAOS PHASE -->
-  <div class="chaos-side">
-    <div class="chaos-header">
-      <span>📊 Wedding_Guest_List_FINAL_v7_UPDATED.xlsx</span>
+  <div class="glow g1"></div>
+  <div class="glow g2"></div>
+
+  <!-- CHAOS: Excel -->
+  <div class="phase chaos-phase">
+    <div class="title">Your current process</div>
+    <div class="spreadsheet">
+      <div class="row header"><span>Name</span><span>Event</span><span>RSVP</span><span>Table</span></div>
+      <div class="row"><span>Sharma, Priya</span><span>Reception</span><span class="error">???</span><span>—</span></div>
+      <div class="row"><span class="dup">Patel, Ravi (dup)</span><span>All</span><span>Yes</span><span>3</span></div>
+      <div class="row"><span>Khan, Aisha</span><span>Sangeet</span><span>Yes</span><span class="error">ERR</span></div>
+      <div class="row"><span>Mehta Family (7)</span><span>???</span><span>Partial</span><span>—</span></div>
+      <div class="row"><span>Singh, Jas</span><span>Ceremony</span><span class="error">No reply</span><span>12</span></div>
+      <div class="row"><span>Reddy, Ananya</span><span>Reception</span><span>Yes</span><span>3</span></div>
+      <div class="row"><span>Gupta, Arjun</span><span>All</span><span class="error">???</span><span>—</span></div>
     </div>
-    <div class="chaos-grid">
-      <div class="chaos-scroll">
-        <table>
-          <thead>
-            <tr><th>Name</th><th>Side</th><th>RSVP Mehndi</th><th>RSVP Sangeet</th><th>RSVP Wedding</th><th>Table</th><th>Dietary</th><th>Hotel?</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Rajesh Shah</td><td>Bride</td><td>Yes</td><td>Yes</td><td>Yes</td><td>1</td><td>Jain</td><td>No</td></tr>
-            <tr><td>Meena Shah</td><td>Bride</td><td>Yes</td><td>Yes</td><td>Yes</td><td>1</td><td>Jain</td><td>No</td></tr>
-            <tr><td class="err">Suresh Mehta</td><td>Bride</td><td class="err">???</td><td>Yes</td><td class="err">Maybe</td><td class="err"></td><td>Veg</td><td>Yes</td></tr>
-            <tr><td>Usha Mehta</td><td>Bride</td><td>Yes</td><td>Yes</td><td>Yes</td><td class="err">TBD</td><td>Jain</td><td>Yes</td></tr>
-            <tr class="dup"><td class="dup">Rohan Mehta</td><td>Bride</td><td>No</td><td>Yes</td><td>Yes</td><td>3</td><td>Non-veg</td><td>Yes</td></tr>
-            <tr class="dup"><td class="dup">Rohan Mehta</td><td class="err">Groom??</td><td>Yes</td><td></td><td>Yes</td><td class="err">3 or 7?</td><td>NV</td><td></td></tr>
-            <tr><td>Bharat Shah</td><td>Bride</td><td>Yes</td><td>Yes</td><td>Yes</td><td>2</td><td>Veg</td><td>Yes</td></tr>
-            <tr><td>Hema Shah</td><td>Bride</td><td>Yes</td><td>Yes</td><td>Yes</td><td>2</td><td>Veg</td><td>Yes</td></tr>
-            <tr><td class="err">Nikhil Shah + Tanya??</td><td>Bride</td><td class="err">+1?</td><td>Yes</td><td>Yes</td><td class="err"></td><td></td><td>Yes</td></tr>
-            <tr><td>Vikram Patel</td><td>Groom</td><td>Yes</td><td>Yes</td><td>Yes</td><td>5</td><td>Veg</td><td>No</td></tr>
-            <tr><td>Sonal Patel</td><td>Groom</td><td>Yes</td><td>Yes</td><td>Yes</td><td>5</td><td>Veg</td><td>No</td></tr>
-            <tr><td class="err">Kevin O'Brien</td><td>Groom</td><td class="err">N/A</td><td>Yes</td><td>Yes</td><td class="err">??</td><td class="err">non veg/gluten free??</td><td>Yes</td></tr>
-            <tr><td>Sahil + Amanda</td><td>Groom</td><td>Yes</td><td>Yes</td><td>Yes</td><td>6</td><td>NV</td><td>Yes</td></tr>
-            <tr><td class="err">DELETE THIS ROW</td><td class="err">-</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><td>Ashok Bhavsar</td><td>Groom</td><td>Yes</td><td>Yes</td><td>Yes</td><td class="err">needs wheelchair table</td><td>Veg</td><td>Yes</td></tr>
-            <tr><td>Manjula Bhavsar</td><td>Groom</td><td>Yes</td><td>Yes</td><td>Yes</td><td>7</td><td>Veg</td><td>Yes</td></tr>
-            <tr><td class="dup">Chris Anderson + Katie</td><td>Groom</td><td></td><td>Yes</td><td>Yes</td><td></td><td>NV</td><td>Yes</td></tr>
-            <tr><td>Darshan Rana</td><td>Groom</td><td>No</td><td>Yes</td><td>Yes</td><td>6</td><td>Veg</td><td>Yes</td></tr>
-            <tr><td class="err">MOM ADD 5 MORE PEOPLE FROM TEMPLE</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-            <tr><td>Jatin Bhakta</td><td>Groom</td><td>Yes</td><td>Yes</td><td>Yes</td><td>8</td><td>Veg</td><td>No</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="pain-text">
+    <div class="chaos-overlay">
       <h2>Sound familiar? 😅</h2>
     </div>
   </div>
 
-  <!-- PHERA CLEAN PHASE -->
-  <div class="phera-side">
-    <div class="phera-content">
-      <div class="brand">Phera</div>
-      <h2>Replace the chaos.</h2>
-      <div class="features">
-        <div class="feat"><span class="icon">👨‍👩‍👧‍👦</span> Family-grouped RSVPs <span class="check">✓</span></div>
-        <div class="feat"><span class="icon">🪑</span> Drag & drop seating <span class="check">✓</span></div>
-        <div class="feat"><span class="icon">📅</span> Per-event invite lists <span class="check">✓</span></div>
-        <div class="feat"><span class="icon">🖨️</span> Auto place cards <span class="check">✓</span></div>
+  <!-- PHERA: Solution -->
+  <div class="phase phera-phase">
+    <div class="title">With Phera</div>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">📋</div>
+        <div class="text"><h3>One dashboard</h3><p>All guests, events & RSVPs in one place</p></div>
+      </div>
+      <div class="feature">
+        <div class="icon">👨‍👩‍👧‍👦</div>
+        <div class="text"><h3>Family grouping</h3><p>RSVP once for the whole family</p></div>
+      </div>
+      <div class="feature">
+        <div class="icon">🪑</div>
+        <div class="text"><h3>Drag & drop seating</h3><p>Visual table builder with capacity</p></div>
+      </div>
+      <div class="feature">
+        <div class="icon">📊</div>
+        <div class="text"><h3>Real-time tracking</h3><p>See who responded instantly</p></div>
+      </div>
+      <div class="feature">
+        <div class="icon">🖨️</div>
+        <div class="text"><h3>Print-ready exports</h3><p>Place cards & table lists in one click</p></div>
       </div>
     </div>
-    <div class="bottom-tag">Free for up to 100 guests</div>
+  </div>
+
+  <div class="bottom-cta">
+    <div class="brand">Phera</div>
+    <p>Ditch the spreadsheet</p>
   </div>
 </body>
 </html>

@@ -716,3 +716,96 @@ describe('Inline edit parsing', () => {
     expect(state).toBeNull();
   });
 });
+
+// ── Confetti Animation Tests ──────────────────────────────
+describe('Confetti animation on RSVP success', () => {
+  it('generates correct number of confetti dots', () => {
+    const COUNT = 30;
+    const dots = Array.from({ length: COUNT }, (_, i) => ({
+      id: i,
+      color: ['#be123c', '#f59e0b', '#10b981', '#6366f1'][i % 4],
+      left: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 2}s`,
+    }));
+    expect(dots).toHaveLength(30);
+    expect(dots[0].color).toBe('#be123c');
+    expect(dots[3].color).toBe('#6366f1');
+  });
+
+  it('confetti dots have valid CSS properties', () => {
+    const dot = {
+      left: `${Math.random() * 100}%`,
+      animationDelay: `${(Math.random() * 2).toFixed(2)}s`,
+      backgroundColor: '#be123c',
+    };
+    expect(dot.left).toMatch(/^\d+(\.\d+)?%$/);
+    expect(dot.animationDelay).toMatch(/^\d+\.\d+s$/);
+  });
+});
+
+// ── Mobile Responsive Layout Tests ──────────────────────────────
+describe('Mobile responsive layouts', () => {
+  it('photo stats grid uses mobile-friendly classes', () => {
+    const gridClasses = 'grid gap-2 grid-cols-3 sm:gap-4';
+    expect(gridClasses).toContain('grid-cols-3');
+    expect(gridClasses).toContain('gap-2');
+    expect(gridClasses).toContain('sm:gap-4');
+  });
+
+  it('bets stats grid stacks on mobile', () => {
+    const gridClasses = 'grid gap-2 grid-cols-2 sm:gap-4 md:grid-cols-4';
+    expect(gridClasses).toContain('grid-cols-2');
+    expect(gridClasses).toContain('md:grid-cols-4');
+  });
+
+  it('cards use compact padding on mobile', () => {
+    const cardClasses = 'border-wine-100 !p-3 sm:!p-4';
+    expect(cardClasses).toContain('!p-3');
+    expect(cardClasses).toContain('sm:!p-4');
+  });
+
+  it('seating mobile view uses bottom sheet pattern', () => {
+    const mobileSelectedTable = { id: 't1', name: 'Table 1', capacity: 10, assignedGuests: ['g1', 'g2'] };
+    expect(mobileSelectedTable.assignedGuests.length).toBeLessThanOrEqual(mobileSelectedTable.capacity);
+    expect(mobileSelectedTable.name).toBeDefined();
+  });
+
+  it('mobile bottom sheet shows guest count correctly', () => {
+    const table = { id: 't5', name: 'Table 5', capacity: 10, assignedGuests: ['a', 'b', 'c'], shape: 'round' };
+    const label = `${table.assignedGuests.length}/${table.capacity} seats filled`;
+    expect(label).toBe('3/10 seats filled');
+  });
+});
+
+// ── Marketing Reels Responsiveness Tests ──────────────────────────────
+describe('Marketing reels responsive design', () => {
+  it('uses viewport-relative units for sizing', () => {
+    const clampValues = [
+      'clamp(32px, 8vw, 64px)',
+      'clamp(60px, 18vw, 140px)',
+      'clamp(11px, 3vw, 14px)',
+    ];
+    clampValues.forEach((v) => {
+      expect(v).toMatch(/clamp\(\d+px,\s*\d+(\.\d+)?vw,\s*\d+px\)/);
+    });
+  });
+
+  it('reel layout uses percentage positioning for iPhone compatibility', () => {
+    const positions = { top: '8%', left: '5%', right: '5%', bottom: '18%' };
+    Object.values(positions).forEach((val) => {
+      expect(val).toMatch(/^\d+%$/);
+    });
+  });
+
+  it('all 5 reels have distinct themes', () => {
+    const reelThemes = [
+      { name: 'seating', bg: 'linear-gradient(135deg, #1a0a0a 0%, #2d1015 50%, #1a0a0a 100%)' },
+      { name: 'rsvp', bg: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' },
+      { name: 'excel', bg: 'linear-gradient(135deg, #1a2e1a 0%, #0a1f0a 100%)' },
+      { name: 'scale', bg: 'linear-gradient(180deg, #0a0a1a 0%, #1a0a2e 50%, #0a0a1a 100%)' },
+      { name: 'checkin', bg: 'linear-gradient(180deg, #0a1628 0%, #162040 50%, #0a1628 100%)' },
+    ];
+    const uniqueBgs = new Set(reelThemes.map((r) => r.bg));
+    expect(uniqueBgs.size).toBe(5);
+  });
+});

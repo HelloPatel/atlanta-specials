@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Reel 5 — Family Check-In</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: linear-gradient(180deg, #0a1628 0%, #162040 50%, #0a1628 100%);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+.top-text {
+  position: absolute; top: 8%; left: 0; right: 0; text-align: center;
+  padding: 0 24px;
+  animation: fadeSlideDown 0.6s ease-out forwards;
+  opacity: 0;
+}
+.top-text h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(28px, 7vw, 52px); color: #fff; margin-bottom: 6px;
+}
+.top-text p {
+  font-size: clamp(13px, 3.5vw, 20px); color: rgba(255,255,255,0.6); font-weight: 500;
+}
+
+.checkin-list {
+  position: absolute; top: 22%; left: 6%; right: 6%; bottom: 18%;
+  display: flex; flex-direction: column; gap: 12px;
+  padding-top: 10px;
+}
+
+.checkin-card {
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  opacity: 0;
+  transform: translateY(20px);
+}
+.checkin-card:nth-child(1) { animation: cardIn 8s 0.5s ease-out infinite; }
+.checkin-card:nth-child(2) { animation: cardIn 8s 1.0s ease-out infinite; }
+.checkin-card:nth-child(3) { animation: cardIn 8s 1.5s ease-out infinite; }
+.checkin-card:nth-child(4) { animation: cardIn 8s 2.0s ease-out infinite; }
+.checkin-card:nth-child(5) { animation: cardIn 8s 2.5s ease-out infinite; }
+.checkin-card:nth-child(6) { animation: cardIn 8s 3.0s ease-out infinite; }
+
+@keyframes cardIn {
+  0%, 3% { opacity: 0; transform: translateY(20px); }
+  8%, 80% { opacity: 1; transform: translateY(0); }
+  85%, 100% { opacity: 0; transform: translateY(0); }
+}
+
+.checkin-card .avatar {
+  width: clamp(36px, 10vw, 48px); height: clamp(36px, 10vw, 48px);
+  border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(14px, 3.5vw, 20px); color: #fff; font-weight: 700;
+  flex-shrink: 0;
+}
+.checkin-card .info {
+  flex: 1;
+}
+.checkin-card .info h3 {
+  font-size: clamp(13px, 3.2vw, 17px); color: #fff; font-weight: 600;
+}
+.checkin-card .info p {
+  font-size: clamp(10px, 2.5vw, 13px); color: rgba(255,255,255,0.5); margin-top: 2px;
+}
+.checkin-card .status {
+  width: clamp(28px, 7vw, 36px); height: clamp(28px, 7vw, 36px);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(14px, 3.5vw, 20px);
+  flex-shrink: 0;
+}
+.checkin-card .status.checked {
+  background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981;
+  animation: checkPulse 2s ease-in-out infinite;
+}
+.checkin-card .status.pending {
+  background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.2);
+}
+
+@keyframes checkPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.3); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+.progress-bar {
+  position: absolute; bottom: 20%; left: 8%; right: 8%;
+  animation: fadeSlideUp 0.6s 3.5s ease-out forwards;
+  opacity: 0;
+}
+.progress-bar .label {
+  display: flex; justify-content: space-between; margin-bottom: 8px;
+}
+.progress-bar .label span {
+  font-size: clamp(11px, 2.8vw, 15px); color: rgba(255,255,255,0.6); font-weight: 600;
+}
+.progress-bar .label .num { color: #10b981; }
+.progress-bar .bar {
+  height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;
+}
+.progress-bar .bar .fill {
+  height: 100%; width: 0; background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 4px;
+  animation: fillBar 3s 4s ease-out forwards;
+}
+@keyframes fillBar {
+  to { width: 72%; }
+}
+
+.bottom-cta {
+  position: absolute; bottom: 4%; left: 0; right: 0; text-align: center;
+  animation: fadeSlideUp 0.6s 4s ease-out forwards;
+  opacity: 0;
+}
+.bottom-cta .brand {
+  font-size: clamp(26px, 7vw, 44px); font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+.bottom-cta p { font-size: clamp(11px, 3vw, 18px); color: rgba(255,255,255,0.5); }
+
+@keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.glow { position: absolute; width: 50vw; height: 50vw; border-radius: 50%; pointer-events: none; }
+.glow.g1 { top: 15%; left: -15%; background: radial-gradient(circle, rgba(59, 130, 246, 0.12), transparent 70%); animation: pulse 4s ease-in-out infinite; }
+.glow.g2 { bottom: 20%; right: -15%; background: radial-gradient(circle, rgba(16, 185, 129, 0.1), transparent 70%); animation: pulse 4s 2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
+</style>
+</head>
+<body>
+  <div class="glow g1"></div>
+  <div class="glow g2"></div>
+
+  <div class="top-text">
+    <h1>Day-of Check-In</h1>
+    <p>Know exactly who's arrived</p>
+  </div>
+
+  <div class="checkin-list">
+    <div class="checkin-card">
+      <div class="avatar">P</div>
+      <div class="info"><h3>Patel Family</h3><p>Table 5 • 4 guests</p></div>
+      <div class="status checked">✓</div>
+    </div>
+    <div class="checkin-card">
+      <div class="avatar">S</div>
+      <div class="info"><h3>Sharma Family</h3><p>Table 12 • 6 guests</p></div>
+      <div class="status checked">✓</div>
+    </div>
+    <div class="checkin-card">
+      <div class="avatar">K</div>
+      <div class="info"><h3>Khan Family</h3><p>Table 8 • 3 guests</p></div>
+      <div class="status checked">✓</div>
+    </div>
+    <div class="checkin-card">
+      <div class="avatar">M</div>
+      <div class="info"><h3>Mehta Family</h3><p>Table 3 • 5 guests</p></div>
+      <div class="status pending">○</div>
+    </div>
+    <div class="checkin-card">
+      <div class="avatar">R</div>
+      <div class="info"><h3>Reddy Family</h3><p>Table 7 • 4 guests</p></div>
+      <div class="status pending">○</div>
+    </div>
+    <div class="checkin-card">
+      <div class="avatar">G</div>
+      <div class="info"><h3>Gupta Family</h3><p>Table 1 • 3 guests</p></div>
+      <div class="status pending">○</div>
+    </div>
+  </div>
+
+  <div class="progress-bar">
+    <div class="label"><span>Arrived</span><span class="num">362 / 500</span></div>
+    <div class="bar"><div class="fill"></div></div>
+  </div>
+
+  <div class="bottom-cta">
+    <div class="brand">Phera</div>
+    <p>Real-time venue tracking</p>
+  </div>
+</body>
+</html>

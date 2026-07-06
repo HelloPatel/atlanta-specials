@@ -290,22 +290,22 @@ function AdminBetsManager({ wedding }) {
         </Card>
       )}
 
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        <Card className="border-wine-100">
-          <p className="text-sm text-gray-500">Questions</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{betsConfig.questions.length}</p>
+      <div className="grid gap-2 grid-cols-2 sm:gap-4 md:grid-cols-4">
+        <Card className="border-wine-100 !p-3 sm:!p-4">
+          <p className="text-xs sm:text-sm text-gray-500">Questions</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-bold text-gray-900">{betsConfig.questions.length}</p>
         </Card>
-        <Card className="border-wine-100">
-          <p className="text-sm text-gray-500">Votes</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{votes.length}</p>
+        <Card className="border-wine-100 !p-3 sm:!p-4">
+          <p className="text-xs sm:text-sm text-gray-500">Votes</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-bold text-gray-900">{votes.length}</p>
         </Card>
-        <Card className="border-wine-100">
-          <p className="text-sm text-gray-500">Answered</p>
-          <p className="mt-2 text-3xl font-bold text-emerald-600">{Object.keys(betsConfig.correctAnswers || {}).length}</p>
+        <Card className="border-wine-100 !p-3 sm:!p-4">
+          <p className="text-xs sm:text-sm text-gray-500">Answered</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-bold text-emerald-600">{Object.keys(betsConfig.correctAnswers || {}).length}</p>
         </Card>
-        <Card className="border-wine-100">
-          <p className="text-sm text-gray-500">Voting</p>
-          <div className="mt-3">
+        <Card className="border-wine-100 !p-3 sm:!p-4">
+          <p className="text-xs sm:text-sm text-gray-500">Voting</p>
+          <div className="mt-2">
             <Button
               size="sm"
               variant={betsConfig.votingLocked ? 'danger' : 'primary'}

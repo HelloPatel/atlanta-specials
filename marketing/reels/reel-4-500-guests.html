@@ -2,186 +2,163 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reel 4 — 500 Guests, One Calm Place</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Reel 4 — 500+ Guests, No Problem</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  width: 1080px; height: 1920px;
-  background: #0a0a0a;
-  font-family: 'Inter', system-ui, sans-serif;
-  overflow: hidden; position: relative;
-  display: flex; align-items: center; justify-content: center;
-}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700&display=swap');
-
-/* Background subtle gradient */
-.bg {
-  position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 40%, rgba(168, 85, 247, 0.06), transparent 70%);
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: linear-gradient(180deg, #0a0a1a 0%, #1a0a2e 50%, #0a0a1a 100%);
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Counter animation */
-.counter-section {
-  position: absolute; top: 320px; left: 0; right: 0; text-align: center;
+.top-text {
+  position: absolute; top: 8%; left: 0; right: 0; text-align: center;
+  padding: 0 24px;
+  animation: fadeSlideDown 0.6s ease-out forwards;
+  opacity: 0;
+}
+.top-text h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(26px, 7vw, 52px); color: #fff; margin-bottom: 6px;
+  text-shadow: 0 4px 30px rgba(0,0,0,0.5);
+}
+.top-text p {
+  font-size: clamp(13px, 3.5vw, 22px); color: rgba(255,255,255,0.6); font-weight: 500;
+}
+
+.counter-area {
+  position: absolute; top: 28%; left: 0; right: 0; text-align: center;
+  animation: fadeIn 0.5s 0.5s ease-out forwards;
+  opacity: 0;
 }
 .counter {
-  font-size: 240px; font-weight: 900; color: #fff;
-  font-variant-numeric: tabular-nums;
-  animation: countUp 7s ease-out infinite;
-  opacity: 0;
+  font-size: clamp(80px, 22vw, 180px); font-weight: 900;
+  background: linear-gradient(135deg, #a78bfa 0%, #f472b6 50%, #fb923c 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  line-height: 1;
+  animation: countUp 4s 1s ease-out forwards;
+  filter: drop-shadow(0 10px 40px rgba(167, 139, 250, 0.3));
 }
 @keyframes countUp {
-  0% { opacity: 0; content: "0"; }
-  5% { opacity: 1; }
-  /* We'll use stepped animations on children */
-  60% { opacity: 1; }
-  85% { opacity: 1; }
-  90%, 100% { opacity: 0; }
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
 }
-
-/* Since we can't animate content, we use span switching */
-.counter-wrapper { position: relative; height: 280px; display: flex; align-items: center; justify-content: center; }
-.counter-num {
-  position: absolute; font-size: 240px; font-weight: 900; color: #fff;
-  opacity: 0;
-}
-.counter-num:nth-child(1) { animation: numShow 7s 0.3s infinite; }
-.counter-num:nth-child(2) { animation: numShow 7s 0.6s infinite; }
-.counter-num:nth-child(3) { animation: numShow 7s 0.9s infinite; }
-.counter-num:nth-child(4) { animation: numShow 7s 1.2s infinite; }
-.counter-num:nth-child(5) { animation: numShow 7s 1.5s infinite; }
-.counter-num:nth-child(6) { animation: numShow 7s 1.8s infinite; }
-
-@keyframes numShow {
-  0%, 8% { opacity: 0; transform: translateY(20px); }
-  10% { opacity: 1; transform: translateY(0); }
-  12% { opacity: 0; }
-  /* Only the last one stays */
-}
-/* Final number stays visible */
-.counter-final {
-  position: absolute; font-size: 240px; font-weight: 900;
-  background: linear-gradient(135deg, #fff, #e9d5ff);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  opacity: 0;
-  animation: finalNum 7s 2.2s infinite;
-}
-@keyframes finalNum {
-  0%, 0% { opacity: 0; transform: scale(0.8); }
-  5% { opacity: 1; transform: scale(1.05); }
-  10% { transform: scale(1); }
-  75% { opacity: 1; }
-  85%, 100% { opacity: 0; }
-}
-
 .counter-label {
-  font-size: 48px; font-weight: 600; color: rgba(255,255,255,0.6);
-  margin-top: 20px;
-  opacity: 0; animation: fadeUp 7s 2.5s infinite;
-}
-@keyframes fadeUp {
-  0% { opacity: 0; transform: translateY(10px); }
-  5% { opacity: 1; transform: translateY(0); }
-  75% { opacity: 1; }
-  85%, 100% { opacity: 0; }
+  font-size: clamp(16px, 4vw, 28px); color: rgba(255,255,255,0.6);
+  font-weight: 600; margin-top: 8px; letter-spacing: 2px;
 }
 
-/* Middle tagline */
-.tagline {
-  position: absolute; top: 780px; left: 0; right: 0; text-align: center;
-  padding: 0 60px;
-  opacity: 0; animation: fadeUp 7s 3s infinite;
-}
-.tagline h2 {
-  font-size: 64px; font-weight: 800; color: #fff; line-height: 1.3;
-}
-.tagline .calm { color: #a78bfa; }
-
-/* Stats row */
-.stats {
-  position: absolute; top: 1050px; left: 0; right: 0;
-  display: flex; justify-content: center; gap: 60px;
-  opacity: 0; animation: fadeUp 7s 3.5s infinite;
-}
-.stat { text-align: center; }
-.stat .num { font-size: 56px; font-weight: 800; color: #a78bfa; }
-.stat .label { font-size: 20px; color: rgba(255,255,255,0.5); margin-top: 4px; }
-
-/* Bottom brand */
-.brand-section {
-  position: absolute; bottom: 200px; left: 0; right: 0; text-align: center;
-  opacity: 0; animation: fadeUp 7s 4s infinite;
-}
-.brand-section .brand {
-  font-size: 84px; font-weight: 900;
-  background: linear-gradient(135deg, #fff, #c4b5fd);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.brand-section p {
-  font-size: 26px; color: rgba(255,255,255,0.4); margin-top: 12px;
-}
-
-/* Floating dots (representing guests) */
-.dots {
-  position: absolute; inset: 0; pointer-events: none;
+.dots-container {
+  position: absolute; top: 50%; left: 5%; right: 5%; bottom: 28%;
+  overflow: hidden;
 }
 .dot {
-  position: absolute; width: 6px; height: 6px; border-radius: 50%;
-  background: rgba(167, 139, 250, 0.3);
-  animation: float 7s ease-in-out infinite;
+  position: absolute;
+  width: clamp(6px, 1.8vw, 10px); height: clamp(6px, 1.8vw, 10px);
+  border-radius: 50%;
+  opacity: 0;
+  animation: floatDot 3s ease-in-out infinite;
 }
-@keyframes float {
-  0%, 100% { transform: translateY(0) scale(0); opacity: 0; }
-  20% { transform: translateY(-20px) scale(1); opacity: 0.6; }
-  80% { transform: translateY(-80px) scale(1); opacity: 0.3; }
-  90% { opacity: 0; }
+@keyframes floatDot {
+  0% { opacity: 0; transform: translateY(100%) scale(0); }
+  20% { opacity: 0.8; transform: translateY(50%) scale(1); }
+  80% { opacity: 0.6; transform: translateY(-50%) scale(0.9); }
+  100% { opacity: 0; transform: translateY(-100%) scale(0); }
 }
+
+.stats-row {
+  position: absolute; bottom: 18%; left: 5%; right: 5%;
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
+  animation: fadeSlideUp 0.6s 1.5s ease-out forwards;
+  opacity: 0;
+}
+.stat {
+  text-align: center;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 14px 8px;
+}
+.stat .num {
+  font-size: clamp(20px, 5.5vw, 36px); font-weight: 800; color: #fff;
+}
+.stat .lbl {
+  font-size: clamp(9px, 2.2vw, 13px); color: rgba(255,255,255,0.5);
+  margin-top: 4px; font-weight: 500;
+}
+
+.bottom-cta {
+  position: absolute; bottom: 4%; left: 0; right: 0; text-align: center;
+  animation: fadeSlideUp 0.6s 2s ease-out forwards;
+  opacity: 0;
+}
+.bottom-cta .brand {
+  font-size: clamp(26px, 7vw, 44px); font-weight: 800;
+  background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+.bottom-cta p { font-size: clamp(11px, 3vw, 18px); color: rgba(255,255,255,0.5); }
+
+@keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.glow { position: absolute; width: 60vw; height: 60vw; border-radius: 50%; pointer-events: none; }
+.glow.g1 { top: 15%; left: -20%; background: radial-gradient(circle, rgba(167, 139, 250, 0.12), transparent 70%); animation: pulse 4s ease-in-out infinite; }
+.glow.g2 { bottom: 25%; right: -20%; background: radial-gradient(circle, rgba(244, 114, 182, 0.1), transparent 70%); animation: pulse 4s 2s ease-in-out infinite; }
+.glow.g3 { top: 45%; left: 20%; background: radial-gradient(circle, rgba(251, 146, 60, 0.08), transparent 70%); animation: pulse 4s 3s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
 </style>
 </head>
 <body>
-  <div class="bg"></div>
+  <div class="glow g1"></div>
+  <div class="glow g2"></div>
+  <div class="glow g3"></div>
 
-  <!-- Floating dots representing guests -->
-  <div class="dots">
-    <div class="dot" style="top: 25%; left: 15%; animation-delay: 0.2s;"></div>
-    <div class="dot" style="top: 35%; left: 80%; animation-delay: 0.8s;"></div>
-    <div class="dot" style="top: 60%; left: 20%; animation-delay: 1.2s;"></div>
-    <div class="dot" style="top: 70%; left: 75%; animation-delay: 0.5s;"></div>
-    <div class="dot" style="top: 45%; left: 90%; animation-delay: 1.8s;"></div>
-    <div class="dot" style="top: 80%; left: 40%; animation-delay: 2.2s;"></div>
-    <div class="dot" style="top: 20%; left: 60%; animation-delay: 0.3s;"></div>
-    <div class="dot" style="top: 55%; left: 10%; animation-delay: 1.5s;"></div>
-    <div class="dot" style="top: 40%; left: 50%; animation-delay: 2.0s;"></div>
-    <div class="dot" style="top: 90%; left: 65%; animation-delay: 0.7s;"></div>
+  <div class="top-text">
+    <h1>Built for Scale</h1>
+    <p>Because Indian weddings are big</p>
   </div>
 
-  <div class="counter-section">
-    <div class="counter-wrapper">
-      <span class="counter-num">47</span>
-      <span class="counter-num">128</span>
-      <span class="counter-num">256</span>
-      <span class="counter-num">389</span>
-      <span class="counter-num">441</span>
-      <span class="counter-num">487</span>
-      <span class="counter-final">500+</span>
-    </div>
-    <div class="counter-label">guests managed</div>
+  <div class="counter-area">
+    <div class="counter">500+</div>
+    <div class="counter-label">GUESTS MANAGED</div>
   </div>
 
-  <div class="tagline">
-    <h2>One <span class="calm">calm</span> place<br>for all of it.</h2>
+  <div class="dots-container">
+    <script>
+      // Generate floating dots
+      const colors = ['#a78bfa','#f472b6','#fb923c','#34d399','#60a5fa','#fbbf24'];
+      const container = document.querySelector('.dots-container');
+      for (let i = 0; i < 60; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.style.left = Math.random() * 100 + '%';
+        dot.style.top = Math.random() * 100 + '%';
+        dot.style.background = colors[Math.floor(Math.random() * colors.length)];
+        dot.style.animationDelay = (Math.random() * 3) + 's';
+        dot.style.animationDuration = (2 + Math.random() * 2) + 's';
+        container.appendChild(dot);
+      }
+    </script>
   </div>
 
-  <div class="stats">
-    <div class="stat"><div class="num">6</div><div class="label">events</div></div>
-    <div class="stat"><div class="num">50</div><div class="label">tables</div></div>
-    <div class="stat"><div class="num">0</div><div class="label">spreadsheets</div></div>
+  <div class="stats-row">
+    <div class="stat"><div class="num">50+</div><div class="lbl">Tables</div></div>
+    <div class="stat"><div class="num">6+</div><div class="lbl">Events</div></div>
+    <div class="stat"><div class="num">3</div><div class="lbl">Languages</div></div>
   </div>
 
-  <div class="brand-section">
+  <div class="bottom-cta">
     <div class="brand">Phera</div>
-    <p>Built for Indian weddings.</p>
+    <p>Handle any size wedding</p>
   </div>
 </body>
 </html>

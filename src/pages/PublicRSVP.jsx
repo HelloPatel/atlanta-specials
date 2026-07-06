@@ -628,7 +628,25 @@ export default function PublicRSVP() {
 
         {/* ── STEP: Done ────────────────────────────────────────────── */}
         {step === 'done' && (
-          <RsvpCard className="text-center">
+          <RsvpCard className="text-center relative overflow-hidden">
+            {/* Confetti celebration */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full animate-bounce"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 60}%`,
+                    backgroundColor: ['#ab204d', '#f59e0b', '#10b981', '#6366f1', '#ec4899'][i % 5],
+                    animationDelay: `${Math.random() * 2}s`,
+                    animationDuration: `${1 + Math.random() * 2}s`,
+                    opacity: 0.7,
+                  }}
+                />
+              ))}
+            </div>
+            <div className="relative z-10">
             <div className="w-16 h-16 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-4">
               <Check size={32} />
             </div>
@@ -662,6 +680,7 @@ export default function PublicRSVP() {
             >
               RSVP for another family →
             </button>
+            </div>
           </RsvpCard>
         )}
       </main>
