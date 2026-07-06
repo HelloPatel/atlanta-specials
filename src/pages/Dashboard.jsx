@@ -10,6 +10,7 @@ import { COLLECTIONS } from '../config/constants';
 import { subscribeToGuests } from '../services/guestService';
 import { subscribeToEvents } from '../services/eventService';
 import { subscribeToRsvpSettings } from '../services/rsvpService';
+import OnboardingTour from '../components/onboarding/OnboardingTour';
 
 export default function Dashboard() {
   const { activeWedding, weddings, loading } = useWedding();
@@ -176,6 +177,7 @@ export default function Dashboard() {
       )}
 
       <CreateWeddingModal open={showCreate} onClose={() => setShowCreate(false)} />
+      <OnboardingTour show={!!activeWedding} />
     </div>
   );
 }
