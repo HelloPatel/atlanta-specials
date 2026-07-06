@@ -201,8 +201,8 @@ function AdminBetsManager({ wedding }) {
   );
   const sections = useMemo(() => groupBySection(betsConfig.questions), [betsConfig.questions]);
 
-  const guestLink = wedding?.id ? getBetsGuestLink(wedding.id) : '';
-  const leaderboardLink = wedding?.id ? getBetsLeaderboardLink(wedding.id) : '';
+  const guestLink = wedding?.id ? getBetsGuestLink(wedding.id, wedding.slug) : '';
+  const leaderboardLink = wedding?.id ? getBetsLeaderboardLink(wedding.id, wedding.slug) : '';
 
   const persistQuestions = async (questions, nextCorrectAnswers = betsConfig.correctAnswers) => {
     await saveBetsConfig(wedding.id, {

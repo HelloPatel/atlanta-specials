@@ -292,8 +292,8 @@ function AdminPhotoGroupManager({ wedding }) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const queueLink = wedding?.id ? getPhotoQueueLink(wedding.id) : '';
-  const displayLink = wedding?.id ? getPhotoDisplayLink(wedding.id) : '';
+  const queueLink = wedding?.id ? getPhotoQueueLink(wedding.id, wedding.slug) : '';
+  const displayLink = wedding?.id ? getPhotoDisplayLink(wedding.id, wedding.slug) : '';
 
   const handleSaveGroup = async (payload) => {
     if (!wedding?.id) return;

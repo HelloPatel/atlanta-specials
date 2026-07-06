@@ -148,10 +148,12 @@ export function subscribeToGroups(weddingId, callback) {
   });
 }
 
-export function getPhotoQueueLink(weddingId) {
-  return `${window.location.origin}/photos/${weddingId}`;
+export function getPhotoQueueLink(weddingId, slug) {
+  const identifier = slug || weddingId;
+  return `${window.location.origin}/photos/${identifier}`;
 }
 
-export function getPhotoDisplayLink(weddingId) {
-  return `${window.location.origin}/photos/${weddingId}/display`;
+export function getPhotoDisplayLink(weddingId, slug) {
+  const identifier = slug || weddingId;
+  return `${window.location.origin}/photos/${identifier}/display`;
 }

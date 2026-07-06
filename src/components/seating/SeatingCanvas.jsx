@@ -95,7 +95,8 @@ export default function SeatingCanvas() {
 
   const finderLink = useMemo(() => {
     if (typeof window === 'undefined' || !activeWedding?.id || !selectedEventId) return '';
-    return `${window.location.origin}/find-table/${activeWedding.id}/${selectedEventId}`;
+    const identifier = activeWedding.slug || activeWedding.id;
+    return `${window.location.origin}/find-table/${identifier}/${selectedEventId}`;
   }, [activeWedding, selectedEventId]);
 
   const ruleEvaluation = useMemo(
@@ -404,11 +405,14 @@ export default function SeatingCanvas() {
                     position: 'absolute',
                     left: table.x,
                     top: table.y,
+                    width: (table.width || 120) + 80,
+                    height: (table.height || 120) + 60,
                     cursor: 'pointer',
+                    zIndex: isSelected ? 10 : 1,
                   }}
                 >
                   <TableComponent
-                    table={table}
+                    table={{ ...table, x: 0, y: 0 }}
                     guests={guests}
                     warnings={ruleEvaluation.tableWarnings[table.id] || []}
                     onUpdate={() => {}}
@@ -416,8 +420,10 @@ export default function SeatingCanvas() {
                     onDrag={() => {}}
                     onRemoveGuest={() => {}}
                     zoom={0.35}
-                    highlight={isSelected}
                   />
+                  {isSelected && (
+                   <div className="absolute inset-0 rounded-xl ring-4 ring-wine-400/50 pointer-events-none" />
+                  )}
                 </div>
               );
             })}

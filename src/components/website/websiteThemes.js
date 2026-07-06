@@ -173,6 +173,7 @@ export function sanitizeWebsiteConfig(config) {
   };
 }
 
-export function getPublicWeddingWebsiteLink(weddingId) {
-  return `${window.location.origin}/w/${weddingId}`;
+export function getPublicWeddingWebsiteLink(weddingId, slug) {
+  const identifier = slug || weddingId;
+  return `${window.location.origin}/w/${identifier}`;
 }

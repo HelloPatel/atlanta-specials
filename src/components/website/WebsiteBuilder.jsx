@@ -110,7 +110,7 @@ export default function WebsiteBuilder() {
     setConfig(normalizeWebsiteConfig(activeWedding, events.map((event) => event.id)));
   }, [activeWedding, events]);
 
-  const websiteUrl = activeWedding ? getPublicWeddingWebsiteLink(activeWedding.id) : '';
+  const websiteUrl = activeWedding ? getPublicWeddingWebsiteLink(activeWedding.id, activeWedding.slug) : '';
   const selectedEventIds = new Set(config.websiteEventIds || []);
   const coupleDisplayName = getCoupleDisplayName(activeWedding);
 
@@ -554,7 +554,7 @@ export default function WebsiteBuilder() {
               <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
               <p className="text-sm text-gray-500">Exactly what guests see at your public link.</p>
             </div>
-            <Badge variant="rose">/w/{activeWedding.id}</Badge>
+            <Badge variant="rose">/w/{activeWedding.slug || activeWedding.id}</Badge>
           </div>
           <WeddingWebsitePreview
             wedding={activeWedding}

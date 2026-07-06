@@ -149,12 +149,14 @@ export function calculateLeaderboard(questions, correctAnswers, votes) {
     .sort((a, b) => b.score - a.score || a.guestName.localeCompare(b.guestName));
 }
 
-export function getBetsGuestLink(weddingId) {
-  return `${window.location.origin}/bets/${weddingId}`;
+export function getBetsGuestLink(weddingId, slug) {
+  const identifier = slug || weddingId;
+  return `${window.location.origin}/bets/${identifier}`;
 }
 
-export function getBetsLeaderboardLink(weddingId) {
-  return `${window.location.origin}/bets/${weddingId}/leaderboard`;
+export function getBetsLeaderboardLink(weddingId, slug) {
+  const identifier = slug || weddingId;
+  return `${window.location.origin}/bets/${identifier}/leaderboard`;
 }
 
 export { POINTS_PER_QUESTION };
