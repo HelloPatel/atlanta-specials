@@ -167,6 +167,43 @@ export default function SeatingCanvas() {
     printWindow.print();
   }, [finderLink, selectedEvent]);
 
+  const handleExportSeating = useCallback(async () => {
+    const XLSX = await import('xlsx');
+    const rows = [];
+    tables.forEach((table) => {
+      (table.assignedGuests || []).forEach((gId) => {
+        const g = guests.find((gu) => gu.id === gId);
+        if (!g) return;
+        rows.push({
+          'Table': table.name,
+          'First Name': g.firstName,
+          'Last Name': g.lastName,
+          'Family': g.familyName || g.family || '',
+          'Side': g.side || '',
+          'Dietary': g.dietaryPreference || '',
+          'RSVP': g.rsvpStatus?.[selectedEventId] || 'pending',
+        });
+      });
+    });
+    // Add unassigned guests
+    unassignedGuests.forEach((g) => {
+      rows.push({
+        'Table': '(Unassigned)',
+        'First Name': g.firstName,
+        'Last Name': g.lastName,
+        'Family': g.familyName || g.family || '',
+        'Side': g.side || '',
+        'Dietary': g.dietaryPreference || '',
+        'RSVP': g.rsvpStatus?.[selectedEventId] || 'pending',
+      });
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Seating');
+    XLSX.writeFile(wb, `seating-${selectedEvent?.name || 'chart'}.xlsx`);
+    toast.success('Seating chart exported');
+  }, [tables, guests, unassignedGuests, selectedEventId, selectedEvent, toast]);
+
   const handleFocusTable = useCallback((tableId) => {
     const table = tables.find((item) => item.id === tableId);
     if (!table || !canvasScrollRef.current) return;
@@ -651,6 +688,10 @@ export default function SeatingCanvas() {
 
             <Button variant="outline" size="sm" onClick={() => setShowQrModal(true)} disabled={!selectedEventId}>
               <QrCode size={14} /> QR Code
+            </Button>
+
+            <Button variant="outline" size="sm" onClick={handleExportSeating} disabled={tables.length === 0}>
+              <FileSpreadsheet size={14} /> Export
             </Button>
 
             {/* Venue floor plan */}

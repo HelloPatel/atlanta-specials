@@ -151,3 +151,94 @@ describe('Days until wedding calculation', () => {
     expect(days).toBeNull();
   });
 });
+
+describe('Seating export data builder', () => {
+  const tables = [
+    { id: 't1', name: 'Table 1', assignedGuests: ['g1', 'g2'] },
+    { id: 't2', name: 'Table 2', assignedGuests: ['g3'] },
+  ];
+  const guests = [
+    { id: 'g1', firstName: 'Rushi', lastName: 'Patel', familyName: 'Patel Family', side: 'groom' },
+    { id: 'g2', firstName: 'Brijal', lastName: 'Shah', familyName: 'Shah Family', side: 'bride' },
+    { id: 'g3', firstName: 'Ankit', lastName: 'Desai', familyName: 'Desai Family', side: 'groom' },
+    { id: 'g4', firstName: 'Unassigned', lastName: 'Guest', familyName: '', side: 'bride' },
+  ];
+
+  function buildExportRows(tables, guests, unassigned) {
+    const rows = [];
+    tables.forEach((table) => {
+      (table.assignedGuests || []).forEach((gId) => {
+        const g = guests.find((gu) => gu.id === gId);
+        if (!g) return;
+        rows.push({ Table: table.name, FirstName: g.firstName, LastName: g.lastName, Family: g.familyName || '', Side: g.side || '' });
+      });
+    });
+    unassigned.forEach((g) => {
+      rows.push({ Table: '(Unassigned)', FirstName: g.firstName, LastName: g.lastName, Family: g.familyName || '', Side: g.side || '' });
+    });
+    return rows;
+  }
+
+  it('includes all seated guests with table names', () => {
+    const rows = buildExportRows(tables, guests, []);
+    expect(rows).toHaveLength(3);
+    expect(rows[0].Table).toBe('Table 1');
+    expect(rows[0].FirstName).toBe('Rushi');
+  });
+
+  it('appends unassigned guests', () => {
+    const unassigned = [guests[3]];
+    const rows = buildExportRows(tables, guests, unassigned);
+    expect(rows).toHaveLength(4);
+    expect(rows[3].Table).toBe('(Unassigned)');
+  });
+
+  it('handles empty tables', () => {
+    const emptyTables = [{ id: 't1', name: 'Empty Table', assignedGuests: [] }];
+    const rows = buildExportRows(emptyTables, guests, []);
+    expect(rows).toHaveLength(0);
+  });
+});
+
+describe('Capacity ring calculation', () => {
+  function capacityArc(assigned, capacity) {
+    const ratio = Math.min(assigned / capacity, 1);
+    const circumference = 94.25; // 2 * PI * 15
+    return parseFloat((ratio * circumference).toFixed(1));
+  }
+
+  it('returns 0 for empty table', () => {
+    expect(capacityArc(0, 10)).toBe(0);
+  });
+
+  it('returns full arc for full table', () => {
+    expect(capacityArc(10, 10)).toBe(94.3); // 94.25 rounded to 1 decimal
+  });
+
+  it('returns half arc for half-full', () => {
+    expect(capacityArc(5, 10)).toBe(47.1);
+  });
+
+  it('caps at full for over-capacity', () => {
+    expect(capacityArc(12, 10)).toBe(94.3);
+  });
+});
+
+describe('WhatsApp share message builder', () => {
+  function buildShareMessage(tableName, eventName, url) {
+    return `🪑 I'm at ${tableName}${eventName ? ` for ${eventName}` : ''}! Find your table too: ${url}`;
+  }
+
+  it('includes table name and event', () => {
+    const msg = buildShareMessage('Table 5', 'Reception', 'https://example.com/find');
+    expect(msg).toContain('Table 5');
+    expect(msg).toContain('for Reception');
+    expect(msg).toContain('https://example.com/find');
+  });
+
+  it('omits event when empty', () => {
+    const msg = buildShareMessage('Head Table', '', 'https://example.com/find');
+    expect(msg).not.toContain('for ');
+    expect(msg).toContain('Head Table');
+  });
+});

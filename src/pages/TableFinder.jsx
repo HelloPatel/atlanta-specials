@@ -152,6 +152,31 @@ export default function TableFinder() {
                         <p className="mt-3 text-sm text-gray-500">You have the table all to yourself right now.</p>
                       )}
                     </div>
+
+                    <div className="mt-4 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          const text = `🪑 I'm at ${result.table.name}${eventName ? ` for ${eventName}` : ''}! Find your table too: ${window.location.href}`;
+                          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                        }}
+                      >
+                        📱 Share via WhatsApp
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => {
+                          const text = `I'm at ${result.table.name}${eventName ? ` for ${eventName}` : ''}! Find your table: ${window.location.href}`;
+                          navigator.share?.({ title: 'My Table', text }) || navigator.clipboard.writeText(text);
+                        }}
+                      >
+                        🔗 Share
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
