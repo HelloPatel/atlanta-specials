@@ -1,42 +1,52 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { WeddingProvider } from './contexts/WeddingContext';
 import { ToastProvider } from './components/ui';
 import AppShell from './components/layout/AppShell';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
-// Pages
+// Eager-loaded pages (landing/auth — needed immediately)
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
-import PublicRSVP from './pages/PublicRSVP';
-import PublicWeddingWebsite from './pages/PublicWeddingWebsite';
-import TableFinder from './pages/TableFinder';
-import Dashboard from './pages/Dashboard';
-import GuestManager from './pages/GuestManager';
-import EventManager from './pages/EventManager';
-import SeatingChart from './pages/SeatingChart';
-import RSVPManager from './pages/RSVPManager';
-import PhotoGroupManager from './pages/PhotoGroupManager';
-import BetsManager from './pages/BetsManager';
-import WeddingWebsite from './pages/WeddingWebsite';
-import PrintExport from './pages/PrintExport';
-import SeedData from './pages/SeedData';
-import {
-  PublicPhotoGroupQueue,
-  PhotoGroupDisplayView,
-} from './components/photos/PhotoGroupManager';
-import {
-  PublicBetsManager,
-  BetsLeaderboardView,
-} from './components/bets/BetsManager';
+
+// Lazy-loaded pages (code-split for faster initial load)
+const PublicRSVP = lazy(() => import('./pages/PublicRSVP'));
+const PublicWeddingWebsite = lazy(() => import('./pages/PublicWeddingWebsite'));
+const TableFinder = lazy(() => import('./pages/TableFinder'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const GuestManager = lazy(() => import('./pages/GuestManager'));
+const EventManager = lazy(() => import('./pages/EventManager'));
+const SeatingChart = lazy(() => import('./pages/SeatingChart'));
+const RSVPManager = lazy(() => import('./pages/RSVPManager'));
+const PhotoGroupManager = lazy(() => import('./pages/PhotoGroupManager'));
+const BetsManager = lazy(() => import('./pages/BetsManager'));
+const WeddingWebsite = lazy(() => import('./pages/WeddingWebsite'));
+const PrintExport = lazy(() => import('./pages/PrintExport'));
+const SeedData = lazy(() => import('./pages/SeedData'));
+
+// Lazy public sub-views
+const PublicPhotoGroupQueue = lazy(() => import('./components/photos/PhotoGroupManager').then(m => ({ default: m.PublicPhotoGroupQueue })));
+const PhotoGroupDisplayView = lazy(() => import('./components/photos/PhotoGroupManager').then(m => ({ default: m.PhotoGroupDisplayView })));
+const PublicBetsManager = lazy(() => import('./components/bets/BetsManager').then(m => ({ default: m.PublicBetsManager })));
+const BetsLeaderboardView = lazy(() => import('./components/bets/BetsManager').then(m => ({ default: m.BetsLeaderboardView })));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-wine-700 border-t-transparent" />
+    </div>
+  );
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<Landing />} />
@@ -76,6 +86,7 @@ export default function App() {
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
