@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Clock3, ExternalLink, Gift, Heart, MapPin, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -91,6 +91,47 @@ function SectionTitle({ eyebrow, title, description, theme }) {
   );
 }
 
+function CountdownTimer({ targetDate, theme }) {
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  useEffect(() => {
+    if (!targetDate) return;
+    const target = new Date(targetDate).getTime();
+    if (Number.isNaN(target)) return;
+    const tick = () => {
+      const diff = target - Date.now();
+      if (diff <= 0) { setTimeLeft(null); return; }
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetDate]);
+
+  if (!timeLeft) return null;
+
+  return (
+    <div className="flex gap-3 mt-6">
+      {[
+        { value: timeLeft.days, label: 'Days' },
+        { value: timeLeft.hours, label: 'Hrs' },
+        { value: timeLeft.minutes, label: 'Min' },
+        { value: timeLeft.seconds, label: 'Sec' },
+      ].map(({ value, label }) => (
+        <div key={label} className="text-center rounded-xl border border-white/20 bg-white/10 backdrop-blur px-3 py-2 min-w-[52px]">
+          <p className="text-xl font-bold text-white">{value}</p>
+          <p className="text-[10px] uppercase tracking-wider text-white/70">{label}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function WeddingWebsitePreview({
   wedding,
   config: rawConfig,
@@ -160,6 +201,7 @@ export default function WeddingWebsitePreview({
                 {heroDate}
               </p>
             )}
+            <CountdownTimer targetDate={config.websiteHero?.date || wedding?.weddingDate} theme={theme} />
             {config.websiteHero?.tagline && (
               <p className="mt-8 max-w-2xl text-base leading-8 text-white/85 md:text-xl">
                 {config.websiteHero.tagline}
