@@ -41,6 +41,7 @@ export default function SeatingCanvas() {
   const [hasChanges, setHasChanges] = useState(false);
   const [copiedFinderLink, setCopiedFinderLink] = useState(false);
   const [mobileSelectedTable, setMobileSelectedTable] = useState(null);
+  const [undoStack, setUndoStack] = useState([]);
   const canvasScrollRef = useRef(null);
   const qrPrintRef = useRef(null);
 
@@ -173,9 +174,10 @@ export default function SeatingCanvas() {
 
   const handleAutoSuggest = useCallback(() => {
     if (unassignedGuests.length === 0 || tables.length === 0) return;
-    const confirmMsg = `Auto-seat ${unassignedGuests.length} unassigned guest${unassignedGuests.length === 1 ? '' : 's'} across available tables?\n\nThis keeps families together and respects your seating rules. You can undo by refreshing before saving.`;
+    const confirmMsg = `Auto-seat ${unassignedGuests.length} unassigned guest${unassignedGuests.length === 1 ? '' : 's'} across available tables?\n\nThis keeps families together and respects your seating rules. You can undo with Ctrl+Z.`;
     if (!window.confirm(confirmMsg)) return;
 
+    pushUndo();
     const { assignments, overflow } = autoSuggestSeating(unassignedGuests, tables, rules);
     const updatedTables = tables.map((t) => {
       const newGuests = assignments.get(t.id) || [];
@@ -188,7 +190,7 @@ export default function SeatingCanvas() {
     if (overflow.length > 0) {
       window.alert(`${overflow.length} guest${overflow.length === 1 ? '' : 's'} could not be seated (not enough capacity or rule conflicts). They remain in the unassigned list.`);
     }
-  }, [unassignedGuests, tables, rules]);
+  }, [unassignedGuests, tables, rules, pushUndo]);
 
   // Auto-save on changes (debounced)
   useEffect(() => {
@@ -204,10 +206,29 @@ export default function SeatingCanvas() {
         e.preventDefault();
         if (hasChanges) handleSave();
       }
+      // Ctrl+Z to undo
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [hasChanges, handleSave]);
+  }, [hasChanges, handleSave, undoStack]);
+
+  const pushUndo = useCallback(() => {
+    setUndoStack((prev) => [...prev.slice(-19), JSON.stringify(tables)]);
+  }, [tables]);
+
+  const handleUndo = useCallback(() => {
+    setUndoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      setTables(JSON.parse(last));
+      setHasChanges(true);
+      return prev.slice(0, -1);
+    });
+  }, []);
 
   // Add table — accepts a preset or custom config
   const addTable = (config) => {
@@ -308,6 +329,8 @@ export default function SeatingCanvas() {
 
     const guestId = active.id;
     const targetTableId = over.id;
+
+    pushUndo();
 
     if (targetTableId === 'unassigned-zone') {
       // Remove from table
@@ -645,6 +668,12 @@ export default function SeatingCanvas() {
                   ✕ BG
                 </Button>
               </>
+            )}
+
+            {undoStack.length > 0 && (
+              <Button size="sm" variant="outline" onClick={handleUndo} title="Undo (Ctrl+Z)">
+                <RotateCcw size={14} /> Undo
+              </Button>
             )}
 
             {hasChanges && (
