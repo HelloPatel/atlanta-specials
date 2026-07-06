@@ -93,6 +93,76 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Guest analytics — shows after guests are added */}
+      {guestCount > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          <Card title="Dietary Breakdown">
+            <div className="space-y-2">
+              {(() => {
+                const dietary = {};
+                guests.forEach((g) => {
+                  const d = g.dietary || 'unspecified';
+                  dietary[d] = (dietary[d] || 0) + 1;
+                });
+                return Object.entries(dietary).sort((a, b) => b[1] - a[1]).map(([key, count]) => (
+                  <div key={key} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 capitalize">{key}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-wine-500 rounded-full" style={{ width: `${(count / guestCount) * 100}%` }} />
+                      </div>
+                      <span className="text-xs text-gray-500 w-8 text-right">{count}</span>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </Card>
+
+          <Card title="Side Split">
+            <div className="space-y-2">
+              {(() => {
+                const bride = guests.filter((g) => g.side === 'bride').length;
+                const groom = guests.filter((g) => g.side === 'groom').length;
+                const other = guestCount - bride - groom;
+                return [
+                  { label: "Bride's side", count: bride, color: 'bg-pink-500' },
+                  { label: "Groom's side", count: groom, color: 'bg-blue-500' },
+                  ...(other > 0 ? [{ label: 'Unassigned', count: other, color: 'bg-gray-400' }] : []),
+                ].map(({ label, count, color }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">{label}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${color}`} style={{ width: `${(count / guestCount) * 100}%` }} />
+                      </div>
+                      <span className="text-xs text-gray-500 w-8 text-right">{count}</span>
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </Card>
+
+          <Card title="Top Families">
+            <div className="space-y-1.5">
+              {(() => {
+                const fam = {};
+                guests.forEach((g) => {
+                  if (g.familyName) fam[g.familyName] = (fam[g.familyName] || 0) + 1;
+                });
+                return Object.entries(fam).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, count]) => (
+                  <div key={name} className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 truncate max-w-[140px]">{name}</span>
+                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{count} members</span>
+                  </div>
+                ));
+              })()}
+            </div>
+          </Card>
+        </div>
+      )}
+
       <CreateWeddingModal open={showCreate} onClose={() => setShowCreate(false)} />
     </div>
   );
