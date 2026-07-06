@@ -51,13 +51,25 @@ export default function Dashboard() {
     return <CreateWeddingPrompt onOpen={() => setShowCreate(true)} showModal={showCreate} onClose={() => setShowCreate(false)} />;
   }
 
+  const daysUntilWedding = activeWedding.weddingDate
+    ? Math.ceil((new Date(activeWedding.weddingDate) - new Date()) / (1000 * 60 * 60 * 24))
+    : null;
+
   return (
     <div className="animate-fade-in">
-      <div className="mb-8">
-        <h1 className="text-2xl font-display font-bold text-gray-900">
-          {activeWedding.coupleName1} & {activeWedding.coupleName2}
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">Your wedding at a glance</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-gray-900">
+            {activeWedding.coupleName1} & {activeWedding.coupleName2}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">Your wedding at a glance</p>
+        </div>
+        {daysUntilWedding !== null && daysUntilWedding > 0 && (
+          <div className="text-right hidden md:block">
+            <p className="text-3xl font-display font-bold text-wine-700">{daysUntilWedding}</p>
+            <p className="text-xs text-gray-500">days to go</p>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
