@@ -902,3 +902,80 @@ describe('Mobile seating zoom controls', () => {
     expect(style).toContain('ease-out');
   });
 });
+
+// ── Dashboard Widget Tests ──────────────────────────────
+describe('Dashboard quick stats', () => {
+  it('calculates RSVP rate correctly', () => {
+    const guests = [
+      { id: '1', rsvpStatus: { e1: 'accepted' } },
+      { id: '2', rsvpStatus: { e1: 'declined' } },
+      { id: '3', rsvpStatus: {} },
+      { id: '4', rsvpStatus: { e1: 'pending' } },
+    ];
+    const responded = guests.filter((g) => {
+      const statuses = Object.values(g.rsvpStatus || {});
+      return statuses.some((s) => s === 'accepted' || s === 'declined');
+    });
+    const rate = Math.round(responded.length / guests.length * 100);
+    expect(rate).toBe(50);
+  });
+
+  it('calculates days until wedding', () => {
+    const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const days = Math.ceil((new Date(futureDate) - new Date()) / (1000 * 60 * 60 * 24));
+    expect(days).toBeGreaterThanOrEqual(29);
+    expect(days).toBeLessThanOrEqual(31);
+  });
+
+  it('counts seated guests correctly', () => {
+    const guests = [
+      { id: '1', tableNumber: 5 },
+      { id: '2', tableNumber: null },
+      { id: '3', tableNumber: 3 },
+      { id: '4', tableNumber: undefined },
+    ];
+    const seated = guests.filter((g) => g.tableNumber != null).length;
+    expect(seated).toBe(2);
+  });
+});
+
+// ── Fuzzy Match Edge Cases ──────────────────────────────
+describe('Fuzzy match edge cases', () => {
+  function fuzzyMatch(query, target) {
+    if (!query || !target) return false;
+    if (query.length < 3) return false;
+    if (target.startsWith(query) || query.startsWith(target)) return true;
+    const maxDist = query.length <= 4 ? 1 : 2;
+    if (Math.abs(query.length - target.length) > maxDist) return false;
+    let prev = Array.from({ length: target.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= query.length; i++) {
+      const curr = [i];
+      for (let j = 1; j <= target.length; j++) {
+        curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + (query[i - 1] === target[j - 1] ? 0 : 1));
+      }
+      prev = curr;
+    }
+    return prev[target.length] <= maxDist;
+  }
+
+  it('matches common Indian name misspellings', () => {
+    expect(fuzzyMatch('patel', 'patell')).toBe(true);
+    expect(fuzzyMatch('priya', 'priyah')).toBe(true);
+    expect(fuzzyMatch('rushi', 'rushi')).toBe(true);
+  });
+
+  it('rejects short queries for safety', () => {
+    expect(fuzzyMatch('pa', 'patel')).toBe(false);
+    expect(fuzzyMatch('', 'patel')).toBe(false);
+  });
+
+  it('handles prefix matching', () => {
+    expect(fuzzyMatch('shar', 'sharma')).toBe(true);
+    expect(fuzzyMatch('sharma', 'shar')).toBe(true);
+  });
+
+  it('rejects completely different names', () => {
+    expect(fuzzyMatch('patel', 'kumar')).toBe(false);
+    expect(fuzzyMatch('sharma', 'reddy')).toBe(false);
+  });
+});

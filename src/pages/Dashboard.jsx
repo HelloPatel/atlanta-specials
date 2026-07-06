@@ -255,7 +255,7 @@ function QuickStat({ icon: Icon, label, value, to }) {
   return (
     <button
       onClick={() => navigate(to)}
-      className="group flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card hover:shadow-lifted hover:-translate-y-0.5 transition-all duration-200 text-left"
+      className="group flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card hover:shadow-lifted hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200 text-left"
     >
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 group-hover:from-wine-100 group-hover:to-phera-100 transition-colors">
         <Icon size={20} className="text-wine-700" />
