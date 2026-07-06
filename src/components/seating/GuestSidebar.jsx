@@ -122,6 +122,12 @@ function DraggableGuest({ guest }) {
     zIndex: 1000,
   } : undefined;
 
+  // RSVP status dot color
+  const rsvpStatuses = Object.values(guest.rsvpStatus || {});
+  const rsvpColor = rsvpStatuses.includes('accepted') ? 'bg-green-400'
+    : rsvpStatuses.includes('declined') ? 'bg-red-400'
+    : rsvpStatuses.length > 0 ? 'bg-amber-400' : 'bg-gray-300';
+
   return (
     <div
       ref={setNodeRef}
@@ -134,12 +140,16 @@ function DraggableGuest({ guest }) {
       `}
     >
       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${guest.side === 'bride' ? 'bg-wine-400' : 'bg-blue-400'}`} />
-      <span className="font-medium text-gray-800 truncate">
+      <span className="font-medium text-gray-800 truncate flex-1">
         {guest.firstName} {guest.lastName}
       </span>
+      {guest.dietary && guest.dietary !== 'vegetarian' && (
+        <span className="text-[9px] text-orange-600 font-medium">{guest.dietary === 'non-veg' ? 'NV' : guest.dietary === 'jain' ? 'J' : guest.dietary === 'vegan' ? 'V' : ''}</span>
+      )}
       {guest.tags?.includes('VIP') && (
         <span className="text-[9px] text-amber-600 font-bold">VIP</span>
       )}
+      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${rsvpColor}`} title={rsvpStatuses[0] || 'no response'} />
     </div>
   );
 }
