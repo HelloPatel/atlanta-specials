@@ -285,6 +285,27 @@ export default function GuestList() {
             <option value="">Add Tag...</option>
             {GUEST_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
+          {events.length > 0 && (
+            <select
+              defaultValue=""
+              onChange={async (e) => {
+                const eventId = e.target.value;
+                if (!eventId) return;
+                const event = events.find((ev) => ev.id === eventId);
+                if (!event) return;
+                const existingIds = event.guestIds || [];
+                const newIds = [...new Set([...existingIds, ...selected])];
+                const { updateEvent } = await import('../../services/eventService');
+                await updateEvent(activeWedding.id, eventId, { guestIds: newIds, inviteAll: false });
+                toast.success(`Invited ${selected.size} guests to ${event.name}`);
+                e.target.value = '';
+              }}
+              className="rounded-md border border-wine-200 bg-white px-2 py-1 text-xs"
+            >
+              <option value="">Invite to Event...</option>
+              {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
+            </select>
+          )}
           <Button variant="danger" size="sm" onClick={handleBulkDelete}>
             <Trash2 size={14} /> Delete
           </Button>
