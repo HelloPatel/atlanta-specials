@@ -375,11 +375,27 @@ export default function PublicRSVP() {
         {settings.customMessage && (
           <p className="text-gray-600 mt-2 max-w-lg mx-auto leading-relaxed">{settings.customMessage}</p>
         )}
-        {settings.deadline && (
-          <p className="text-sm text-wine-700 mt-2 font-medium">
-            Please respond by {new Date(settings.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-          </p>
-        )}
+        {settings.deadline && (() => {
+          const daysLeft = Math.ceil((new Date(settings.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+          return (
+            <div className="mt-3">
+              <p className="text-sm text-wine-700 font-medium">
+                {lang === 'en' ? 'Please respond by' : lang === 'hi' ? 'कृपया इस तारीख तक जवाब दें' : 'કૃપા કરી આ તારીખ સુધીમાં જવાબ આપો'}{' '}
+                {new Date(settings.deadline).toLocaleDateString(lang === 'hi' ? 'hi-IN' : lang === 'gu' ? 'gu-IN' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </p>
+              {daysLeft > 0 && daysLeft <= 14 && (
+                <p className="text-xs text-wine-600 mt-1 animate-pulse">
+                  ⏰ {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left to respond!
+                </p>
+              )}
+              {daysLeft <= 0 && (
+                <p className="text-xs text-red-600 mt-1 font-semibold">
+                  ⚠️ {lang === 'en' ? 'Deadline has passed — please respond ASAP' : lang === 'hi' ? 'समय सीमा बीत चुकी है — कृपया जल्दी जवाब दें' : 'સમય મર્યાદા પસાર થઈ ગઈ છે — કૃપા કરી જલ્દી જવાબ આપો'}
+                </p>
+              )}
+            </div>
+          );
+        })()}
       </header>
 
       <main className="max-w-xl mx-auto px-4 pb-20">
