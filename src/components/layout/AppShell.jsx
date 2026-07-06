@@ -44,7 +44,7 @@ export default function AppShell() {
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="flex items-center justify-around px-2 py-1.5">
           <MobileNavItem to="/dashboard" icon={LayoutDashboard} label="Home" />
           <MobileNavItem to="/guests" icon={Users} label="Guests" />
@@ -65,7 +65,7 @@ function MobileNavItem({ to, icon: Icon, label }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors ${isActive ? 'text-wine-700' : 'text-gray-400 hover:text-gray-600'}`
+        `flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all active:scale-90 ${isActive ? 'text-wine-700' : 'text-gray-400 hover:text-gray-600'}`
       }
     >
       <Icon size={20} />

@@ -130,7 +130,7 @@ export default function EventList() {
             {events.map((event, idx) => {
               const color = getEventColor(event.name);
               return (
-                <div key={event.id} className={`relative rounded-xl border bg-white p-5 shadow-sm hover:shadow-md transition-all ${color.border}`}>
+                <div key={event.id} className={`relative rounded-xl border bg-white p-5 shadow-sm hover:shadow-md active:scale-[0.98] transition-all ${color.border}`}>
                   {/* Timeline dot */}
                   {events.length > 1 && (
                     <div className={`absolute left-4 top-6 w-3 h-3 rounded-full ring-2 ring-white hidden md:block ${color.dot}`}></div>
