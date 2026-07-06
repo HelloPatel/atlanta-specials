@@ -6,12 +6,13 @@ import { subscribeToGuests } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating, saveSeating } from '../../services/seatingService';
 import { Button, Modal } from '../ui';
-import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus } from 'lucide-react';
+import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2 } from 'lucide-react';
 import { TABLE_DEFAULTS, TABLE_PRESETS } from '../../config/constants';
 import TableComponent from './Table';
 import GuestSidebar from './GuestSidebar';
 import RulesPanel from './RulesPanel';
 import { evaluateSeatingRules } from './seatingRules';
+import { autoSuggestSeating } from './seatingAutoSuggest';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -169,6 +170,25 @@ export default function SeatingCanvas() {
     });
     setShowRules(false);
   }, [tables, zoom]);
+
+  const handleAutoSuggest = useCallback(() => {
+    if (unassignedGuests.length === 0 || tables.length === 0) return;
+    const confirmMsg = `Auto-seat ${unassignedGuests.length} unassigned guest${unassignedGuests.length === 1 ? '' : 's'} across available tables?\n\nThis keeps families together and respects your seating rules. You can undo by refreshing before saving.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    const { assignments, overflow } = autoSuggestSeating(unassignedGuests, tables, rules);
+    const updatedTables = tables.map((t) => {
+      const newGuests = assignments.get(t.id) || [];
+      if (newGuests.length === 0) return t;
+      return { ...t, assignedGuests: [...(t.assignedGuests || []), ...newGuests] };
+    });
+    setTables(updatedTables);
+    setHasChanges(true);
+
+    if (overflow.length > 0) {
+      window.alert(`${overflow.length} guest${overflow.length === 1 ? '' : 's'} could not be seated (not enough capacity or rule conflicts). They remain in the unassigned list.`);
+    }
+  }, [unassignedGuests, tables, rules]);
 
   // Auto-save on changes (debounced)
   useEffect(() => {
@@ -576,6 +596,12 @@ export default function SeatingCanvas() {
             <Button variant="outline" size="sm" onClick={() => setShowRules(true)}>
               <ShieldAlert size={14} /> Rules
             </Button>
+
+            {unassignedGuests.length > 0 && tables.length > 0 && (
+              <Button variant="outline" size="sm" onClick={handleAutoSuggest} className="border-purple-300 text-purple-700 hover:bg-purple-50">
+                <Wand2 size={14} /> Auto-Seat
+              </Button>
+            )}
 
             <Button variant="outline" size="sm" onClick={() => setShowQrModal(true)} disabled={!selectedEventId}>
               <QrCode size={14} /> QR Code
