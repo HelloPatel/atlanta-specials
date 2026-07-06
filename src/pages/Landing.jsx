@@ -54,6 +54,26 @@ export default function Landing() {
         </div>
       </div>
 
+      {/* Stats bar */}
+      <div className="max-w-4xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div>
+          <p className="text-3xl font-display font-bold text-wine-700">6+</p>
+          <p className="text-sm text-gray-500 mt-1">Event types supported</p>
+        </div>
+        <div>
+          <p className="text-3xl font-display font-bold text-wine-700">1000+</p>
+          <p className="text-sm text-gray-500 mt-1">Guest capacity</p>
+        </div>
+        <div>
+          <p className="text-3xl font-display font-bold text-wine-700">50+</p>
+          <p className="text-sm text-gray-500 mt-1">Tables per chart</p>
+        </div>
+        <div>
+          <p className="text-3xl font-display font-bold text-wine-700">3</p>
+          <p className="text-sm text-gray-500 mt-1">Languages (EN, हिं, ગુ)</p>
+        </div>
+      </div>
+
       {/* Features — warm cream background */}
       <section className="px-6 py-20 max-w-6xl mx-auto section-warm">
         <div className="text-center mb-14">

@@ -17,6 +17,7 @@ export default function GuestList() {
   const [filterSide, setFilterSide] = useState('all');
   const [filterDietary, setFilterDietary] = useState('all');
   const [filterTag, setFilterTag] = useState('all');
+  const [filterRsvp, setFilterRsvp] = useState('all'); // all | responded | pending | accepted | declined
   const [selected, setSelected] = useState(new Set());
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -57,6 +58,13 @@ export default function GuestList() {
       if (filterSide !== 'all' && g.side !== filterSide) return false;
       if (filterDietary !== 'all' && g.dietary !== filterDietary) return false;
       if (filterTag !== 'all' && !(g.tags || []).includes(filterTag)) return false;
+      if (filterRsvp !== 'all') {
+        const statuses = Object.values(g.rsvpStatus || {});
+        if (filterRsvp === 'responded' && !statuses.some((s) => s === 'accepted' || s === 'declined')) return false;
+        if (filterRsvp === 'pending' && statuses.some((s) => s === 'accepted' || s === 'declined')) return false;
+        if (filterRsvp === 'accepted' && !statuses.includes('accepted')) return false;
+        if (filterRsvp === 'declined' && !statuses.includes('declined')) return false;
+      }
       return true;
     });
     // Sort
@@ -71,13 +79,13 @@ export default function GuestList() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return list;
-  }, [guests, search, filterSide, filterDietary, filterTag, sortField, sortDir, tableMap]);
+  }, [guests, search, filterSide, filterDietary, filterTag, filterRsvp, sortField, sortDir, tableMap]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginatedGuests = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   // Reset page when filters change - use effect
-  useEffect(() => { setPage(0); }, [search, filterSide, filterDietary, filterTag]);
+  useEffect(() => { setPage(0); }, [search, filterSide, filterDietary, filterTag, filterRsvp]);
 
   const stats = useMemo(() => ({
     total: guests.length,
@@ -190,6 +198,14 @@ export default function GuestList() {
           <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
             <option value="all">All Tags</option>
             {GUEST_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+
+          <select value={filterRsvp} onChange={(e) => setFilterRsvp(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            <option value="all">All RSVP</option>
+            <option value="responded">Responded</option>
+            <option value="pending">Not Responded</option>
+            <option value="accepted">Accepted</option>
+            <option value="declined">Declined</option>
           </select>
         </div>
 
