@@ -360,8 +360,9 @@ export default function GuestList() {
                         <button type="button" className="text-red-500 text-xs" onClick={() => setInlineEdit(null)}>✗</button>
                       </form>
                     ) : (
-                      <span className="cursor-pointer hover:underline" onDoubleClick={() => setInlineEdit({ id: guest.id, firstName: guest.firstName, lastName: guest.lastName })}>
+                      <span className="cursor-pointer hover:underline" onDoubleClick={() => setInlineEdit({ id: guest.id, firstName: guest.firstName, lastName: guest.lastName })} title={guest.notes || undefined}>
                         {guest.firstName} {guest.lastName}
+                        {guest.notes && <span className="ml-1 text-xs text-gray-400">📝</span>}
                       </span>
                     )}
                   </td>

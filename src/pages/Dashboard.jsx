@@ -180,6 +180,40 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Family RSVP completion */}
+      {guestCount > 0 && events.length > 0 && (
+        <Card title="Family RSVP Progress" className="mt-6">
+          <div className="space-y-2 max-h-48 overflow-auto">
+            {(() => {
+              const families = {};
+              guests.forEach((g) => {
+                const fam = g.familyName || 'No Family';
+                if (!families[fam]) families[fam] = { total: 0, responded: 0 };
+                families[fam].total++;
+                const hasResponded = Object.values(g.rsvpStatus || {}).some((s) => s === 'accepted' || s === 'declined');
+                if (hasResponded) families[fam].responded++;
+              });
+              return Object.entries(families)
+                .filter(([, v]) => v.total > 1)
+                .sort((a, b) => (b[1].responded / b[1].total) - (a[1].responded / a[1].total))
+                .slice(0, 10)
+                .map(([name, { total, responded }]) => {
+                  const pct = Math.round((responded / total) * 100);
+                  return (
+                    <div key={name} className="flex items-center gap-3">
+                      <span className="text-sm text-gray-600 truncate w-32">{name}</span>
+                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${pct === 100 ? 'bg-green-500' : 'bg-wine-400'}`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="text-xs text-gray-500 w-16 text-right">{responded}/{total}</span>
+                    </div>
+                  );
+                });
+            })()}
+          </div>
+        </Card>
+      )}
+
       {/* Per-event RSVP response rates */}
       {events.length > 0 && guestCount > 0 && (
         <Card title="RSVP by Event" className="mt-6">
