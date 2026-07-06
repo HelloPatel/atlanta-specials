@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToEvents, addEvent, updateEvent, deleteEvent } from '../../services/eventService';
+import { subscribeToGuests } from '../../services/guestService';
 import { Button, Input, Modal, Badge, useToast } from '../ui';
 import { Plus, Edit3, Trash2, Calendar, Clock, MapPin, Users, Sparkles, GripVertical } from 'lucide-react';
 import { EVENT_TEMPLATES } from '../../config/constants';
@@ -26,13 +27,16 @@ export default function EventList() {
   const { activeWedding } = useWedding();
   const toast = useToast();
   const [events, setEvents] = useState([]);
+  const [guests, setGuests] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
   const [prefill, setPrefill] = useState(null);
 
   useEffect(() => {
     if (!activeWedding) return;
-    return subscribeToEvents(activeWedding.id, setEvents);
+    const unsub1 = subscribeToEvents(activeWedding.id, setEvents);
+    const unsub2 = subscribeToGuests(activeWedding.id, setGuests);
+    return () => { unsub1(); unsub2(); };
   }, [activeWedding]);
 
   const handleDelete = async (eventId) => {
@@ -144,6 +148,17 @@ export default function EventList() {
                                 &middot; {event.dressCode}
                               </span>
                             )}
+                            {(() => {
+                              const invited = event.inviteAll ? guests : guests.filter((g) => (event.guestIds || []).includes(g.id));
+                              const accepted = invited.filter((g) => (g.rsvpStatus || {})[event.id] === 'accepted').length;
+                              const declined = invited.filter((g) => (g.rsvpStatus || {})[event.id] === 'declined').length;
+                              if (accepted + declined === 0) return null;
+                              return (
+                                <span className="text-xs text-gray-400">
+                                  &middot; <span className="text-green-600">{accepted}✓</span> <span className="text-red-500">{declined}✗</span>
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
                       </div>
