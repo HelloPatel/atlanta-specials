@@ -159,6 +159,10 @@ export function normalizeWebsiteConfig(wedding = {}, eventIds = []) {
           }))
         : [],
     },
+    websiteGallery: {
+      enabled: Boolean(wedding.websiteGallery?.enabled),
+      images: Array.isArray(wedding.websiteGallery?.images) ? wedding.websiteGallery.images : [],
+    },
     websiteFooter: wedding.websiteFooter || defaults.websiteFooter,
     websitePublished: Boolean(wedding.websitePublished),
     websiteEventIds: Array.isArray(wedding.websiteEventIds) ? wedding.websiteEventIds : defaults.websiteEventIds,

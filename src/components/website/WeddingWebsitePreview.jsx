@@ -423,6 +423,24 @@ export default function WeddingWebsitePreview({
           </section>
         )}
 
+        {config.websiteGallery?.enabled && (config.websiteGallery.images || []).length > 0 && (
+          <section className="py-16">
+            <SectionTitle
+              eyebrow="Gallery"
+              title="Our Moments"
+              description="A few of our favorite memories together."
+              theme={theme}
+            />
+            <div className="mx-auto max-w-5xl grid grid-cols-2 md:grid-cols-3 gap-3">
+              {config.websiteGallery.images.map((url, i) => (
+                <div key={i} className="aspect-square rounded-2xl overflow-hidden shadow-md">
+                  <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="py-8">
           <div
             className="rounded-[2rem] px-8 py-10 text-center shadow-[0_20px_50px_rgba(15,23,42,0.12)]"
