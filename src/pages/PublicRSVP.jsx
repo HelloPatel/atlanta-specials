@@ -126,10 +126,15 @@ export default function PublicRSVP() {
   const [passwordError, setPasswordError] = useState('');
   const [lang, setLang] = useState('en'); // 'en' | 'hi' | 'gu'
   const [seniorMode, setSeniorMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)').matches || false);
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const textScale = seniorMode ? 'text-lg' : 'text-sm';
   const headingScale = seniorMode ? 'text-2xl' : 'text-lg';
+  const darkBg = darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gradient-to-br from-rose-50 via-white to-amber-50';
+  const darkCard = darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white/80 backdrop-blur-sm border-white/40';
+  const darkText = darkMode ? 'text-gray-100' : 'text-gray-900';
+  const darkMuted = darkMode ? 'text-gray-400' : 'text-gray-500';
 
   useEffect(() => {
     async function load() {
@@ -341,7 +346,7 @@ export default function PublicRSVP() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-wine-50 via-white to-amber-50">
+    <div className={`min-h-screen ${darkBg}`}>
       {/* Header */}
       <header className="text-center pt-10 pb-6 px-4">
         {/* Language toggle */}
@@ -366,6 +371,15 @@ export default function PublicRSVP() {
             title="Large text mode for easier reading"
           >
             {seniorMode ? 'Aa−' : 'Aa+'}
+          </button>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              darkMode ? 'bg-wine-700 text-white' : 'bg-white/70 text-gray-600 hover:bg-wine-50'
+            }`}
+            title="Toggle dark mode"
+          >
+            {darkMode ? '☀️' : '🌙'}
           </button>
         </div>
         <div className="w-12 h-12 rounded-full bg-wine-100 text-wine-700 flex items-center justify-center mx-auto mb-3">

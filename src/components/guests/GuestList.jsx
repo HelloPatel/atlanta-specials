@@ -25,6 +25,7 @@ export default function GuestList() {
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
   const [editingGuest, setEditingGuest] = useState(null);
+  const [inlineEdit, setInlineEdit] = useState(null); // {id, firstName, lastName}
 
   useEffect(() => {
     if (!activeWedding) return;
@@ -323,7 +324,25 @@ export default function GuestList() {
                     <input type="checkbox" checked={selected.has(guest.id)} onChange={() => toggleSelect(guest.id)} className="rounded" />
                   </td>
                   <td className="px-4 py-3 font-medium text-gray-900">
-                    {guest.firstName} {guest.lastName}
+                    {inlineEdit?.id === guest.id ? (
+                      <form className="flex gap-1" onSubmit={async (e) => {
+                        e.preventDefault();
+                        await updateGuest(activeWedding.id, guest.id, { firstName: inlineEdit.firstName, lastName: inlineEdit.lastName });
+                        setInlineEdit(null);
+                        toast.success('Name updated');
+                      }}>
+                        <input className="border rounded px-1 py-0.5 text-sm w-20" value={inlineEdit.firstName}
+                          onChange={(e) => setInlineEdit({ ...inlineEdit, firstName: e.target.value })} autoFocus />
+                        <input className="border rounded px-1 py-0.5 text-sm w-20" value={inlineEdit.lastName}
+                          onChange={(e) => setInlineEdit({ ...inlineEdit, lastName: e.target.value })} />
+                        <button type="submit" className="text-green-600 text-xs">✓</button>
+                        <button type="button" className="text-red-500 text-xs" onClick={() => setInlineEdit(null)}>✗</button>
+                      </form>
+                    ) : (
+                      <span className="cursor-pointer hover:underline" onDoubleClick={() => setInlineEdit({ id: guest.id, firstName: guest.firstName, lastName: guest.lastName })}>
+                        {guest.firstName} {guest.lastName}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-gray-600">{guest.familyName || '—'}</td>
                   <td className="px-4 py-3">

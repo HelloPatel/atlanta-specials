@@ -3,7 +3,7 @@ import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToEvents, addEvent, updateEvent, deleteEvent } from '../../services/eventService';
 import { subscribeToGuests } from '../../services/guestService';
 import { Button, Input, Modal, Badge, useToast } from '../ui';
-import { Plus, Edit3, Trash2, Calendar, Clock, MapPin, Users, Sparkles, GripVertical } from 'lucide-react';
+import { Plus, Edit3, Trash2, Calendar, Clock, MapPin, Users, Sparkles, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { EVENT_TEMPLATES } from '../../config/constants';
 
 // Subtle accent colors for each event type to give visual distinction
@@ -46,6 +46,18 @@ export default function EventList() {
     } catch (err) {
       console.error('Failed to delete event:', err);
       toast.error('Failed to delete event. Please try again.');
+    }
+  };
+
+  const handleReorder = async (idx, direction) => {
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= events.length) return;
+    const updates = [
+      { id: events[idx].id, order: newIdx },
+      { id: events[newIdx].id, order: idx },
+    ];
+    for (const u of updates) {
+      await updateEvent(activeWedding.id, u.id, { order: u.order });
     }
   };
 
@@ -163,6 +175,16 @@ export default function EventList() {
                         </div>
                       </div>
                       <div className="flex gap-1">
+                        {idx > 0 && (
+                          <button onClick={() => handleReorder(idx, -1)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                            <ChevronUp size={15} />
+                          </button>
+                        )}
+                        {idx < events.length - 1 && (
+                          <button onClick={() => handleReorder(idx, 1)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                            <ChevronDown size={15} />
+                          </button>
+                        )}
                         <button onClick={() => setEditing(event)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                           <Edit3 size={15} />
                         </button>
