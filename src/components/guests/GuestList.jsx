@@ -202,6 +202,24 @@ export default function GuestList() {
         <Button variant="outline" onClick={() => exportGuestsToExcel(guests)} className="hidden md:inline-flex">
           <Download size={16} /> Export
         </Button>
+        <Button variant="outline" onClick={async () => {
+          const ungrouped = guests.filter((g) => !g.familyName && g.lastName);
+          if (ungrouped.length === 0) { toast.info('All guests already have families assigned'); return; }
+          const groups = {};
+          ungrouped.forEach((g) => {
+            const key = g.lastName.trim().toLowerCase();
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(g);
+          });
+          const multiGroups = Object.entries(groups).filter(([, arr]) => arr.length > 1);
+          if (multiGroups.length === 0) { toast.info('No family groups detected (need 2+ guests with same last name)'); return; }
+          if (!confirm(`Auto-group ${multiGroups.length} families (${multiGroups.reduce((s, [, a]) => s + a.length, 0)} guests)?`)) return;
+          const updates = multiGroups.flatMap(([, arr]) => arr.map((g) => ({ id: g.id, familyName: `The ${arr[0].lastName} Family` })));
+          await updateGuestsBatch(activeWedding.id, updates);
+          toast.success(`Grouped ${updates.length} guests into ${multiGroups.length} families`);
+        }} className="hidden md:inline-flex" title="Group guests by last name into families">
+          <Users size={16} /> Auto-Group
+        </Button>
       </div>
 
       {/* Duplicate warning */}

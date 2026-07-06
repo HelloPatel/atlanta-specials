@@ -658,6 +658,17 @@ export default function SeatingCanvas() {
             <Button variant="outline" size="sm" onClick={() => setZoom(1)}>
               <RotateCcw size={14} />
             </Button>
+            <Button variant="outline" size="sm" onClick={() => {
+              if (tables.length === 0 || !canvasScrollRef.current) return;
+              const maxX = Math.max(...tables.map((t) => t.x + 150));
+              const maxY = Math.max(...tables.map((t) => t.y + 150));
+              const containerW = canvasScrollRef.current.clientWidth;
+              const containerH = canvasScrollRef.current.clientHeight;
+              const fitZoom = Math.min(containerW / maxX, containerH / maxY, 1.5);
+              setZoom(Math.max(Math.round(fitZoom * 10) / 10, 0.3));
+            }} title="Fit all tables in view">
+              Fit
+            </Button>
 
             <div className="w-px h-6 bg-gray-200" />
 
