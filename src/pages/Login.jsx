@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button, Input } from '../components/ui';
-import { APP_NAME, APP_TAGLINE } from '../config/constants';
+import { APP_NAME } from '../config/constants';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -63,7 +63,7 @@ export default function Login() {
             P
           </div>
           <h1 className="text-2xl font-bold text-gray-900">{APP_NAME}</h1>
-          <p className="text-sm text-gray-500 mt-1">{APP_TAGLINE}</p>
+          <p className="text-sm text-gray-500 mt-1">Indian wedding planning, simplified</p>
         </div>
 
         <div className="rounded-2xl bg-white/90 backdrop-blur-sm p-8 shadow-lifted border border-white/60">
@@ -74,6 +74,20 @@ export default function Login() {
               {error}
             </div>
           )}
+
+          <Button variant="outline" className="w-full mb-4" onClick={handleGoogle} disabled={loading}>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-5 w-5" />
+            Continue with Google
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">or use email</span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -102,24 +116,10 @@ export default function Login() {
             </Button>
           </form>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">or</span>
-            </div>
-          </div>
-
-          <Button variant="outline" className="w-full" onClick={handleGoogle}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-5 w-5" />
-            Continue with Google
-          </Button>
-
           <p className="mt-6 text-center text-sm text-gray-500">
             Don't have an account?{' '}
             <Link to="/register" className="font-medium text-wine-700 hover:text-wine-800">
-              Sign up
+              Sign up free
             </Link>
           </p>
         </div>

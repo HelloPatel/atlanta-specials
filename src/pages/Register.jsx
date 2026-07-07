@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button, Input } from '../components/ui';
-import { APP_NAME, APP_TAGLINE } from '../config/constants';
+import { APP_NAME } from '../config/constants';
 
 export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register, loginWithGoogle } = useAuth();
@@ -18,9 +17,6 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    if (password !== confirmPassword) {
-      return setError('Passwords do not match');
-    }
     if (password.length < 6) {
       return setError('Password must be at least 6 characters');
     }
@@ -75,17 +71,32 @@ export default function Register() {
             P
           </div>
           <h1 className="text-2xl font-bold text-gray-900">{APP_NAME}</h1>
-          <p className="text-sm text-gray-500 mt-1">{APP_TAGLINE}</p>
+          <p className="text-sm text-gray-500 mt-1">Plan your entire wedding in one place</p>
         </div>
 
         <div className="rounded-2xl bg-white/90 backdrop-blur-sm p-8 shadow-lifted border border-white/60">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Create your account</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-1">Create your account</h2>
+          <p className="text-sm text-gray-500 mb-6">Free forever. No credit card needed.</p>
 
           {error && (
             <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
+
+          <Button variant="outline" className="w-full mb-4" onClick={handleGoogle} disabled={loading}>
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-5 w-5" />
+            Continue with Google
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-gray-500">or use email</span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -112,32 +123,10 @@ export default function Register() {
               placeholder="At least 6 characters"
               required
             />
-            <Input
-              label="Confirm Password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter password"
-              required
-            />
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating account...' : 'Create account'}
+              {loading ? 'Creating account...' : 'Create Free Account'}
             </Button>
           </form>
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">or</span>
-            </div>
-          </div>
-
-          <Button variant="outline" className="w-full" onClick={handleGoogle}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-5 w-5" />
-            Continue with Google
-          </Button>
 
           <p className="mt-6 text-center text-sm text-gray-500">
             Already have an account?{' '}
@@ -145,6 +134,10 @@ export default function Register() {
               Sign in
             </Link>
           </p>
+        </div>
+
+        <div className="mt-4 text-center text-xs text-gray-400 space-y-1">
+          <p>Unlimited guests, events, tables, and RSVPs included</p>
         </div>
       </div>
     </div>
