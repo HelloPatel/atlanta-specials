@@ -157,9 +157,13 @@ export default function SeatingCanvas() {
 
   const handleCopyFinderLink = useCallback(async () => {
     if (!finderLink) return;
-    await navigator.clipboard.writeText(finderLink);
-    setCopiedFinderLink(true);
-    setTimeout(() => setCopiedFinderLink(false), 2000);
+    try {
+      await navigator.clipboard?.writeText(finderLink);
+      setCopiedFinderLink(true);
+      setTimeout(() => setCopiedFinderLink(false), 2000);
+    } catch {
+      // Clipboard API unavailable — ignore.
+    }
   }, [finderLink]);
 
   const handlePrintQr = useCallback(() => {

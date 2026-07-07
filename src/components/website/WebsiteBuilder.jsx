@@ -190,9 +190,13 @@ export default function WebsiteBuilder() {
   };
 
   const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(websiteUrl);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard?.writeText(websiteUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard API unavailable (insecure context / older browser) — ignore.
+    }
   };
 
   const handleImageUpload = async (event) => {

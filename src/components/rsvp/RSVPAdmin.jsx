@@ -117,9 +117,13 @@ export default function RSVPAdmin() {
   // Copy RSVP link
   const handleCopyLink = async () => {
     const link = getRsvpLink(activeWedding.id, activeWedding.slug);
-    await navigator.clipboard.writeText(link);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard?.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable (insecure context / older browser) — ignore.
+    }
   };
 
   const rsvpLink = activeWedding ? getRsvpLink(activeWedding.id, activeWedding.slug) : '';
@@ -583,9 +587,13 @@ function RsvpSettingsForm({ settings, onSave }) {
 function ReminderTemplate({ label, message }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(message);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard?.writeText(message);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable — ignore.
+    }
   };
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
   return (

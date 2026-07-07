@@ -126,7 +126,7 @@ export default function PublicRSVP() {
   const [passwordError, setPasswordError] = useState('');
   const [lang, setLang] = useState('en'); // 'en' | 'hi' | 'gu'
   const [seniorMode, setSeniorMode] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)').matches || false);
+  const [darkMode, setDarkMode] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false);
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const textScale = seniorMode ? 'text-lg' : 'text-sm';
@@ -463,11 +463,11 @@ export default function PublicRSVP() {
                     className="w-full text-left flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 hover:bg-wine-50 hover:border-wine-300 transition-all active:scale-[0.98]"
                   >
                     <div className="w-10 h-10 rounded-full bg-wine-100 text-wine-700 flex items-center justify-center flex-shrink-0">
-                      {members.length > 1 ? <Users size={18} /> : <span className="text-sm font-bold">{members[0].firstName[0]}</span>}
+                      {members.length > 1 ? <Users size={18} /> : <span className="text-sm font-bold">{members[0]?.firstName?.[0] || '?'}</span>}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-gray-900 truncate">
-                        {familyName ? `The ${familyName} Family` : `${members[0].firstName} ${members[0].lastName}`}
+                        {familyName ? `The ${familyName} Family` : `${members[0]?.firstName || ''} ${members[0]?.lastName || ''}`.trim()}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
                         {members.map((m) => `${m.firstName} ${m.lastName}`).join(', ')}

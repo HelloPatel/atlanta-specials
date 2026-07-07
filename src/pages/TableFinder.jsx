@@ -171,7 +171,9 @@ export default function TableFinder() {
                         className="flex-1"
                         onClick={() => {
                           const text = `I'm at ${result.table.name}${eventName ? ` for ${eventName}` : ''}! Find your table: ${window.location.href}`;
-                          navigator.share?.({ title: 'My Table', text }) || navigator.clipboard.writeText(text);
+                          if (!navigator.share?.({ title: 'My Table', text })) {
+                            navigator.clipboard?.writeText(text).catch(() => {});
+                          }
                         }}
                       >
                         🔗 Share
