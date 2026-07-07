@@ -14,7 +14,7 @@ export default function AppShell() {
   }, [pathname]);
 
   return (
-    <div className="flex h-dvh bg-gray-50">
+    <div className="flex h-dvh" style={{ backgroundColor: '#faf9f7' }}>
       <CommandPalette />
       {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 py-3 bg-white/95 backdrop-blur-sm border-b border-gray-200/80">
