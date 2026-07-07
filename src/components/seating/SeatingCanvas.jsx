@@ -67,6 +67,9 @@ export default function SeatingCanvas() {
   const [undoStack, setUndoStack] = useState([]);
   const canvasScrollRef = useRef(null);
   const qrPrintRef = useRef(null);
+  const shouldFitRef = useRef(false);
+  const fittedEventRef = useRef(null);
+  const pendingScrollRef = useRef(null);
 
   // Only initialize DnD sensors on desktop — avoids @dnd-kit issues on iOS Safari
   const sensors = useSensors(
@@ -415,12 +418,67 @@ export default function SeatingCanvas() {
     setHasChanges(true);
   };
 
+  // Zoom + scroll so the whole layout (tables and zones) is framed in view.
+  // The canvas is a fixed 3000x2000 area scaled by `zoom` with origin 0,0, so
+  // fitting requires BOTH setting the zoom and scrolling to the content bounds.
+  const fitToView = useCallback(() => {
+    const el = canvasScrollRef.current;
+    if (!el) return;
+    const items = [...tables, ...zones];
+    if (items.length === 0) return;
+
+    const minX = Math.min(...items.map((i) => i.x || 0));
+    const minY = Math.min(...items.map((i) => i.y || 0));
+    const maxX = Math.max(...items.map((i) => (i.x || 0) + (i.width || 150)));
+    const maxY = Math.max(...items.map((i) => (i.y || 0) + (i.height || 150)));
+
+    const pad = 100;
+    const contentW = (maxX - minX) + pad * 2;
+    const contentH = (maxY - minY) + pad * 2;
+    const z = Math.max(
+      0.3,
+      Math.min(el.clientWidth / contentW, el.clientHeight / contentH, 1.25),
+    );
+    const rounded = Math.round(z * 100) / 100;
+
+    // Queue the scroll target so it applies AFTER the new zoom commits (the
+    // scrollable extent depends on the scaled child width/height).
+    pendingScrollRef.current = {
+      x: Math.max(0, (minX - pad) * rounded),
+      y: Math.max(0, (minY - pad) * rounded),
+    };
+    setZoom(rounded);
+  }, [tables, zones]);
+
+  // Apply any queued scroll target once the zoom change has committed.
+  useEffect(() => {
+    const target = pendingScrollRef.current;
+    if (!target || !canvasScrollRef.current) return;
+    pendingScrollRef.current = null;
+    canvasScrollRef.current.scrollLeft = target.x;
+    canvasScrollRef.current.scrollTop = target.y;
+  }, [zoom]);
+
+  // Auto zoom-to-fit: when a layout is applied, or when seating data first
+  // loads for an event, frame the whole layout automatically.
+  useEffect(() => {
+    if (tables.length === 0 && zones.length === 0) return;
+    const isNewEvent = fittedEventRef.current !== selectedEventId;
+    if (shouldFitRef.current || isNewEvent) {
+      shouldFitRef.current = false;
+      fittedEventRef.current = selectedEventId;
+      // Defer a frame so the canvas has laid out at its current size.
+      requestAnimationFrame(() => fitToView());
+    }
+  }, [tables, zones, selectedEventId, fitToView]);
+
   // Apply venue preset layout
   const applyPreset = (preset) => {
     setTables(preset.tables.map((t, i) => ({ ...t, id: uid(), assignedGuests: [] })));
     setZones(preset.zones.map((z) => ({ ...z, id: uid() })));
     setHasChanges(true);
     setShowPresets(false);
+    shouldFitRef.current = true;
   };
 
   // Apply layout generator (Indian wedding, mehendi, reception, staggered)
@@ -454,6 +512,7 @@ export default function SeatingCanvas() {
       setZones(newZones.map(z => ({ ...z, id: uid() })));
       setHasChanges(true);
       setShowPresets(false);
+      shouldFitRef.current = true;
       toast.success(`Applied ${layoutType} layout for ${guestCount} guests`);
     } catch (err) {
       toast.error('Failed to apply layout: ' + err.message);
@@ -586,15 +645,7 @@ export default function SeatingCanvas() {
             <Button variant="outline" size="sm" onClick={() => setZoom(1)}>
               <RotateCcw size={14} />
             </Button>
-            <Button variant="outline" size="sm" onClick={() => {
-              if (tables.length === 0 || !canvasScrollRef.current) return;
-              const maxX = Math.max(...tables.map((t) => t.x + 150));
-              const maxY = Math.max(...tables.map((t) => t.y + 150));
-              const containerW = canvasScrollRef.current.clientWidth;
-              const containerH = canvasScrollRef.current.clientHeight;
-              const fitZoom = Math.min(containerW / maxX, containerH / maxY, 1.5);
-              setZoom(Math.max(Math.round(fitZoom * 10) / 10, 0.3));
-            }} title="Fit all tables in view">
+            <Button variant="outline" size="sm" onClick={fitToView} title="Fit all tables in view">
               Fit
             </Button>
 
