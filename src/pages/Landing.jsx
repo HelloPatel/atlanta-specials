@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui';
-import ProductShowcase from '../components/ui/ProductShowcase';
+import HeroDemo from '../components/ui/HeroDemo';
 import FeatureTiles from '../components/ui/FeatureTiles';
 import { APP_NAME } from '../config/constants';
 import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles, Play } from 'lucide-react';
@@ -119,7 +119,7 @@ export default function Landing() {
           <p className="text-sm text-gray-500">Watch how 500+ guests get organized in minutes</p>
         </div>
         <div className="rounded-[1.25rem] p-1.5 bg-gray-900/5 border border-gray-200/60">
-          <ProductShowcase />
+          <HeroDemo />
         </div>
       </div>
 
@@ -139,25 +139,32 @@ export default function Landing() {
           <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
             Problems we solve
           </h2>
+          <p className="text-sm text-gray-500">The stuff that actually made our own wedding stressful.</p>
         </div>
-        <RevealGrid className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+        <RevealGrid className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
           <ScenarioCard
             number="01"
-            title="Guest list chaos"
-            problem="Names in WhatsApp, Mom's notebook, and 3 spreadsheets nobody can find."
-            solution="One list. Import from anywhere. Duplicates caught. Families grouped automatically."
+            title="Parents who want to help (and hover)"
+            problem="Your parents keep asking to see the seating chart, the guest list, the RSVPs. Every question is another text and another screenshot."
+            solution="Give them a view-only login. They see the seating, RSVPs, and invite list anytime, and still can't change a thing."
           />
           <ScenarioCard
             number="02"
-            title="Seating headaches"
-            problem="Uncle Raj and Uncle Mohan can't sit together. Shahs need 12 seats. Excel keeps breaking."
-            solution="Drag and drop. Custom table sizes. Conflict rules. Warnings before problems happen."
+            title="Seating you can actually import"
+            problem="You build the whole arrangement in a spreadsheet, then move one table and the entire thing falls apart."
+            solution="Build your guest list, drag people to tables, or import a full arrangement in one go. Everything stays put when you move a table."
           />
           <ScenarioCard
             number="03"
-            title="Nobody RSVPs"
-            problem="Aunties ignore emails. Cousins forget apps. 200 maybes after 3 reminders."
-            solution="One WhatsApp link. Tap name. Done. Response rates go from 40% to 90%+."
+            title="The photo line nobody wants to stand in"
+            problem="Family and friends stand around waiting for group photos while their food goes cold and no one knows when they're up."
+            solution="A live photo queue on one link. Everyone sees when their group is coming, so they can go eat and show up right on time."
+          />
+          <ScenarioCard
+            number="04"
+            title="RSVPs scattered across the family"
+            problem="One cousin replies, three go quiet, and you're chasing a whole family just to pin down a single head count."
+            solution="Guests are grouped by family with RSVPs tracked together. See who's in, who's out, and exactly who to nudge."
           />
         </RevealGrid>
       </section>
