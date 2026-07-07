@@ -30,6 +30,13 @@ build
 
 screenshots/
 
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+playwright/.cache/
+
 # Firebase service account keys (never commit)
 serviceAccountKey*.json
 **/serviceAccountKey*.json

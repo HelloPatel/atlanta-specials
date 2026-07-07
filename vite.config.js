@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'happy-dom',
     setupFiles: ['./src/test/setup.js'],
     css: false,
+    exclude: ['e2e/**', 'node_modules/**', 'build/**', 'scripts/**'],
   },
   optimizeDeps: {
     include: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
