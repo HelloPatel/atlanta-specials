@@ -88,6 +88,114 @@ body {
   }
 }
 
+/* ─── Venue Canvas Grid (floor-plan feel) ─── */
+.venue-canvas {
+  background-color: #fafbfc;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(171, 32, 77, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.venue-canvas-dark {
+  background-color: #f8f9fa;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ─── Premium Zone Styling ─── */
+.zone-element {
+  backdrop-filter: blur(2px);
+  transition: all 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.zone-element:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.zone-dancefloor {
+  background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.08) 0%, rgba(168, 85, 247, 0.03) 70%, transparent 100%);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.zone-stage {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(217, 119, 6, 0.04) 100%);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.zone-bar {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(37, 99, 235, 0.03) 100%);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* ─── Bottom Sheet Animation ─── */
+@keyframes sheetReveal {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sheet-reveal {
+  animation: sheetReveal 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+/* ─── Premium Table Card ─── */
+.table-card {
+  transition: all 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+.table-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
+}
+.table-card.selected {
+  box-shadow: 0 0 0 3px rgba(171, 32, 77, 0.2), 0 4px 16px rgba(171, 32, 77, 0.08);
+  transform: scale(1.03);
+}
+
+/* ─── Glass Morphism Toolbar ─── */
+.toolbar-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03), 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+/* ─── Capacity Progress Bar ─── */
+.capacity-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+.capacity-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ─── Smooth scrollbar for seating canvas ─── */
+.seating-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.seating-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.seating-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+.seating-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
 /* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

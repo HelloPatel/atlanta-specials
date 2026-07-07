@@ -7,13 +7,14 @@ import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating, saveSeating } from '../../services/seatingService';
 import { Button, Modal } from '../ui';
 import { useToast } from '../ui/Toast';
-import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2, Printer } from 'lucide-react';
+import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2, Printer, Music, Mic, Wine, Gift, Cake, Camera, DoorOpen, CircleDot } from 'lucide-react';
 import { TABLE_DEFAULTS, TABLE_PRESETS } from '../../config/constants';
 import TableComponent from './Table';
 import GuestSidebar from './GuestSidebar';
 import RulesPanel from './RulesPanel';
 import { evaluateSeatingRules } from './seatingRules';
 import { autoSuggestSeating } from './seatingAutoSuggest';
+import { generateIndianWeddingLayout, generateMehendiLayout, generateReceptionLayout, generateStaggeredLayout } from './seatingLayouts';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -376,6 +377,39 @@ export default function SeatingCanvas() {
     setShowPresets(false);
   };
 
+  // Apply layout generator (Indian wedding, mehendi, reception, staggered)
+  const applyLayoutGenerator = (layoutType) => {
+    const guestCount = guests.filter(g => g.rsvpStatus?.[selectedEventId] !== 'declined').length;
+    let newTables, newZones;
+
+    try {
+      switch (layoutType) {
+        case 'indianWedding':
+          ({ tables: newTables, zones: newZones } = generateIndianWeddingLayout(guestCount));
+          break;
+        case 'mehendi':
+          ({ tables: newTables, zones: newZones } = generateMehendiLayout(guestCount));
+          break;
+        case 'reception':
+          ({ tables: newTables, zones: newZones } = generateReceptionLayout(guestCount));
+          break;
+        case 'staggered':
+          ({ tables: newTables, zones: newZones } = generateStaggeredLayout(guestCount));
+          break;
+        default:
+          return;
+      }
+
+      setTables(newTables.map(t => ({ ...t, id: uid(), assignedGuests: [] })));
+      setZones(newZones.map(z => ({ ...z, id: uid() })));
+      setHasChanges(true);
+      setShowPresets(false);
+      toast.success(`Applied ${layoutType} layout for ${guestCount} guests`);
+    } catch (err) {
+      toast.error('Failed to apply layout: ' + err.message);
+    }
+  };
+
   // Remove table
   const removeTable = (tableId) => {
     setTables((prev) => prev.filter((t) => t.id !== tableId));
@@ -480,7 +514,7 @@ export default function SeatingCanvas() {
         {/* Main canvas */}
         <div className="flex-1 flex flex-col min-h-0">
           {/* Toolbar */}
-          <div className="no-print flex items-center gap-2 mb-3 flex-wrap">
+          <div className="no-print flex items-center gap-2 mb-3 flex-wrap toolbar-glass rounded-xl px-3 py-2">
             {/* Event selector */}
             <select
               value={selectedEventId || ''}
@@ -526,12 +560,15 @@ export default function SeatingCanvas() {
                 <Plus size={14} /> Zone ▾
               </Button>
               <div className="hidden group-hover:block absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 w-44">
-                {ZONE_PRESETS.map((z) => (
-                  <button key={z.type} onClick={() => addZone(z)}
-                    className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2">
-                    <span>{z.icon}</span> {z.label}
-                  </button>
-                ))}
+                {ZONE_PRESETS.map((z) => {
+                  const ZIcon = z.icon;
+                  return (
+                    <button key={z.type} onClick={() => addZone(z)}
+                      className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2">
+                      <ZIcon size={14} className="text-gray-500" /> {z.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -624,17 +661,17 @@ export default function SeatingCanvas() {
           {/* Capacity summary bar */}
           {tables.length > 0 && (
             <div className="mb-3 flex items-center gap-3 text-xs text-gray-500">
-              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="capacity-bar flex-1">
                 <div
-                  className={`h-full rounded-full transition-all ${
+                  className={`capacity-bar-fill ${
                     assignedGuestIds.size > tables.reduce((s, t) => s + t.capacity, 0) ? 'bg-red-500' :
                     assignedGuestIds.size === tables.reduce((s, t) => s + t.capacity, 0) ? 'bg-green-500' : 'bg-wine-500'
                   }`}
                   style={{ width: `${Math.min((assignedGuestIds.size / Math.max(tables.reduce((s, t) => s + t.capacity, 0), 1)) * 100, 100)}%` }}
                 />
               </div>
-              <span>{assignedGuestIds.size}/{tables.reduce((s, t) => s + t.capacity, 0)} seats filled</span>
-              <span>• {tables.length} tables</span>
+              <span className="font-medium">{assignedGuestIds.size}/{tables.reduce((s, t) => s + t.capacity, 0)} seats filled</span>
+              <span className="text-gray-400">{tables.length} tables</span>
               {(() => {
                 const seated = guests.filter((g) => assignedGuestIds.has(g.id));
                 const bride = seated.filter((g) => g.side === 'bride').length;
@@ -660,7 +697,7 @@ export default function SeatingCanvas() {
             </div>
           )}
 
-          <div ref={canvasScrollRef} className="seating-print-area flex-1 rounded-xl border border-gray-200 bg-white overflow-auto relative">
+          <div ref={canvasScrollRef} className="seating-print-area flex-1 rounded-2xl border border-gray-200/60 overflow-auto relative venue-canvas seating-scroll shadow-venue">
             {events.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
                 <p>Add events first to start seating</p>
@@ -853,7 +890,11 @@ export default function SeatingCanvas() {
 
       {/* Venue Layout Presets modal */}
       <Modal open={showPresets} onClose={() => setShowPresets(false)} title="Venue Layout Presets" size="lg">
-        <VenuePresetsPanel onApply={applyPreset} onClose={() => setShowPresets(false)} />
+        <VenuePresetsPanel 
+          onApply={applyPreset} 
+          onClose={() => setShowPresets(false)}
+          onApplyGenerator={applyLayoutGenerator}
+        />
       </Modal>
 
       <RulesPanel
@@ -1117,16 +1158,16 @@ function Grid3XIcon() {
 // ─── Zone presets ───────────────────────────────────────────────────────────
 
 const ZONE_PRESETS = [
-  { type: 'dancefloor', label: 'Dance Floor', icon: 'DF', width: 250, height: 250, color: '#fef3c7' },
-  { type: 'dj',         label: 'DJ Booth',    icon: 'DJ', width: 100, height: 60,  color: '#e0e7ff' },
-  { type: 'bar',        label: 'Bar',         icon: 'B',  width: 160, height: 60,  color: '#dbeafe' },
-  { type: 'gifts',      label: 'Gifts & Cards', icon: 'G', width: 100, height: 80, color: '#fce7f3' },
-  { type: 'desserts',   label: 'Desserts',    icon: 'D',  width: 120, height: 60,  color: '#fef9c3' },
-  { type: 'cake',       label: 'Cake',        icon: 'C',  width: 80,  height: 80,  color: '#fff7ed' },
-  { type: 'stage',      label: 'Stage / Mandap', icon: 'S', width: 300, height: 150, color: '#fee2e2' },
-  { type: 'photo',      label: 'Photo Booth', icon: 'PB', width: 100, height: 80,  color: '#f3e8ff' },
-  { type: 'entrance',   label: 'Entrance',    icon: 'E',  width: 80,  height: 40,  color: '#f1f5f9' },
-  { type: 'custom',     label: 'Custom Zone',  icon: '+',  width: 150, height: 100, color: '#f3f4f6' },
+  { type: 'dancefloor', label: 'Dance Floor', icon: Music, width: 250, height: 250, color: '#fef3c7' },
+  { type: 'dj',         label: 'DJ Booth',    icon: Mic, width: 100, height: 60,  color: '#e0e7ff' },
+  { type: 'bar',        label: 'Bar',         icon: Wine,  width: 160, height: 60,  color: '#dbeafe' },
+  { type: 'gifts',      label: 'Gifts & Cards', icon: Gift, width: 100, height: 80, color: '#fce7f3' },
+  { type: 'desserts',   label: 'Desserts',    icon: Cake,  width: 120, height: 60,  color: '#fef9c3' },
+  { type: 'cake',       label: 'Cake',        icon: Cake,  width: 80,  height: 80,  color: '#fff7ed' },
+  { type: 'stage',      label: 'Stage / Mandap', icon: Mic, width: 300, height: 150, color: '#fee2e2' },
+  { type: 'photo',      label: 'Photo Booth', icon: Camera, width: 100, height: 80,  color: '#f3e8ff' },
+  { type: 'entrance',   label: 'Entrance',    icon: DoorOpen,  width: 80,  height: 40,  color: '#f1f5f9' },
+  { type: 'custom',     label: 'Custom Zone',  icon: CircleDot,  width: 150, height: 100, color: '#f3f4f6' },
 ];
 
 // ─── Zone element (non-seatable, draggable) ─────────────────────────────────
@@ -1165,7 +1206,9 @@ function ZoneElement({ zone, onUpdate, onRemove, zoom }) {
     window.addEventListener('touchend', handleUp);
   }, [zone.x, zone.y, zoom, onUpdate]);
 
-  const zoneIcon = ZONE_PRESETS.find((z) => z.type === zone.type)?.icon || '📐';
+  const zonePreset = ZONE_PRESETS.find((z) => z.type === zone.type);
+  const ZoneIcon = zonePreset?.icon || CircleDot;
+  const isDanceFloor = zone.type === 'dancefloor' || zone.type === 'dance-floor';
 
   return (
     <div
@@ -1180,11 +1223,11 @@ function ZoneElement({ zone, onUpdate, onRemove, zoom }) {
     >
       <div
         style={{ backgroundColor: zone.color || '#f3f4f6' }}
-        className="w-full h-full rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing transition-colors hover:border-gray-400"
+        className={`w-full h-full ${isDanceFloor ? 'rounded-full zone-dancefloor' : 'rounded-xl'} ${zone.type === 'stage' || zone.type === 'dj' ? 'zone-stage' : ''} ${zone.type === 'bar' ? 'zone-bar' : ''} border-2 border-dashed flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing zone-element`}
         onMouseDown={handleGripDown}
         onTouchStart={handleGripDown}
       >
-        <span className="text-2xl mb-1 pointer-events-none">{zoneIcon}</span>
+        <ZoneIcon size={Math.min(zone.width, zone.height) * 0.2} className="text-gray-500 opacity-60 pointer-events-none" />
         {isEditing ? (
           <input
             value={editLabel}
@@ -1202,9 +1245,13 @@ function ZoneElement({ zone, onUpdate, onRemove, zoom }) {
       </div>
 
       {/* Hover actions */}
-      <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:flex gap-1 bg-white rounded-lg shadow-md border px-1 py-0.5 z-10">
-        <button onClick={() => setIsEditing(true)} className="p-1 rounded hover:bg-gray-100 text-gray-500 text-[10px]" title="Rename">✏️</button>
-        <button onClick={onRemove} className="p-1 rounded hover:bg-red-50 text-red-500 text-[10px]" title="Remove">🗑️</button>
+      <div className="absolute -top-8 left-1/2 -translate-x-1/2 hidden group-hover:flex gap-1 bg-white rounded-lg shadow-lg border border-gray-200 px-1.5 py-1 z-10">
+        <button onClick={() => setIsEditing(true)} className="p-1 rounded hover:bg-gray-100 text-gray-500" title="Rename">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </button>
+        <button onClick={onRemove} className="p-1 rounded hover:bg-red-50 text-red-500" title="Remove">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        </button>
       </div>
 
       {/* Resize handle */}
@@ -1521,39 +1568,123 @@ function TableShapeIcon({ shape }) {
   }
 }
 
-function VenuePresetsPanel({ onApply, onClose }) {
+function VenuePresetsPanel({ onApply, onClose, onApplyGenerator }) {
+  const [tab, setTab] = useState('presets'); // 'presets' or 'event-layouts'
+
+  const eventLayouts = [
+    {
+      id: 'indianWedding',
+      name: 'Indian Wedding Reception',
+      description: 'Mandap/stage, bride & groom family sides, dance floor, bar, cocktail area',
+      icon: '🎉',
+    },
+    {
+      id: 'mehendi',
+      name: 'Mehendi Celebration',
+      description: 'Casual layout with performance stage, dance area, cocktail seating',
+      icon: '🌺',
+    },
+    {
+      id: 'reception',
+      name: 'Formal Reception',
+      description: 'Head table, circular arrangement, stage, dance floor',
+      icon: '👑',
+    },
+    {
+      id: 'staggered',
+      name: 'Staggered Seating',
+      description: 'Organic, non-grid arrangement with offset rows',
+      icon: '✨',
+    },
+  ];
+
   return (
     <div className="space-y-3">
       <p className="text-sm text-gray-600">
-        Pick a layout that matches your venue. You can move, resize, add, or remove tables after.
+        Choose a layout based on your venue type or event. You can customize tables and zones after.
       </p>
       <p className="text-xs text-amber-600 font-medium">⚠️ This will replace your current layout.</p>
 
-      <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
-        {VENUE_LAYOUTS.map((layout, i) => (
-          <button
-            key={i}
-            onClick={() => {
-              if (confirm(`Apply "${layout.name}"? This replaces your current tables and zones.`)) {
-                onApply(layout);
-              }
-            }}
-            className="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-wine-50 hover:border-wine-200 transition-colors text-left"
-          >
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-wine-50 flex items-center justify-center">
-              <Grid3X3 size={18} className="text-wine-700" />
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-gray-900">{layout.name}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{layout.description}</div>
-              <div className="text-xs text-gray-400 mt-1">
-                {layout.tables.length} tables · {layout.tables.reduce((s, t) => s + t.capacity, 0)} seats
-                {layout.zones.length > 0 && ` · ${layout.zones.length} zones`}
-              </div>
-            </div>
-          </button>
-        ))}
+      {/* Tab selector */}
+      <div className="flex gap-2 border-b border-gray-200">
+        <button
+          onClick={() => setTab('presets')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'presets'
+              ? 'text-wine-700 border-wine-300'
+              : 'text-gray-500 border-transparent hover:text-gray-700'
+          }`}
+        >
+          Venue Presets
+        </button>
+        <button
+          onClick={() => setTab('event-layouts')}
+          className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'event-layouts'
+              ? 'text-wine-700 border-wine-300'
+              : 'text-gray-500 border-transparent hover:text-gray-700'
+          }`}
+        >
+          Event Layouts
+        </button>
       </div>
+
+      {/* Venue Presets */}
+      {tab === 'presets' && (
+        <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+          {VENUE_LAYOUTS.map((layout, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                if (confirm(`Apply "${layout.name}"? This replaces your current tables and zones.`)) {
+                  onApply(layout);
+                }
+              }}
+              className="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-wine-50 hover:border-wine-200 transition-colors text-left"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-wine-50 flex items-center justify-center text-lg">
+                {layout.icon}
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-gray-900">{layout.name}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{layout.description}</div>
+                <div className="text-xs text-gray-400 mt-1">
+                  {layout.tables.length} tables · {layout.tables.reduce((s, t) => s + t.capacity, 0)} seats
+                  {layout.zones.length > 0 && ` · ${layout.zones.length} zones`}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Event Layouts */}
+      {tab === 'event-layouts' && (
+        <div className="grid grid-cols-1 gap-3 max-h-96 overflow-y-auto">
+          {eventLayouts.map((layout) => (
+            <button
+              key={layout.id}
+              onClick={() => {
+                if (confirm(`Apply "${layout.name}"? This will create an optimized layout based on your guest count.`)) {
+                  onApplyGenerator(layout.id);
+                }
+              }}
+              className="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-wine-50 hover:border-wine-200 transition-colors text-left"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-wine-50 flex items-center justify-center text-lg">
+                {layout.icon}
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-gray-900">{layout.name}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{layout.description}</div>
+                <div className="text-xs text-gray-400 mt-1">
+                  Auto-calculated tables based on guest count
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

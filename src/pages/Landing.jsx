@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui';
+import VideoEmbed from '../components/ui/VideoEmbed';
 import { APP_NAME } from '../config/constants';
-import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles } from 'lucide-react';
+import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles, Play } from 'lucide-react';
 
 function useReveal() {
   const ref = useRef(null);
@@ -98,75 +99,25 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Visual mockup */}
+      {/* Demo video section */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-6 sm:pb-8">
-        <div className="rounded-2xl border border-gray-200/80 bg-white shadow-lifted overflow-hidden">
-          <div className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-            <div className="size-2.5 rounded-full bg-red-300"></div>
-            <div className="size-2.5 rounded-full bg-amber-300"></div>
-            <div className="size-2.5 rounded-full bg-green-300"></div>
-            <span className="ml-3 text-[10px] text-gray-400 font-mono">phera.app/seating</span>
-          </div>
-          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-            {/* Seating canvas mockup */}
-            <div className="sm:col-span-2 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-100 p-4 sm:p-5 relative overflow-hidden min-h-[140px] sm:min-h-[200px]">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Reception Seating</p>
-                <span className="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">487/500 seated</span>
-              </div>
-              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3">
-                {[
-                  { n: 1, seats: 10, fill: 10 },
-                  { n: 2, seats: 12, fill: 11 },
-                  { n: 3, seats: 10, fill: 10 },
-                  { n: 4, seats: 8, fill: 8 },
-                  { n: 5, seats: 12, fill: 12 },
-                  { n: 6, seats: 10, fill: 9 },
-                  { n: 7, seats: 10, fill: 10 },
-                  { n: 8, seats: 8, fill: 7 },
-                  { n: 9, seats: 12, fill: 12 },
-                  { n: 10, seats: 10, fill: 10 },
-                  { n: 11, seats: 10, fill: 10 },
-                  { n: 12, seats: 8, fill: 8 },
-                ].map(t => (
-                  <div key={t.n} className="relative group">
-                    <div className={`aspect-square rounded-full border-2 flex items-center justify-center transition-colors ${t.fill === t.seats ? 'border-wine-300 bg-wine-50' : 'border-amber-300 bg-amber-50'}`}>
-                      <span className="text-[8px] sm:text-[10px] font-bold text-gray-600">{t.n}</span>
-                    </div>
-                    <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-gray-400">{t.fill}/{t.seats}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="absolute bottom-3 right-3 flex items-center gap-3 text-[8px] text-gray-400">
-                <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-wine-200"></span> Full</span>
-                <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-amber-200"></span> Open</span>
-              </div>
-            </div>
-            {/* Sidebar mockup */}
-            <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 sm:p-4 flex flex-col">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Unassigned (13)</p>
-              <div className="space-y-1.5 flex-1">
-                {[
-                  { name: 'Kavita Sharma', fam: 'Sharma Family' },
-                  { name: 'Raj Patel', fam: 'Patel Family' },
-                  { name: 'Anita Desai', fam: 'Desai Family' },
-                  { name: 'Vikram Singh', fam: 'Singh Family' },
-                  { name: 'Priya Mehta', fam: 'Mehta Family' },
-                ].map(g => (
-                  <div key={g.name} className="flex items-center gap-1.5 bg-white rounded-md px-2 py-1 border border-gray-100">
-                    <div className="size-4 rounded-full bg-wine-100 flex items-center justify-center">
-                      <span className="text-[7px] font-bold text-wine-600">{g.name[0]}</span>
-                    </div>
-                    <div className="min-w-0">
-                      <span className="text-[9px] text-gray-700 font-medium block truncate">{g.name}</span>
-                      <span className="text-[7px] text-gray-400 block truncate">{g.fam}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-2 pt-2 border-t border-gray-100 text-[9px] text-green-600 font-medium">✓ 312 RSVPs confirmed</div>
-            </div>
-          </div>
+        <div className="text-center mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-2xl font-display font-bold text-gray-900 mb-2">See it in action</h2>
+          <p className="text-sm text-gray-600">Watch how to manage 500+ guests in minutes</p>
+        </div>
+        <div className="rounded-2xl border border-gray-200/80 overflow-hidden shadow-lifted bg-black">
+          <VideoEmbed
+            src=""
+            fallbackImage="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'%3E%3Crect fill='%23f3f4f6' width='1280' height='720'/%3E%3Crect fill='%23e5e7eb' x='40' y='40' width='1200' height='640'/%3E%3Ctext x='640' y='300' font-size='32' font-weight='bold' text-anchor='middle' fill='%236b7280'%3ESeating Chart Demo%3C/text%3E%3Ctext x='640' y='360' font-size='16' text-anchor='middle' fill='%239ca3af'%3E500+ guests, organized in minutes%3C/text%3E%3Ccircle cx='100' cy='120' r='40' fill='%23dc2626'/%3E%3Ccircle cx='120' cy='140' r='35' fill='%23f59e0b'/%3E%3Ccircle cx='140' cy='130' r='38' fill='%2316a34a'/%3E%3Crect x='60' y='180' width='180' height='120' fill='%23f3f4f6' stroke='%23d1d5db' stroke-width='2'/%3E%3Ctext x='150' y='245' font-size='14' text-anchor='middle' fill='%234b5563'%3EDrag Tables%3C/text%3E%3C/svg%3E"
+            title="Seating Chart Demo"
+            autoplay={true}
+            muted={true}
+            loop={true}
+            controls={false}
+            playButtonOverlay={true}
+            className="w-full"
+            aspectRatio="video"
+          />
         </div>
       </div>
 

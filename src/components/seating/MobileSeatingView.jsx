@@ -4,10 +4,12 @@ import { subscribeToGuests } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating } from '../../services/seatingService';
 import { evaluateSeatingRules } from './seatingRules';
+import { Music, Mic, UtensilsCrossed, Droplets, Gift, Cake, Camera, DoorOpen, Wine, CircleDot } from 'lucide-react';
 
 /**
  * Lightweight mobile seating view. No @dnd-kit imports at all.
  * Renders tables as simple styled divs with tap-to-view guest list.
+ * Now includes dance floor, stage, bar, and other venue elements.
  */
 export default function MobileSeatingView() {
   const { activeWedding } = useWedding();
@@ -16,6 +18,7 @@ export default function MobileSeatingView() {
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [tables, setTables] = useState([]);
   const [rules, setRules] = useState([]);
+  const [zones, setZones] = useState([]);
   const [mobileSelectedTable, setMobileSelectedTable] = useState(null);
   const [mobileZoom, setMobileZoom] = useState(0.35);
 
@@ -34,6 +37,7 @@ export default function MobileSeatingView() {
     return subscribeToSeating(activeWedding.id, selectedEventId, (data) => {
       setTables(data.tables || []);
       setRules(data.rules || []);
+      setZones(data.zones || []);
     });
   }, [activeWedding, selectedEventId]);
 
@@ -98,8 +102,8 @@ export default function MobileSeatingView() {
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 overflow-auto bg-gray-50 relative">
-        {tables.length === 0 ? (
+      <div className="flex-1 overflow-auto venue-canvas relative seating-scroll">
+        {tables.length === 0 && zones.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
             <p className="text-gray-400 text-sm mb-1">No tables yet</p>
             <p className="text-gray-400 text-xs">Open this page on desktop to add tables and arrange seating.</p>
@@ -116,6 +120,62 @@ export default function MobileSeatingView() {
               minHeight: canvasBounds.height,
             }}
           >
+            {/* Render zones (dance floor, stage, bar, etc.) */}
+            {zones.map((zone) => {
+              const zoneIcons = {
+                'dance-floor': Music,
+                'dancefloor': Music,
+                stage: Mic,
+                dj: Mic,
+                bar: Wine,
+                'cocktail-area': Droplets,
+                gifts: Gift,
+                cake: Cake,
+                desserts: Cake,
+                photo: Camera,
+                entrance: DoorOpen,
+                custom: CircleDot,
+              };
+              const Icon = zoneIcons[zone.type] || Music;
+              const isDanceFloor = zone.type === 'dance-floor' || zone.type === 'dancefloor';
+              const zoneStyles = {
+                'dance-floor': 'border-purple-300 bg-purple-50/80 shadow-inner',
+                'dancefloor': 'border-purple-300 bg-purple-50/80 shadow-inner',
+                stage: 'border-amber-300 bg-amber-50/80',
+                dj: 'border-indigo-300 bg-indigo-50/80',
+                bar: 'border-blue-300 bg-blue-50/80',
+                'cocktail-area': 'border-teal-300 bg-teal-50/80',
+                gifts: 'border-pink-300 bg-pink-50/80',
+                cake: 'border-orange-200 bg-orange-50/80',
+                desserts: 'border-yellow-300 bg-yellow-50/80',
+                photo: 'border-violet-300 bg-violet-50/80',
+                entrance: 'border-slate-300 bg-slate-50/80',
+                custom: 'border-gray-300 bg-gray-50/80',
+              };
+              return (
+                <div
+                  key={zone.id}
+                  style={{
+                    position: 'absolute',
+                    left: zone.x,
+                    top: zone.y,
+                    width: zone.width,
+                    height: zone.height,
+                    borderRadius: isDanceFloor ? '50%' : '12px',
+                  }}
+                  className={`border-2 border-dashed flex flex-col items-center justify-center gap-1 transition-all ${
+                    zoneStyles[zone.type] || 'border-gray-300 bg-gray-50/80'
+                  }`}
+                >
+                  <Icon size={20} className="text-gray-600 opacity-70" />
+                  <span className="text-[9px] font-semibold text-gray-600 opacity-80 leading-tight text-center px-1">
+                    {zone.label}
+                  </span>
+                </div>
+              );
+            })}
+
+            {/* Render tables */}
             {tables.map((table) => {
               const isSelected = mobileSelectedTable?.id === table.id;
               const assigned = (table.assignedGuests || []).length;
@@ -145,18 +205,18 @@ export default function MobileSeatingView() {
                       height: table.height || 120,
                       transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
                     }}
-                    className={`border-2 flex flex-col items-center justify-center ${shapeClass} ${
-                      isOver ? 'border-red-400 bg-red-50' : isFull ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
+                    className={`border-2 flex flex-col items-center justify-center ${shapeClass} transition-all duration-200 ${
+                      isSelected ? 'ring-4 ring-wine-400/40 scale-105' :
+                      isOver ? 'border-red-400 bg-red-50 shadow-sm' : 
+                      isFull ? 'border-green-300 bg-green-50 shadow-sm' : 
+                      'border-gray-300 bg-white shadow-sm hover:shadow-md'
                     }`}
                   >
                     <span className="text-xs font-semibold text-gray-700 leading-tight">{table.name}</span>
-                    <span className={`text-[10px] font-bold mt-0.5 ${isOver ? 'text-red-600' : 'text-gray-500'}`}>
+                    <span className={`text-[10px] font-bold mt-0.5 ${isOver ? 'text-red-600' : isFull ? 'text-green-600' : 'text-gray-500'}`}>
                       {assigned}/{table.capacity}
                     </span>
                   </div>
-                  {isSelected && (
-                    <div className="absolute inset-0 rounded-xl ring-4 ring-wine-400/50 pointer-events-none" />
-                  )}
                 </div>
               );
             })}
@@ -166,8 +226,8 @@ export default function MobileSeatingView() {
 
       {/* Table detail bottom sheet */}
       {mobileSelectedTable && (
-        <div className="border-t border-gray-200 bg-white max-h-[35dvh] overflow-auto animate-slide-up shrink-0">
-          <div className="sticky top-0 bg-white px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+        <div className="border-t border-gray-200 bg-white max-h-[35dvh] overflow-auto shrink-0 shadow-[0_-4px_12px_rgba(0,0,0,0.05)] sheet-reveal">
+          <div className="sticky top-0 bg-white/95 backdrop-blur-sm px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-gray-900">{mobileSelectedTable.name}</h3>
               <p className="text-xs text-gray-500">
@@ -177,7 +237,7 @@ export default function MobileSeatingView() {
             </div>
             <button
               onClick={() => setMobileSelectedTable(null)}
-              className="text-gray-400 hover:text-gray-600 p-1"
+              className="text-gray-400 hover:text-gray-600 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
             >&times;</button>
           </div>
           <div className="px-4 py-2">
