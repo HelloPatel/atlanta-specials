@@ -157,14 +157,13 @@ export default function GuestSidebar({
 }
 
 function DraggableGuest({ guest }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: guest.id,
   });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 1000,
-  } : undefined;
+  // With a DragOverlay handling the moving element, the source item must stay
+  // put in the list (only dimmed). Applying a transform here would make the
+  // list item fly around too, shifting the sidebar as you drag over names.
 
   // RSVP status dot color
   const rsvpStatuses = Object.values(guest.rsvpStatus || {});
@@ -175,12 +174,11 @@ function DraggableGuest({ guest }) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...listeners}
       {...attributes}
       className={`
-        flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs cursor-grab active:cursor-grabbing transition-colors
-        ${isDragging ? 'opacity-50 bg-wine-100' : 'hover:bg-gray-50'}
+        flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs cursor-grab active:cursor-grabbing
+        ${isDragging ? 'opacity-40 bg-wine-50 ring-1 ring-wine-200' : 'hover:bg-gray-50'}
       `}
     >
       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${guest.side === 'bride' ? 'bg-wine-400' : 'bg-blue-400'}`} />
