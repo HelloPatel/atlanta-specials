@@ -19,8 +19,8 @@ const ONBOARDING_STEPS = [
   },
   {
     id: 'seating',
-    title: 'Drag & drop seating',
-    description: 'Mix round, estate, and head tables. Set keep-together rules. Use Auto-Seat to fill tables intelligently.',
+    title: 'Drag and drop seating',
+    description: 'Mix round, estate, and head tables. Set keep-together rules. Use Auto-Seat to fill tables quickly.',
   },
   {
     id: 'rsvp',

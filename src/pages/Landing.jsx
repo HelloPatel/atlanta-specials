@@ -9,6 +9,12 @@ function useReveal() {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+
+    // Fallback: reveal everything after 1.5s in case observer doesn't fire
+    const fallback = setTimeout(() => {
+      el.querySelectorAll('.reveal').forEach((child) => child.classList.add('revealed'));
+    }, 1500);
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -18,10 +24,10 @@ function useReveal() {
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0.08, rootMargin: '0px 0px 50px 0px' }
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); clearTimeout(fallback); };
   }, []);
   return ref;
 }
@@ -87,7 +93,7 @@ export default function Landing() {
           <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Import</p>
         </div>
         <div>
-          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">$0</p>
+          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700">Free</p>
           <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Always</p>
         </div>
       </div>

@@ -24,7 +24,7 @@ const navItems = [
   { to: '/events', icon: Calendar, label: 'Events' },
   { to: '/seating', icon: Grid3X3, label: 'Seating' },
   { to: '/rsvp', icon: Mail, label: 'RSVPs' },
-  { to: '/print', icon: Printer, label: 'Print & Export' },
+  { to: '/print', icon: Printer, label: 'Print' },
   { to: '/photos', icon: Camera, label: 'Photo Groups' },
   { to: '/bets', icon: Trophy, label: 'Games' },
   { to: '/website', icon: Globe, label: 'Website' },
