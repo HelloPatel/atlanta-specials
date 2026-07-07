@@ -158,15 +158,15 @@ export default function CollaboratorsPanel() {
         <div className="space-y-2 text-xs text-gray-600">
           <div className="flex items-start gap-2">
             <Crown size={12} className="text-wine-700 mt-0.5 flex-shrink-0" />
-            <div><strong>Owner</strong> — Full control, manage collaborators, delete wedding</div>
+            <div><strong>Owner</strong>: Full control, manage collaborators, delete wedding</div>
           </div>
           <div className="flex items-start gap-2">
             <Edit3 size={12} className="text-blue-600 mt-0.5 flex-shrink-0" />
-            <div><strong>Editor</strong> — Add/edit guests, events, seating, RSVP. Perfect for spouse</div>
+            <div><strong>Editor</strong>: Add/edit guests, events, seating, RSVP. Good for your spouse</div>
           </div>
           <div className="flex items-start gap-2">
             <Eye size={12} className="text-gray-500 mt-0.5 flex-shrink-0" />
-            <div><strong>Viewer</strong> — See everything, change nothing. Great for parents</div>
+            <div><strong>Viewer</strong>: See everything, change nothing. Good for parents</div>
           </div>
         </div>
       </div>
@@ -216,7 +216,7 @@ export default function CollaboratorsPanel() {
                   <Edit3 size={14} className="text-blue-600" />
                   <span className="text-sm font-medium">Editor</span>
                 </div>
-                <p className="text-xs text-gray-500">Full access — can add guests, edit events, manage seating</p>
+                <p className="text-xs text-gray-500">Full access. Can add guests, edit events, manage seating</p>
               </button>
               <button
                 onClick={() => setInviteRole(COLLAB_ROLES.VIEWER)}
@@ -230,7 +230,7 @@ export default function CollaboratorsPanel() {
                   <Eye size={14} className="text-gray-600" />
                   <span className="text-sm font-medium">Viewer</span>
                 </div>
-                <p className="text-xs text-gray-500">Read-only — can see everything but can't make changes</p>
+                <p className="text-xs text-gray-500">Read-only. Can see everything but cannot make changes</p>
               </button>
             </div>
           </div>

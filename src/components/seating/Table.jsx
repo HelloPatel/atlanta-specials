@@ -455,7 +455,7 @@ function ChairSeat({ chair, index, chairSize }) {
           height: chairSize,
         }}
         className="rounded-full border border-gray-300 bg-gray-50"
-        title={`Seat ${index + 1} — empty`}
+        title={`Seat ${index + 1} (empty)`}
       />
     );
   }
@@ -494,7 +494,7 @@ function SeatedGuestChip({ guest, x, y, familyAtTable, chairSize }) {
           ${isDragging ? 'ring-2 ring-wine-400 opacity-70' : ''}
           ${familyAtTable ? 'bg-amber-400 border-2 border-amber-500' : 'bg-wine-400 border-2 border-wine-600'}
         `}
-        title={`${guest.firstName} ${guest.lastName}${guest.familyName ? ` (${guest.familyName})` : ''} — ${guest.dietary || 'no dietary'}`}
+        title={`${guest.firstName} ${guest.lastName}${guest.familyName ? ` (${guest.familyName})` : ''} | ${guest.dietary || 'no dietary'}`}
       />
       {/* Name label — outside the chair, not draggable */}
       {!isDragging && (

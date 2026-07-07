@@ -263,7 +263,7 @@ export default function SeatingCanvas() {
     setHasChanges(true);
 
     if (overflow.length > 0) {
-      toast.warning(`Seated ${seatedCount} guests. ${overflow.length} couldn't be placed — not enough capacity.`);
+      toast.warning(`Seated ${seatedCount} guests. ${overflow.length} couldn't be placed (not enough capacity).`);
     } else {
       toast.success(`All ${seatedCount} guests auto-seated!`);
     }
@@ -457,6 +457,7 @@ export default function SeatingCanvas() {
 
   // Mobile: view-only optimized layout
   const mobileViewContent = (
+    <DndContext>
     <div className="md:hidden flex flex-col h-[calc(100dvh-7.5rem)] overflow-hidden -mx-4 -my-5">
       {/* Mobile header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-white shrink-0">
@@ -616,6 +617,7 @@ export default function SeatingCanvas() {
         )}
       </div>
     </div>
+    </DndContext>
   );
 
   return (
@@ -1635,7 +1637,7 @@ const VENUE_LAYOUTS = (() => {
       ],
     },
     {
-      name: 'Ceremony — Mandap with Row Seating',
+      name: 'Ceremony: Mandap with Row Seating',
       description: 'Mandap at center, rows of chairs on both sides with center aisle',
       icon: '🔥',
       tables: (() => {

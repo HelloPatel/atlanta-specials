@@ -222,7 +222,7 @@ export default function WeddingWebsitePreview({
           style={{ backgroundColor: theme.surface, color: theme.primary }}
         >
           <Heart size={16} />
-          Previewing a draft website — publish when you're ready to share it with guests.
+          Previewing a draft website. Publish when you're ready to share it with guests.
         </div>
       )}
 

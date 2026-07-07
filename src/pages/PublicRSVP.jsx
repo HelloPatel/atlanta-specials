@@ -418,7 +418,7 @@ export default function PublicRSVP() {
               )}
               {daysLeft <= 0 && (
                 <p className="text-xs text-red-600 mt-1 font-semibold">
-                  ⚠️ {lang === 'en' ? 'Deadline has passed — please respond ASAP' : lang === 'hi' ? 'समय सीमा बीत चुकी है — कृपया जल्दी जवाब दें' : 'સમય મર્યાદા પસાર થઈ ગઈ છે — કૃપા કરી જલ્દી જવાબ આપો'}
+                  ⚠️ {lang === 'en' ? 'Deadline has passed. Please respond ASAP' : lang === 'hi' ? 'समय सीमा बीत चुकी है। कृपया जल्दी जवाब दें' : 'સમય મર્યાદા પસાર થઈ ગઈ છે। કૃપા કરી જલ્દી જવાબ આપો'}
                 </p>
               )}
             </div>
@@ -432,7 +432,7 @@ export default function PublicRSVP() {
           <RsvpCard>
             <h2 className={`${headingScale} font-semibold text-gray-900 mb-1`}>{t.findFamily}</h2>
             <p className={`${textScale} text-gray-500 mb-5`}>
-              {lang === 'en' ? 'Search for any family member — we\'ll pull up your whole household.' : lang === 'hi' ? 'किसी भी सदस्य का नाम खोजें — हम पूरा परिवार दिखाएंगे।' : 'કોઈપણ સભ્યનું નામ શોધો — અમે આખું ઘર બતાવીશું.'}
+              {lang === 'en' ? 'Search for any family member and we\'ll pull up your whole household.' : lang === 'hi' ? 'किसी भी सदस्य का नाम खोजें। हम पूरा परिवार दिखाएंगे।' : 'કોઈપણ સભ્યનું નામ શોધો. અમે આખું ઘર બતાવીશું.'}
             </p>
 
             <div className="flex gap-2 mb-5">

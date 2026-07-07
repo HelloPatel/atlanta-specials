@@ -403,7 +403,7 @@ function AdminBetsManager({ wedding }) {
             <div className="space-y-3">
               <ShareLinkCard
                 title="Guest voting page"
-                description="Public voting form for guests—no login required."
+                description="Public voting form for guests. No login required."
                 url={guestLink}
               />
               <ShareLinkCard

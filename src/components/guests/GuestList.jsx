@@ -457,7 +457,7 @@ export default function GuestList() {
                           toast.success(guest.checkedIn ? 'Checked out' : 'Checked in ✓');
                         }}
                         className={`rounded p-1.5 transition-colors ${guest.checkedIn ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`}
-                        title={guest.checkedIn ? 'Checked in — click to undo' : 'Mark as arrived'}
+                        title={guest.checkedIn ? 'Checked in. Click to undo' : 'Mark as arrived'}
                       >
                         {guest.checkedIn ? '✓' : '○'}
                       </button>

@@ -10,7 +10,7 @@ const ONBOARDING_STEPS = [
   {
     id: 'events',
     title: 'Start with your events',
-    description: 'Add Mehndi, Sangeet, Haldi, Ceremony, Reception — each gets its own guest list and seating.',
+    description: 'Add Mehndi, Sangeet, Haldi, Ceremony, Reception. Each gets its own guest list and seating.',
   },
   {
     id: 'guests',
