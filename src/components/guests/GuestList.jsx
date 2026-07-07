@@ -120,7 +120,11 @@ export default function GuestList() {
     const seen = new Map();
     const dupes = [];
     guests.forEach((g) => {
-      const key = `${(g.firstName || '').toLowerCase().trim()}_${(g.lastName || '').toLowerCase().trim()}`;
+      const family = (g.familyName || '').toLowerCase().trim();
+      // Within-family only: Indian guest lists reuse first and last names across
+      // different families, so a bare name match would flag distinct people.
+      if (!family) return;
+      const key = `${(g.firstName || '').toLowerCase().trim()}_${(g.lastName || '').toLowerCase().trim()}_${family}`;
       if (seen.has(key)) {
         dupes.push({ original: seen.get(key), duplicate: g });
       } else {
