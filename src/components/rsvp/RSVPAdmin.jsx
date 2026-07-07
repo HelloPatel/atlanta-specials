@@ -8,6 +8,7 @@ import {
   subscribeToResponses,
   getRsvpLink,
   getWhatsAppRsvpLink,
+  getHouseholdRsvpLink,
 } from '../../services/rsvpService';
 import { Button, Modal, Input, Badge, Card } from '../ui';
 import { RSVP_STATUS, DIETARY_OPTIONS } from '../../config/constants';
@@ -85,19 +86,27 @@ export default function RSVPAdmin() {
     });
   }, [guests, search, filterStatus, selectedEvent]);
 
-  // Update a guest's RSVP for an event
+  // Update a guest's RSVP for an event (admin-entered = source "manual")
   const handleSetRsvp = async (guestId, eventId, status) => {
     const guest = guests.find((g) => g.id === guestId);
     if (!guest) return;
     const rsvpStatus = { ...(guest.rsvpStatus || {}), [eventId]: status };
-    await updateGuest(activeWedding.id, guestId, { rsvpStatus });
+    await updateGuest(activeWedding.id, guestId, {
+      rsvpStatus,
+      rsvpMethod: 'manual',
+      rsvpUpdatedAt: Date.now(),
+    });
   };
 
-  // Bulk set RSVP for all events
+  // Bulk set RSVP for all events (admin-entered = source "manual")
   const handleBulkRsvp = async (guestId, status) => {
     const rsvpStatus = {};
     events.forEach((evt) => { rsvpStatus[evt.id] = status; });
-    await updateGuest(activeWedding.id, guestId, { rsvpStatus });
+    await updateGuest(activeWedding.id, guestId, {
+      rsvpStatus,
+      rsvpMethod: 'manual',
+      rsvpUpdatedAt: Date.now(),
+    });
   };
 
   // Toggle RSVP open/closed
@@ -127,9 +136,80 @@ export default function RSVPAdmin() {
   };
 
   const rsvpLink = activeWedding ? getRsvpLink(activeWedding.id, activeWedding.slug) : '';
+  const coupleLabel = activeWedding
+    ? (activeWedding.coupleName ||
+       [activeWedding.coupleName1, activeWedding.coupleName2].filter(Boolean).join(' & ') ||
+       'Our')
+    : 'Our';
   const whatsappLink = activeWedding
-    ? getWhatsAppRsvpLink(activeWedding.id, activeWedding.coupleName || 'Our', activeWedding.slug)
+    ? getWhatsAppRsvpLink(activeWedding.id, coupleLabel, activeWedding.slug)
     : '';
+
+  // ─── Buffer-aware headcount ────────────────────────────────────────────────
+  // Weddings rarely hit exact confirmed numbers. Show a planning headcount that
+  // adds a configurable buffer % on top of confirmed acceptances.
+  const bufferPct = Number.isFinite(rsvpSettings?.headcountBufferPct)
+    ? rsvpSettings.headcountBufferPct
+    : 10;
+  const planHeadcount = Math.ceil(stats.accepted * (1 + bufferPct / 100));
+
+  // ─── CSV exports ───────────────────────────────────────────────────────────
+  const downloadCSV = (filename, header, rows) => {
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const csv = [header, ...rows].map((r) => r.map(esc).join(',')).join('\r\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Per-caterer dietary breakdown for the selected event (or all events).
+  const exportDietaryCSV = () => {
+    const evts = selectedEvent === 'all' ? events : events.filter((e) => e.id === selectedEvent);
+    const header = ['Event', 'Dietary', 'Confirmed guests'];
+    const rows = [];
+    evts.forEach((evt) => {
+      const counts = {};
+      guests.forEach((g) => {
+        if ((g.rsvpStatus || {})[evt.id] !== 'accepted') return;
+        const diet = (g.dietary || 'vegetarian').toLowerCase();
+        counts[diet] = (counts[diet] || 0) + 1;
+      });
+      Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .forEach(([diet, n]) => rows.push([evt.name, diet, n]));
+      if (Object.keys(counts).length === 0) rows.push([evt.name, '(no confirmed guests)', 0]);
+    });
+    downloadCSV(`dietary-by-event.csv`, header, rows);
+  };
+
+  // Timestamped RSVP integrity log: every guest's status + source, for records.
+  const exportResponsesCSV = () => {
+    const header = ['Guest', 'Family', 'Side', 'Phone', 'Email', 'Event', 'Status', 'Dietary', 'Source'];
+    const rows = [];
+    guests.forEach((g) => {
+      const status = g.rsvpStatus || {};
+      const evts = events.filter((e) => e.inviteAll || (e.guestIds || []).includes(g.id));
+      const list = evts.length ? evts : events;
+      list.forEach((evt) => {
+        rows.push([
+          `${g.firstName} ${g.lastName}`.trim(),
+          g.familyName || '',
+          g.side || '',
+          g.phone || '',
+          g.email || '',
+          evt.name,
+          status[evt.id] || 'no-response',
+          g.dietary || '',
+          g.rsvpMethod || (status[evt.id] ? 'web' : ''),
+        ]);
+      });
+    });
+    downloadCSV('rsvp-log.csv', header, rows);
+  };
 
   const isOpen = rsvpSettings?.isOpen || false;
 
@@ -149,12 +229,36 @@ export default function RSVPAdmin() {
 
         <div className="flex-1" />
 
+        {stats.accepted > 0 && (
+          <div
+            className="hidden lg:flex items-center gap-1.5 rounded-lg bg-wine-50 border border-wine-100 px-3 py-1.5 text-xs"
+            title={`Confirmed ${stats.accepted} + ${bufferPct}% planning buffer`}
+          >
+            <span className="text-wine-700 font-semibold">Plan for ~{planHeadcount}</span>
+            <span className="text-wine-400">({stats.accepted} confirmed +{bufferPct}%)</span>
+          </div>
+        )}
+
+        <div className="relative group">
+          <Button variant="outline" size="sm">
+            <Download size={14} /> <span className="hidden md:inline">Export</span>
+          </Button>
+          <div className="absolute right-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20">
+            <button onClick={exportResponsesCSV} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+              RSVP log (CSV)
+            </button>
+            <button onClick={exportDietaryCSV} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
+              Dietary by event (CSV)
+            </button>
+          </div>
+        </div>
+
         <Button
           variant={isOpen ? 'primary' : 'outline'}
           size="sm"
           onClick={handleToggleRsvp}
         >
-          {isOpen ? '🟢 RSVPs Open' : '🔴 RSVPs Closed'}
+          {isOpen ? 'RSVPs Open' : 'RSVPs Closed'}
         </Button>
 
         <Button variant="outline" size="sm" onClick={() => setShowShare(true)}>
@@ -163,7 +267,7 @@ export default function RSVPAdmin() {
 
         <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
           <span className="hidden md:inline">Settings</span>
-          <span className="md:hidden">⚙</span>
+          <span className="md:hidden">Set</span>
         </Button>
       </div>
 
@@ -260,6 +364,7 @@ export default function RSVPAdmin() {
                       >
                         <X size={14} />
                       </button>
+                      <HouseholdShare wedding={activeWedding} guest={guest} coupleLabel={coupleLabel} />
                     </div>
                   </td>
                 </tr>
@@ -297,6 +402,7 @@ export default function RSVPAdmin() {
                   <button onClick={() => handleBulkRsvp(guest.id, 'declined')} className="p-2 rounded-lg hover:bg-red-50 text-red-600" title="Decline all">
                     <X size={16} />
                   </button>
+                  <HouseholdShare wedding={activeWedding} guest={guest} coupleLabel={coupleLabel} />
                 </div>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -393,15 +499,15 @@ export default function RSVPAdmin() {
             <div className="space-y-2">
               <ReminderTemplate
                 label="Gentle Reminder"
-                message={`🙏 Namaste! Just a gentle reminder to RSVP for ${activeWedding.coupleName1} & ${activeWedding.coupleName2}'s wedding. It helps us plan seating and food. Takes 30 seconds:\n${rsvpLink}`}
+                message={`Namaste! Just a gentle reminder to RSVP for ${activeWedding.coupleName1} & ${activeWedding.coupleName2}'s wedding. It helps us plan seating and food, and takes about 30 seconds:\n${rsvpLink}`}
               />
               <ReminderTemplate
                 label="Final Call"
-                message={`⏰ Last call! We're finalizing guest lists for the wedding. If you haven't RSVP'd yet, please do so today:\n${rsvpLink}\nThank you! 🙏`}
+                message={`Last call! We're finalizing the guest list for the wedding. If you haven't RSVP'd yet, please do so today:\n${rsvpLink}\nThank you!`}
               />
               <ReminderTemplate
                 label="Family Group"
-                message={`👨‍👩‍👧‍👦 Hi family! Please RSVP for ${activeWedding.coupleName1} & ${activeWedding.coupleName2}'s wedding when you get a chance. One person can RSVP for the whole family:\n${rsvpLink}`}
+                message={`Hi family! Please RSVP for ${activeWedding.coupleName1} & ${activeWedding.coupleName2}'s wedding when you get a chance. One person can RSVP for the whole family:\n${rsvpLink}`}
               />
             </div>
           </div>
@@ -477,6 +583,7 @@ function RsvpSettingsForm({ settings, onSave }) {
     familyRsvp: settings?.familyRsvp ?? true,
     customMessage: settings?.customMessage || '',
     rsvpPassword: settings?.rsvpPassword || '',
+    headcountBufferPct: Number.isFinite(settings?.headcountBufferPct) ? settings.headcountBufferPct : 10,
   });
 
   return (
@@ -499,6 +606,19 @@ function RsvpSettingsForm({ settings, onSave }) {
           onChange={(e) => setForm({ ...form, deadline: e.target.value })}
           className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Planning buffer (%)</label>
+        <input
+          type="number"
+          min={0}
+          max={50}
+          value={form.headcountBufferPct}
+          onChange={(e) => setForm({ ...form, headcountBufferPct: Math.max(0, Math.min(50, Number(e.target.value) || 0)) })}
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-gray-400 mt-1">Extra headcount added on top of confirmed guests for catering and seating (walk-ins, late yeses). Shown as "Plan for ~N".</p>
       </div>
 
       <div className="space-y-2">
@@ -581,6 +701,43 @@ function RsvpSettingsForm({ settings, onSave }) {
 
       <Button onClick={() => onSave(form)} className="w-full">Save Settings</Button>
     </div>
+  );
+}
+
+function HouseholdShare({ wedding, guest, coupleLabel }) {
+  const [copied, setCopied] = useState(false);
+  const link = getHouseholdRsvpLink(wedding.id, guest.id, wedding.slug);
+  const waLink = getWhatsAppRsvpLink(wedding.id, coupleLabel, wedding.slug, {
+    guestId: guest.id,
+    firstName: guest.firstName,
+    phone: guest.phone,
+  });
+  const copy = async () => {
+    try {
+      await navigator.clipboard?.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { /* clipboard unavailable */ }
+  };
+  return (
+    <>
+      <a
+        href={waLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="p-1 rounded hover:bg-green-50 text-green-600"
+        title="Send this household their personal RSVP link on WhatsApp"
+      >
+        <MessageCircle size={14} />
+      </a>
+      <button
+        onClick={copy}
+        className="p-1 rounded hover:bg-gray-100 text-gray-500"
+        title="Copy this household's personal RSVP link"
+      >
+        {copied ? <Check size={14} /> : <Link2 size={14} />}
+      </button>
+    </>
   );
 }
 

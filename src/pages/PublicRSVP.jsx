@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import {
   getPublicWeddingData,
   submitRsvpResponse,
@@ -105,6 +105,7 @@ const TRANSLATIONS = {
 
 export default function PublicRSVP() {
   const { weddingId: rawParam } = useParams();
+  const [searchParams] = useSearchParams();
   const [weddingId, setWeddingId] = useState(null);
   const [weddingData, setWeddingData] = useState(null);
   const [allGuests, setAllGuests] = useState([]);
@@ -216,6 +217,16 @@ export default function PublicRSVP() {
     setDietaryChoices(dietary);
     setStep('family');
   };
+
+  // Personalized household link (`?g=<guestId>`): skip name search and open
+  // this household's invitation directly.
+  useEffect(() => {
+    const gid = searchParams.get('g');
+    if (!gid || step !== 'search' || allGuests.length === 0) return;
+    const found = allGuests.find((x) => x.id === gid);
+    if (found) handleSelectGuest(found);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allGuests, searchParams]);
 
   // Toggle a single guest+event
   const toggleRsvp = (guestId, eventId, status) => {

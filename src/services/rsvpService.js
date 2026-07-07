@@ -131,10 +131,27 @@ export function getRsvpLink(weddingId, slug) {
   return `${window.location.origin}/rsvp/${identifier}`;
 }
 
-export function getWhatsAppRsvpLink(weddingId, coupleName, slug) {
-  const rsvpUrl = getRsvpLink(weddingId, slug);
+// Personalized per-household link. When opened, the RSVP page skips the
+// name-search step and loads that household directly (see PublicRSVP `?g`).
+export function getHouseholdRsvpLink(weddingId, guestId, slug) {
+  const base = getRsvpLink(weddingId, slug);
+  return guestId ? `${base}?g=${encodeURIComponent(guestId)}` : base;
+}
+
+// Build a WhatsApp share link. If `phone` is provided the chat opens with that
+// recipient; otherwise it opens the share sheet. `guestId` personalizes the
+// destination so the household lands straight on their own invitation.
+export function getWhatsAppRsvpLink(weddingId, coupleName, slug, opts = {}) {
+  const { guestId, firstName, phone } = opts;
+  const rsvpUrl = guestId
+    ? getHouseholdRsvpLink(weddingId, guestId, slug)
+    : getRsvpLink(weddingId, slug);
+  const greeting = firstName ? `Hi ${firstName}, ` : '';
   const message = encodeURIComponent(
-    `🎉 You're invited to ${coupleName}'s wedding! Please RSVP here: ${rsvpUrl}`
+    `${greeting}you're invited to ${coupleName}'s wedding. Tap here to see your events and RSVP: ${rsvpUrl}`
   );
-  return `https://wa.me/?text=${message}`;
+  const digits = (phone || '').replace(/\D/g, '');
+  return digits
+    ? `https://wa.me/${digits}?text=${message}`
+    : `https://wa.me/?text=${message}`;
 }
