@@ -223,7 +223,7 @@ export default function GuestList() {
           if (ungrouped.length === 0) { toast.info('All guests already have families assigned'); return; }
           const groups = {};
           ungrouped.forEach((g) => {
-            const key = g.lastName.trim().toLowerCase();
+            const key = (g.lastName || '').trim().toLowerCase();
             if (!groups[key]) groups[key] = [];
             groups[key].push(g);
           });
