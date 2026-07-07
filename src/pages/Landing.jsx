@@ -54,7 +54,7 @@ export default function Landing() {
         </div>
         <p className="text-xs sm:text-sm font-medium text-wine-600 tracking-wide uppercase mb-3 sm:mb-4">For 200 to 1000+ guest weddings</p>
         <h1 className="text-2xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.1] mb-4 sm:mb-6 text-balance">
-          One place for your entire<br className="hidden sm:block" />
+          One place for your entire<br className="hidden sm:block" />{' '}
           <span className="text-wine-700">Indian wedding</span>
         </h1>
         <p className="text-sm sm:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
