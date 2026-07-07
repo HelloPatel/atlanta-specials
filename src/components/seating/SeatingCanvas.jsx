@@ -22,6 +22,22 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 // Detect mobile once at module level to avoid SSR issues
 const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768;
 
+// ─── Zone presets (declared above the component so it is fully initialized
+// before render — avoids a production-minifier TDZ crash) ───────────────────
+const ZONE_PRESETS = [
+  { type: 'dancefloor', label: 'Dance Floor', icon: Music, width: 250, height: 250, color: '#fef3c7' },
+  { type: 'dj',         label: 'DJ Booth',    icon: Mic, width: 100, height: 60,  color: '#e0e7ff' },
+  { type: 'bar',        label: 'Bar',         icon: Wine,  width: 160, height: 60,  color: '#dbeafe' },
+  { type: 'gifts',      label: 'Gifts & Cards', icon: Gift, width: 100, height: 80, color: '#fce7f3' },
+  { type: 'desserts',   label: 'Desserts',    icon: Cake,  width: 120, height: 60,  color: '#fef9c3' },
+  { type: 'cake',       label: 'Cake',        icon: Cake,  width: 80,  height: 80,  color: '#fff7ed' },
+  { type: 'stage',      label: 'Stage / Mandap', icon: Mic, width: 300, height: 150, color: '#fee2e2' },
+  { type: 'photo',      label: 'Photo Booth', icon: Camera, width: 100, height: 80,  color: '#f3e8ff' },
+  { type: 'entrance',   label: 'Entrance',    icon: DoorOpen,  width: 80,  height: 40,  color: '#f1f5f9' },
+  { type: 'custom',     label: 'Custom Zone',  icon: CircleDot,  width: 150, height: 100, color: '#f3f4f6' },
+];
+
+
 export default function SeatingCanvas() {
   const { activeWedding } = useWedding();
   const toast = useToast();
@@ -1268,21 +1284,6 @@ function Grid3XIcon() {
     </svg>
   );
 }
-
-// ─── Zone presets ───────────────────────────────────────────────────────────
-
-const ZONE_PRESETS = [
-  { type: 'dancefloor', label: 'Dance Floor', icon: Music, width: 250, height: 250, color: '#fef3c7' },
-  { type: 'dj',         label: 'DJ Booth',    icon: Mic, width: 100, height: 60,  color: '#e0e7ff' },
-  { type: 'bar',        label: 'Bar',         icon: Wine,  width: 160, height: 60,  color: '#dbeafe' },
-  { type: 'gifts',      label: 'Gifts & Cards', icon: Gift, width: 100, height: 80, color: '#fce7f3' },
-  { type: 'desserts',   label: 'Desserts',    icon: Cake,  width: 120, height: 60,  color: '#fef9c3' },
-  { type: 'cake',       label: 'Cake',        icon: Cake,  width: 80,  height: 80,  color: '#fff7ed' },
-  { type: 'stage',      label: 'Stage / Mandap', icon: Mic, width: 300, height: 150, color: '#fee2e2' },
-  { type: 'photo',      label: 'Photo Booth', icon: Camera, width: 100, height: 80,  color: '#f3e8ff' },
-  { type: 'entrance',   label: 'Entrance',    icon: DoorOpen,  width: 80,  height: 40,  color: '#f1f5f9' },
-  { type: 'custom',     label: 'Custom Zone',  icon: CircleDot,  width: 150, height: 100, color: '#f3f4f6' },
-];
 
 // ─── Zone element (non-seatable, draggable) ─────────────────────────────────
 
