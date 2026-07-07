@@ -27,6 +27,7 @@ export default function GuestList() {
   const PAGE_SIZE = 50;
   const [editingGuest, setEditingGuest] = useState(null);
   const [inlineEdit, setInlineEdit] = useState(null); // {id, firstName, lastName}
+  const [viewMode, setViewMode] = useState('family'); // family | list
 
   useEffect(() => {
     if (!activeWedding) return;
@@ -84,6 +85,26 @@ export default function GuestList() {
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginatedGuests = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
+  // Group the filtered guests into families for the visual "Families" view.
+  // A "family" is a set of guests that share a familyName (case-insensitive).
+  // Guests without a family are gathered into an "Individual guests" bucket.
+  const familyGroups = useMemo(() => {
+    const groups = new Map();
+    const solo = [];
+    filtered.forEach((g) => {
+      const key = (g.familyName || '').trim();
+      if (!key) { solo.push(g); return; }
+      const k = key.toLowerCase();
+      if (!groups.has(k)) groups.set(k, { name: key, members: [] });
+      groups.get(k).members.push(g);
+    });
+    const list = [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
+    // Sort members within a family by first name for a tidy read
+    list.forEach((f) => f.members.sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')));
+    solo.sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
+    return { families: list, solo };
+  }, [filtered]);
+
   // Reset page when filters change - use effect
   useEffect(() => { setPage(0); }, [search, filterSide, filterDietary, filterTag, filterRsvp]);
 
@@ -123,6 +144,15 @@ export default function GuestList() {
     } else {
       setSelected(new Set(filtered.map((g) => g.id)));
     }
+  };
+
+  const toggleSelectMany = (ids) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      const allSelected = ids.every((id) => next.has(id));
+      ids.forEach((id) => (allSelected ? next.delete(id) : next.add(id)));
+      return next;
+    });
   };
 
   const handleBulkDelete = async () => {
@@ -188,6 +218,22 @@ export default function GuestList() {
           <option value="bride">Bride's Side</option>
           <option value="groom">Groom's Side</option>
         </select>
+
+        {/* View toggle: family cards vs flat list */}
+        <div className="inline-flex rounded-lg border border-gray-300 bg-gray-50 p-0.5">
+          <button
+            onClick={() => setViewMode('family')}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+              viewMode === 'family' ? 'bg-white text-wine-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >Families</button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+              viewMode === 'list' ? 'bg-white text-wine-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >List</button>
+        </div>
 
         <div className="hidden md:contents">
           <select value={filterDietary} onChange={(e) => setFilterDietary(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
@@ -280,10 +326,11 @@ export default function GuestList() {
         </div>
       )}
 
-      {/* Bulk actions */}
+      {/* Bulk actions — floating island, not glued to the top */}
       {selected.size > 0 && (
-        <div className="flex flex-wrap items-center gap-2 md:gap-3 rounded-lg bg-wine-50 px-4 py-2">
-          <span className="text-sm font-medium text-wine-800">{selected.size} selected</span>
+        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 animate-[fadeUp_0.4s_cubic-bezier(0.32,0.72,0,1)]">
+          <div className="flex max-w-[calc(100vw-1.5rem)] flex-nowrap items-center gap-2 overflow-x-auto rounded-full border border-white/60 bg-white/85 px-4 py-2.5 shadow-[0_8px_40px_rgba(76,29,49,0.22)] backdrop-blur-xl md:gap-3">
+          <span className="whitespace-nowrap text-sm font-semibold text-wine-800">{selected.size} selected</span>
           <select
             defaultValue=""
             onChange={async (e) => {
@@ -359,9 +406,24 @@ export default function GuestList() {
             <Trash2 size={14} /> Delete
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>Clear</Button>
+          </div>
         </div>
       )}
 
+      {/* Guest list — Families view (grouped cards) or List view (table) */}
+      {viewMode === 'family' ? (
+        <FamilyView
+          familyGroups={familyGroups}
+          events={events}
+          selected={selected}
+          toggleSelect={toggleSelect}
+          toggleSelectMany={toggleSelectMany}
+          onEdit={setEditingGuest}
+          tableMap={tableMap}
+          totalGuests={guests.length}
+        />
+      ) : (
+      <>
       {/* Guest list — table on desktop, cards on mobile */}
       {/* Desktop table */}
       <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200 bg-white">
@@ -410,7 +472,7 @@ export default function GuestList() {
                         <button type="button" className="text-red-500 text-xs" onClick={() => setInlineEdit(null)}>✗</button>
                       </form>
                     ) : (
-                      <span className="cursor-pointer hover:underline" onDoubleClick={() => setInlineEdit({ id: guest.id, firstName: guest.firstName, lastName: guest.lastName })} title={guest.notes || undefined}>
+                      <span className="cursor-pointer hover:text-wine-700 hover:underline" onClick={() => setEditingGuest(guest)} onDoubleClick={(e) => { e.stopPropagation(); setInlineEdit({ id: guest.id, firstName: guest.firstName, lastName: guest.lastName }); }} title={guest.notes || 'Click to edit'}>
                         {guest.firstName} {guest.lastName}
                         {guest.notes && <span className="ml-1 text-xs text-gray-400">📝</span>}
                       </span>
@@ -547,6 +609,8 @@ export default function GuestList() {
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* Modals */}
       <GuestFormModal
@@ -571,6 +635,226 @@ function StatCard({ label, value }) {
     <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
       <p className="text-2xl font-bold text-gray-900">{value}</p>
       <p className="text-xs text-gray-500">{label}</p>
+    </div>
+  );
+}
+
+// ─── Families view ─────────────────────────────────────────────────────────
+// Groups guests into family cards with a per-event attendance grid so it's
+// instantly clear who is coming to what — everyone to everything, one person
+// to one event, or only a single member from the whole family.
+
+const STATUS_META = {
+  accepted: { dot: 'bg-emerald-500', ring: 'ring-emerald-500/30', label: 'Coming' },
+  declined: { dot: 'bg-rose-400', ring: 'ring-rose-400/30', label: 'Not coming' },
+  pending:  { dot: 'bg-amber-400', ring: 'ring-amber-400/30', label: 'Awaiting reply' },
+};
+
+function guestEventStatus(guest, event) {
+  const invited = event.inviteAll || (event.guestIds || []).includes(guest.id);
+  if (!invited) return 'not-invited';
+  return guest.rsvpStatus?.[event.id] || 'pending';
+}
+
+function familyAttendanceSummary(members, events) {
+  if (!events.length) return null;
+  const totalEvents = events.length;
+  const per = members.map((m) => {
+    const statuses = events.map((ev) => guestEventStatus(m, ev));
+    const invited = statuses.filter((s) => s !== 'not-invited').length;
+    const accepted = statuses.filter((s) => s === 'accepted').length;
+    const declined = statuses.filter((s) => s === 'declined').length;
+    return { m, invited, accepted, declined };
+  });
+  const coming = per.filter((p) => p.accepted > 0);
+  if (per.every((p) => p.invited === totalEvents && p.accepted === totalEvents)) {
+    return { tone: 'all', text: totalEvents === 1 ? 'Everyone attending' : 'Everyone attending all events' };
+  }
+  if (coming.length === 0 && per.some((p) => p.declined > 0)) {
+    return { tone: 'none', text: per.every((p) => p.declined > 0) ? 'No one attending' : 'Awaiting replies' };
+  }
+  if (coming.length === 0) return { tone: 'pending', text: 'Awaiting replies' };
+  if (coming.length === 1) {
+    const only = coming[0];
+    const evName = totalEvents === 1 ? '' : ` (${only.accepted}/${totalEvents} events)`;
+    return { tone: 'partial', text: `Only ${only.m.firstName} attending${evName}` };
+  }
+  return { tone: 'partial', text: `${coming.length} of ${members.length} attending` };
+}
+
+const SUMMARY_TONE = {
+  all:     'bg-emerald-50 text-emerald-700 ring-emerald-600/15',
+  partial: 'bg-amber-50 text-amber-700 ring-amber-600/15',
+  none:    'bg-rose-50 text-rose-600 ring-rose-500/15',
+  pending: 'bg-gray-100 text-gray-500 ring-gray-500/10',
+};
+
+function StatusDot({ status }) {
+  if (status === 'not-invited') {
+    return <span className="inline-block h-2 w-2 rounded-full bg-gray-200" title="Not invited" />;
+  }
+  const meta = STATUS_META[status];
+  return <span className={`inline-block h-2.5 w-2.5 rounded-full ring-2 ${meta.dot} ${meta.ring}`} title={meta.label} />;
+}
+
+function FamilyView({ familyGroups, events, selected, toggleSelect, toggleSelectMany, onEdit, tableMap, totalGuests }) {
+  const { families, solo } = familyGroups;
+
+  if (totalGuests === 0) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center text-gray-400">
+        No guests yet. Add your first guest or import from Excel to see them grouped by family.
+      </div>
+    );
+  }
+  if (families.length === 0 && solo.length === 0) {
+    return (
+      <div className="rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center text-gray-400">
+        No guests match your filters.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Legend */}
+      {events.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 text-xs text-gray-500">
+          <span className="font-medium text-gray-600">Attendance:</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/30" /> Coming</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-400 ring-2 ring-amber-400/30" /> Awaiting reply</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-400 ring-2 ring-rose-400/30" /> Not coming</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-gray-200" /> Not invited</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {families.map((family, i) => (
+          <FamilyCard
+            key={family.name}
+            family={family}
+            index={i}
+            events={events}
+            selected={selected}
+            toggleSelect={toggleSelect}
+            toggleSelectMany={toggleSelectMany}
+            onEdit={onEdit}
+            tableMap={tableMap}
+          />
+        ))}
+      </div>
+
+      {/* Individual guests (no family assigned) */}
+      {solo.length > 0 && (
+        <FamilyCard
+          family={{ name: 'Individual guests', members: solo }}
+          index={families.length}
+          events={events}
+          selected={selected}
+          toggleSelect={toggleSelect}
+          toggleSelectMany={toggleSelectMany}
+          onEdit={onEdit}
+          tableMap={tableMap}
+          isSolo
+        />
+      )}
+    </div>
+  );
+}
+
+function FamilyCard({ family, index, events, selected, toggleSelect, toggleSelectMany, onEdit, tableMap, isSolo }) {
+  const { name, members } = family;
+  const memberIds = members.map((m) => m.id);
+  const allSelected = memberIds.length > 0 && memberIds.every((id) => selected.has(id));
+  const someSelected = memberIds.some((id) => selected.has(id));
+  const summary = familyAttendanceSummary(members, events);
+  const side = members[0]?.side;
+  // Alternating warm/cool shell tint keeps a long list of families readable.
+  const shellTint = index % 2 === 0 ? 'bg-ivory-100/70' : 'bg-wine-50/40';
+
+  return (
+    <div className={`rounded-[1.75rem] p-1.5 ring-1 ring-black/5 ${shellTint}`}>
+      <div className="rounded-[calc(1.75rem-0.375rem)] bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.6)]">
+        {/* Header */}
+        <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+          <input
+            type="checkbox"
+            checked={allSelected}
+            ref={(el) => { if (el) el.indeterminate = someSelected && !allSelected; }}
+            onChange={() => toggleSelectMany(memberIds)}
+            className="h-4 w-4 flex-shrink-0 rounded"
+            title={allSelected ? 'Deselect family' : 'Select whole family'}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate font-serif text-base font-semibold text-gray-900">{name}</h3>
+              {!isSolo && side && (
+                <Badge variant={side === 'bride' ? 'rose' : 'info'} className="flex-shrink-0 capitalize">{side}</Badge>
+              )}
+            </div>
+            <p className="text-xs text-gray-400">{members.length} {members.length === 1 ? 'guest' : 'guests'}</p>
+          </div>
+          {summary && (
+            <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ${SUMMARY_TONE[summary.tone]}`}>
+              {summary.text}
+            </span>
+          )}
+        </div>
+
+        {/* Member × event attendance grid */}
+        <div className="overflow-x-auto border-t border-gray-100">
+          <table className="w-full text-sm">
+            {events.length > 0 && (
+              <thead>
+                <tr className="text-[10px] uppercase tracking-wide text-gray-400">
+                  <th className="px-4 py-2 text-left font-medium">Guest</th>
+                  {events.map((ev) => (
+                    <th key={ev.id} className="px-2 py-2 text-center font-medium" title={ev.name}>
+                      <span className="mx-auto block max-w-[64px] truncate">{ev.name}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody className="divide-y divide-gray-50">
+              {members.map((m) => (
+                <tr
+                  key={m.id}
+                  className="group cursor-pointer transition-colors hover:bg-wine-50/40"
+                  onClick={() => onEdit(m)}
+                >
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(m.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => toggleSelect(m.id)}
+                        className="h-4 w-4 flex-shrink-0 rounded"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-gray-900 group-hover:text-wine-700">
+                          {m.firstName} {m.lastName}
+                          {m.plusOne && <span className="ml-1 text-[10px] font-normal text-gray-400">+1</span>}
+                        </p>
+                        <p className="truncate text-[11px] text-gray-400">
+                          {m.relation || (m.dietary && m.dietary !== 'vegetarian' ? m.dietary : '')}
+                          {tableMap[m.id] ? `${m.relation ? ' · ' : ''}${tableMap[m.id]}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  {events.map((ev) => (
+                    <td key={ev.id} className="px-2 py-2.5 text-center">
+                      <StatusDot status={guestEventStatus(m, ev)} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
