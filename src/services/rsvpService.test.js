@@ -59,7 +59,6 @@ describe('rsvpService', () => {
     it('has no emoji in the message (brand convention)', () => {
       const link = getWhatsAppRsvpLink('abc123', 'Test', 'test-slug');
       const decoded = decodeURIComponent(link);
-      // eslint-disable-next-line no-misleading-character-class
       expect(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(decoded)).toBe(false);
     });
 

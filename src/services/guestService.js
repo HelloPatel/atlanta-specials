@@ -24,6 +24,19 @@ function familiesRef(weddingId) {
   return collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.FAMILIES);
 }
 
+// Firestore allows at most 500 writes per batch. Chunk below that so large
+// imports/deletes/updates don't throw once a wedding grows past ~500 guests.
+const BATCH_LIMIT = 450;
+
+async function commitInChunks(items, apply) {
+  for (let i = 0; i < items.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    for (const item of items.slice(i, i + BATCH_LIMIT)) apply(batch, item);
+    await batch.commit();
+  }
+  return items.length;
+}
+
 // ─── Guest CRUD ─────────────────────────────────────────────────────────────
 
 export async function addGuest(weddingId, guest) {
@@ -70,9 +83,9 @@ export async function deleteGuest(weddingId, guestId) {
 }
 
 export async function deleteGuestsBatch(weddingId, guestIds) {
-  const batch = writeBatch(db);
-  guestIds.forEach((id) => batch.delete(doc(guestsRef(weddingId), id)));
-  await batch.commit();
+  return commitInChunks(guestIds, (batch, id) =>
+    batch.delete(doc(guestsRef(weddingId), id))
+  );
 }
 
 export function subscribeToGuests(weddingId, callback) {
@@ -85,12 +98,9 @@ export function subscribeToGuests(weddingId, callback) {
 // ─── Bulk import ────────────────────────────────────────────────────────────
 
 export async function importGuestsBatch(weddingId, guests) {
-  const batch = writeBatch(db);
   const ref = guestsRef(weddingId);
-
-  guests.forEach((guest) => {
-    const docRef = doc(ref);
-    batch.set(docRef, {
+  return commitInChunks(guests, (batch, guest) => {
+    batch.set(doc(ref), {
       firstName: guest.firstName || '',
       lastName: guest.lastName || '',
       email: guest.email || '',
@@ -119,26 +129,25 @@ export async function importGuestsBatch(weddingId, guests) {
       createdAt: serverTimestamp(),
     });
   });
-
-  await batch.commit();
-  return guests.length;
 }
 
 // ─── Bulk update (table assignment, event assignment, etc.) ─────────────────
 
 export async function updateGuestsBatch(weddingId, updates) {
-  const batch = writeBatch(db);
-  updates.forEach(({ guestId, data }) => {
-    batch.update(doc(guestsRef(weddingId), guestId), data);
-  });
-  await batch.commit();
+  return commitInChunks(updates, (batch, { guestId, data }) =>
+    batch.update(doc(guestsRef(weddingId), guestId), data)
+  );
 }
 
 // ─── Family CRUD ────────────────────────────────────────────────────────────
 
 export async function addFamily(weddingId, family) {
+  const familyName = (family.familyName || '').trim();
+  if (!familyName) {
+    throw new Error('Family name is required');
+  }
   const docRef = await addDoc(familiesRef(weddingId), {
-    familyName: family.familyName,
+    familyName,
     headOfFamily: family.headOfFamily || null,
     memberIds: family.memberIds || [],
     side: family.side || 'bride',

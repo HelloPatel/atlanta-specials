@@ -71,7 +71,12 @@ service cloud.firestore {
       // Guests — public read for RSVP lookup, editors can write
       match /guests/{guestId} {
         allow read: if true;
-        allow update: if true;  // Public RSVP updates guest rsvpStatus
+        // Public RSVP may only touch RSVP-related fields; anything else
+        // (name, email, phone, notes, tags, …) requires an editor. This keeps
+        // the unauthenticated RSVP flow working while preventing tampering.
+        allow update: if isEditor(weddingId)
+          || request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['rsvpStatus', 'dietary', 'rsvpMethod']);
         allow create, delete: if isEditor(weddingId);
       }
 

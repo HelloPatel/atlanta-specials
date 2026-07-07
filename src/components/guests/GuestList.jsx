@@ -277,8 +277,13 @@ export default function GuestList() {
               const lastName = parts.slice(1).join(' ') || '';
               return { firstName, lastName, side: 'bride', dietary: 'vegetarian', tags: [] };
             });
-            await importGuestsBatch(activeWedding.id, newGuests);
-            toast.success(`Added ${newGuests.length} guests`);
+            try {
+              await importGuestsBatch(activeWedding.id, newGuests);
+              toast.success(`Added ${newGuests.length} guests`);
+            } catch (err) {
+              console.error('Quick add failed:', err);
+              toast.error('Could not add guests. Please try again.');
+            }
           }} className="flex-shrink-0 whitespace-nowrap" title="Quickly add multiple guests by name">
             <Plus size={16} /> Quick Add
           </Button>

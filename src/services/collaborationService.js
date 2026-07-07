@@ -28,8 +28,13 @@ function collabRef(weddingId) {
 // ─── Add collaborator by email ──────────────────────────────────────────────
 
 export async function addCollaborator(weddingId, { email, role, name }) {
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    throw new Error('A valid email address is required');
+  }
+
   // Check if already added
-  const q = query(collabRef(weddingId), where('email', '==', email.toLowerCase()));
+  const q = query(collabRef(weddingId), where('email', '==', normalizedEmail));
   const existing = await getDocs(q);
   if (!existing.empty) {
     throw new Error('This person is already a collaborator');
@@ -38,13 +43,13 @@ export async function addCollaborator(weddingId, { email, role, name }) {
   // Look up user by email in users collection
   const usersQuery = query(
     collection(db, COLLECTIONS.USERS),
-    where('email', '==', email.toLowerCase())
+    where('email', '==', normalizedEmail)
   );
   const userSnap = await getDocs(usersQuery);
   const userId = userSnap.empty ? null : userSnap.docs[0].id;
 
   const docRef = await addDoc(collabRef(weddingId), {
-    email: email.toLowerCase(),
+    email: normalizedEmail,
     userId,
     role: role || COLLAB_ROLES.VIEWER,
     name: name || '',
@@ -128,8 +133,9 @@ export async function getUserRole(weddingId, userEmail, userId) {
   if (!weddingSnap.exists()) return null;
   if (weddingSnap.data().ownerId === userId) return 'owner';
 
-  // Check collaborators
-  const q = query(collabRef(weddingId), where('email', '==', userEmail));
+  // Check collaborators (emails are stored lowercased)
+  const normalizedEmail = typeof userEmail === 'string' ? userEmail.trim().toLowerCase() : '';
+  const q = query(collabRef(weddingId), where('email', '==', normalizedEmail));
   const snap = await getDocs(q);
   if (snap.empty) return null;
   return snap.docs[0].data().role;
