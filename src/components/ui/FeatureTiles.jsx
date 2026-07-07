@@ -13,8 +13,8 @@ const FEATURES = [
     key: 'import',
     icon: Users,
     title: 'Import 500 guests in 60 seconds',
-    description: 'Paste from Excel. Columns auto-detected, families grouped, duplicates caught.',
-    caption: 'Paste a spreadsheet, watch columns map themselves.',
+    description: 'Upload from Excel or CSV. Columns auto-detected, families grouped, duplicates caught.',
+    caption: 'Upload a spreadsheet, watch columns map themselves.',
   },
   {
     key: 'seating',
