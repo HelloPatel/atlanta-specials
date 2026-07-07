@@ -45,8 +45,8 @@ export default function ForgotPassword() {
               <p className="text-sm text-gray-500 mb-6">
                 We sent a password reset link to <strong>{email}</strong>
               </p>
-              <Link to="/login" className="inline-block w-full">
-                <Button variant="outline" className="w-full" tabIndex={-1}>Back to sign in</Button>
+              <Link to="/login" className="inline-flex w-full items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                Back to sign in
               </Link>
             </div>
           ) : (
