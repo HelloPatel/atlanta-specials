@@ -73,10 +73,14 @@ function MobileNavItem({ to, icon: Icon, label }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all duration-150 active:scale-90 ${isActive ? 'text-wine-700' : 'text-gray-400 hover:text-gray-600'}`
+        `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150 active:scale-90 ${
+          isActive
+            ? 'text-wine-700 bg-wine-50'
+            : 'text-gray-400 hover:text-gray-600'
+        }`
       }
     >
-      <Icon size={20} />
+      <Icon size={20} strokeWidth={1.75} />
       <span className="text-[10px] font-medium">{label}</span>
     </NavLink>
   );

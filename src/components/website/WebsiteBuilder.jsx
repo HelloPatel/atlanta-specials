@@ -219,10 +219,13 @@ export default function WebsiteBuilder() {
       if (remainingSlots === 0) return;
 
       const uploadedImages = await Promise.all(files.slice(0, remainingSlots).map((file) => fileToDataUrl(file)));
-      updateSection('websiteGallery', {
-        ...config.websiteGallery,
-        images: [...config.websiteGallery.images, ...uploadedImages].slice(0, 12),
-      });
+      setConfig((current) => ({
+        ...current,
+        websiteGallery: {
+          ...current.websiteGallery,
+          images: [...current.websiteGallery.images, ...uploadedImages].slice(0, 12),
+        },
+      }));
     } finally {
       setUploadingGallery(false);
       event.target.value = '';

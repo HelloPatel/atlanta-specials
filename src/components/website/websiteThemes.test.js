@@ -121,7 +121,7 @@ describe('websiteThemes', () => {
       expect(result.websiteTheme).toBe('royal-gold');
       expect(result.websiteHero.date).toBe('2025-12-14');
       expect(result.websiteHero.tagline).toBe('Love wins');
-       expect(result.websiteHero.pattern).toBe('paisley');
+      expect(result.websiteHero.pattern).toBe('paisley');
       expect(result.websiteStory.text).toBe('Our story...');
       expect(result.websiteRsvp).toEqual({ enabled: true, buttonText: 'Reply Today' });
       expect(result.websiteCustomColors).toEqual({

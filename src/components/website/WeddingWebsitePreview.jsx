@@ -44,6 +44,57 @@ function getMapsLink(event) {
   return locationText ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationText)}` : '';
 }
 
+function hexToRgba(hex, alpha) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex || '')) return `rgba(255, 255, 255, ${alpha})`;
+  const normalized = hex.slice(1);
+  const red = parseInt(normalized.slice(0, 2), 16);
+  const green = parseInt(normalized.slice(2, 4), 16);
+  const blue = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+function getHeroPatternStyle(pattern, theme) {
+  switch (pattern) {
+    case 'mandala':
+      return {
+        backgroundImage: `
+          radial-gradient(circle at center, ${hexToRgba(theme.accent, 0.22)} 0, ${hexToRgba(theme.accent, 0.22)} 10%, transparent 10%, transparent 28%),
+          radial-gradient(circle at center, transparent 0, transparent 38%, ${hexToRgba('#ffffff', 0.12)} 38%, ${hexToRgba('#ffffff', 0.12)} 40%, transparent 40%)
+        `,
+        backgroundSize: '220px 220px',
+        backgroundPosition: 'center',
+      };
+    case 'floral':
+      return {
+        backgroundImage: `
+          radial-gradient(circle at 20% 20%, ${hexToRgba('#ffffff', 0.16)} 0, ${hexToRgba('#ffffff', 0.16)} 10%, transparent 10%),
+          radial-gradient(circle at 80% 30%, ${hexToRgba(theme.accent, 0.18)} 0, ${hexToRgba(theme.accent, 0.18)} 12%, transparent 12%),
+          radial-gradient(circle at 30% 80%, ${hexToRgba(theme.accent, 0.14)} 0, ${hexToRgba(theme.accent, 0.14)} 9%, transparent 9%)
+        `,
+        backgroundSize: '180px 180px',
+        backgroundPosition: 'center',
+      };
+    case 'geometric':
+      return {
+        backgroundImage: `linear-gradient(135deg, ${hexToRgba('#ffffff', 0.1)} 25%, transparent 25%, transparent 50%, ${hexToRgba('#ffffff', 0.1)} 50%, ${hexToRgba('#ffffff', 0.1)} 75%, transparent 75%, transparent)`,
+        backgroundSize: '72px 72px',
+        backgroundPosition: 'center',
+      };
+    case 'paisley':
+      return {
+        backgroundImage: `
+          radial-gradient(circle at 25% 30%, ${hexToRgba(theme.accent, 0.18)} 0, ${hexToRgba(theme.accent, 0.18)} 10%, transparent 11%),
+          radial-gradient(circle at 30% 35%, transparent 0, transparent 12%, ${hexToRgba('#ffffff', 0.12)} 12%, ${hexToRgba('#ffffff', 0.12)} 16%, transparent 16%),
+          radial-gradient(circle at 72% 68%, ${hexToRgba('#ffffff', 0.12)} 0, ${hexToRgba('#ffffff', 0.12)} 8%, transparent 9%)
+        `,
+        backgroundSize: '180px 180px',
+        backgroundPosition: 'center',
+      };
+    default:
+      return null;
+  }
+}
+
 function useThemeFont(theme) {
   useEffect(() => {
     if (!theme?.fontUrl) return undefined;
@@ -139,13 +190,24 @@ export default function WeddingWebsitePreview({
   previewMode = false,
 }) {
   const config = useMemo(() => normalizeWebsiteConfig(rawConfig), [rawConfig]);
-  const theme = getThemeConfig(config.websiteTheme);
+  const baseTheme = useMemo(() => getThemeConfig(config.websiteTheme), [config.websiteTheme]);
+  const theme = useMemo(() => ({
+    ...baseTheme,
+    primary: config.websiteCustomColors?.primary || baseTheme.primary,
+    accent: config.websiteCustomColors?.accent || baseTheme.accent,
+    background: config.websiteCustomColors?.background || baseTheme.background,
+    heroOverlay: `linear-gradient(135deg, ${hexToRgba(baseTheme.text, 0.78)}, ${hexToRgba(config.websiteCustomColors?.primary || baseTheme.primary, 0.45)})`,
+  }), [baseTheme, config.websiteCustomColors]);
   const coupleName = getCoupleDisplayName(wedding);
   const heroDate = formatDisplayDate(config.websiteHero?.date || wedding?.weddingDate);
   const publicEvents = useMemo(() => {
     const selectedIds = new Set(config.websiteEventIds || []);
     return events.filter((event) => selectedIds.has(event.id));
   }, [config.websiteEventIds, events]);
+  const heroPatternStyle = useMemo(
+    () => getHeroPatternStyle(config.websiteHero?.pattern, theme),
+    [config.websiteHero?.pattern, theme]
+  );
 
   useThemeFont(theme);
 
@@ -178,6 +240,12 @@ export default function WeddingWebsitePreview({
         }}
       >
         <div className="absolute inset-0 bg-black/5" />
+        {heroPatternStyle && (
+          <div
+            className="absolute inset-0 opacity-90"
+            style={heroPatternStyle}
+          />
+        )}
         {/* Ornamental decorations for Indian themes */}
         {theme.ornaments && (
           <>
@@ -208,13 +276,15 @@ export default function WeddingWebsitePreview({
               </p>
             )}
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              <Link
-                to={`/rsvp/${wedding?.id}`}
-                className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5"
-                style={{ backgroundColor: theme.surface, color: theme.primary }}
-              >
-                RSVP Now
-              </Link>
+              {config.websiteRsvp?.enabled && (
+                <Link
+                  to={`/rsvp/${wedding?.id}`}
+                  className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5"
+                  style={{ backgroundColor: theme.surface, color: theme.primary }}
+                >
+                  {config.websiteRsvp.buttonText}
+                </Link>
+              )}
               {publicEvents.length > 0 && (
                 <a
                   href="#events"
@@ -441,32 +511,34 @@ export default function WeddingWebsitePreview({
           </section>
         )}
 
-        <section className="py-8">
-          <div
-            className="rounded-[2rem] px-8 py-10 text-center shadow-[0_20px_50px_rgba(15,23,42,0.12)]"
-            style={{
-              background: `linear-gradient(135deg, ${theme.primary}, ${theme.text})`,
-              color: '#ffffff',
-            }}
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
-              Celebration RSVP
-            </p>
-            <h2 className="mt-4 text-3xl font-semibold md:text-4xl">
-              We would love to celebrate with you
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 md:text-base">
-              Please let us know if you'll be joining us so we can plan each moment with care.
-            </p>
-            <Link
-              to={`/rsvp/${wedding?.id}`}
-              className="mt-8 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5"
-              style={{ backgroundColor: theme.surface, color: theme.primary }}
+        {config.websiteRsvp?.enabled && (
+          <section className="py-8">
+            <div
+              className="rounded-[2rem] px-8 py-10 text-center shadow-[0_20px_50px_rgba(15,23,42,0.12)]"
+              style={{
+                background: `linear-gradient(135deg, ${theme.primary}, ${theme.text})`,
+                color: '#ffffff',
+              }}
             >
-              RSVP Here
-            </Link>
-          </div>
-        </section>
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+                Celebration RSVP
+              </p>
+              <h2 className="mt-4 text-3xl font-semibold md:text-4xl">
+                We would love to celebrate with you
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 md:text-base">
+                Please let us know if you'll be joining us so we can plan each moment with care.
+              </p>
+              <Link
+                to={`/rsvp/${wedding?.id}`}
+                className="mt-8 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5"
+                style={{ backgroundColor: theme.surface, color: theme.primary }}
+              >
+                {config.websiteRsvp.buttonText}
+              </Link>
+            </div>
+          </section>
+        )}
       </div>
 
       <footer
