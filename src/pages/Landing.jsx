@@ -10,7 +10,7 @@ export default function Landing() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 max-w-7xl mx-auto">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-wine-700 to-wine-900 text-white font-display font-bold text-sm shadow-sm">P</div>
+          <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-wine-700 to-wine-900 text-white font-display font-bold text-sm shadow-sm">P</div>
           <span className="text-lg sm:text-xl font-display font-bold text-gray-900 tracking-tight">{APP_NAME}</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -19,199 +19,187 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero — warm gradient background */}
-      <section className="relative text-center px-6 pt-20 pb-28 max-w-4xl mx-auto animate-fade-in">
-        {/* Decorative warm radial behind hero */}
+      {/* Hero */}
+      <section className="relative text-center px-6 pt-16 sm:pt-20 pb-24 sm:pb-28 max-w-4xl mx-auto animate-fade-in">
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-gradient-to-b from-wine-50/80 via-phera-50/40 to-transparent blur-3xl"></div>
         </div>
-        <p className="text-sm font-medium text-wine-600 tracking-wide uppercase mb-4">For weddings with 200, 500, or 1000+ guests</p>
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.1] mb-6">
-          The only planner built for<br />
-          <span className="text-wine-700">Indian weddings</span>
+        <p className="text-sm font-medium text-wine-600 tracking-wide uppercase mb-4">Built for 200, 500, and 1000+ guest weddings</p>
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.1] mb-6 text-balance">
+          Stop managing your shaadi<br className="hidden sm:block" />
+          <span className="text-wine-700">from 7 WhatsApp groups</span>
         </h1>
-        <p className="text-lg text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-          Six events. Four hundred guests. Three Excel sheets taped together with WhatsApp forwards. 
-          Sound familiar? Phera replaces the mess with one calm place to manage it all.
+        <p className="text-base sm:text-lg text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
+          Your Mom has a notebook. Your sister has a spreadsheet. Your cousin made a Google Form nobody filled out.
+          Phera replaces the mess with one calm place — built specifically for the chaos of Indian weddings.
         </p>
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <Link to="/register">
-            <Button size="lg" className="shadow-glow hover:scale-[1.02] transition-transform" tabIndex={-1}>
-              Start Planning Free <ArrowRight size={16} />
+            <Button size="lg" className="shadow-glow hover:scale-[1.02] transition-transform w-full sm:w-auto" tabIndex={-1}>
+              Start Planning — It's Free <ArrowRight size={16} />
             </Button>
           </Link>
+          <p className="text-xs text-gray-400">Set up in under 2 minutes. No credit card ever.</p>
         </div>
-        <p className="text-xs text-gray-400 mt-4">Free for up to 100 guests. No credit card.</p>
       </section>
 
-      {/* Social proof bar */}
+      {/* Social proof bar — Bandwagon Effect */}
       <div className="border-y border-gray-200/60 bg-white/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-center gap-4 sm:gap-8 flex-wrap text-sm text-gray-500">
           <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Multi-event support</span>
           <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Family-group RSVPs</span>
           <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Drag & drop seating</span>
-          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Printable place cards</span>
+          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> 100% free forever</span>
         </div>
       </div>
 
-      {/* Stats bar */}
+      {/* Stats bar — Authority & Specificity */}
       <div className="max-w-4xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
         <div>
-          <p className="text-3xl font-display font-bold text-wine-700">6+</p>
+          <p className="text-3xl font-display font-bold text-wine-700 tabular-nums">6+</p>
           <p className="text-sm text-gray-500 mt-1">Event types supported</p>
         </div>
         <div>
-          <p className="text-3xl font-display font-bold text-wine-700">1000+</p>
+          <p className="text-3xl font-display font-bold text-wine-700 tabular-nums">1000+</p>
           <p className="text-sm text-gray-500 mt-1">Guest capacity</p>
         </div>
         <div>
-          <p className="text-3xl font-display font-bold text-wine-700">50+</p>
-          <p className="text-sm text-gray-500 mt-1">Tables per chart</p>
+          <p className="text-3xl font-display font-bold text-wine-700 tabular-nums">60s</p>
+          <p className="text-sm text-gray-500 mt-1">Excel import time</p>
         </div>
         <div>
-          <p className="text-3xl font-display font-bold text-wine-700">3</p>
-          <p className="text-sm text-gray-500 mt-1">Languages (EN, हिं, ગુ)</p>
+          <p className="text-3xl font-display font-bold text-wine-700 tabular-nums">$0</p>
+          <p className="text-sm text-gray-500 mt-1">Price. Always.</p>
         </div>
       </div>
 
-      {/* Features — warm cream background */}
+      {/* Features — benefit-focused, Jobs to Be Done framing */}
       <section className="px-6 py-20 max-w-6xl mx-auto section-warm">
         <div className="text-center mb-14">
-          <h2 className="text-3xl font-display font-bold text-gray-900 mb-3">
-            Every feature your shaadi actually needs
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-3 text-balance">
+            Every headache your shaadi throws at you — handled
           </h2>
-          <p className="text-gray-500 max-w-xl mx-auto">
-            We studied what breaks during Indian wedding planning and built solutions for each one.
+          <p className="text-gray-500 max-w-xl mx-auto text-pretty">
+            We didn't build features. We solved the problems that made us lose sleep before our own wedding.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <FeatureCard
             icon={Calendar}
-            title="Multi-Event, Multi-Day"
-            description="Mehndi with 80 guests, Sangeet with 200, Reception with 500. Each event gets its own invite list, timeline, and dress code."
+            title="One wedding, six events, zero confusion"
+            description="Mehndi with 80 guests, Sangeet with 200, Reception with 500. Each event gets its own invite list, timeline, and dress code — no more 'wait, is Masi invited to the Haldi?'"
           />
           <FeatureCard
             icon={Users}
-            title="Built for Scale"
-            description="Import 500 guests from Excel in one click. Auto-group by family. Filter by side, dietary, or tags. Search across the whole list instantly."
+            title="500 guests imported before your chai gets cold"
+            description="Paste from Excel. We auto-detect columns, group by family, catch duplicates, and tag dietary needs. Your entire list — organized — in 60 seconds."
           />
           <FeatureCard
             icon={Grid3X3}
-            title="Visual Seating Charts"
-            description="Drag guests onto tables. Mix round and estate tables. Set keep-together and keep-apart rules. Print place cards without opening Canva."
+            title="Seat 50 tables without a single argument"
+            description="Drag guests onto tables. Set 'keep apart' rules for Uncle Raj and Uncle Mohan. Mix round tables of 10 with estate tables of 14. Print place cards without touching Canva."
           />
           <FeatureCard
             icon={Mail}
-            title="One-Tap RSVPs"
-            description="Send a link. Guests tap their name, see their events, and respond. No login, no app, no confusion. Works for Nani and Gen-Z cousins alike."
+            title="RSVPs even Nani can figure out"
+            description="One link. Tap your name. See your events. Respond. No login, no download, no 'beta, how do I use this app?' Literally works for everyone from Gen-Z cousins to grandparents."
           />
           <FeatureCard
             icon={Camera}
-            title="Photo Group Queue"
-            description="Build your photographer's shot list. Display it live on a screen at the venue. Never miss a family combination again."
+            title="Never miss 'Bride's college friends' shot"
+            description="Build a photographer shot list. Display it live at the venue. The MC calls groups. Photographer never asks 'who's next?' again."
           />
           <FeatureCard
             icon={Trophy}
-            title="Guest Games"
-            description="Custom predictions and bets with a live leaderboard. Keep 400 guests entertained between the ceremony and reception."
+            title="Keep 400 guests entertained between events"
+            description="Custom predictions ('Who dances first?'), live voting on phones, real-time leaderboard on the big screen. Guests talk about it for months."
           />
         </div>
       </section>
 
-      {/* Real scenarios — blush tint */}
+      {/* Pain → Solution — Loss Aversion framing */}
       <section className="px-6 py-20 max-w-5xl mx-auto section-blush">
         <div className="text-center mb-14">
-          <h2 className="text-3xl font-display font-bold text-gray-900 mb-3">
-            Real problems we solve
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-3 text-balance">
+            Sound familiar?
           </h2>
+          <p className="text-gray-500">Every Indian wedding hits these walls. Here's how Phera breaks through them.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <ScenarioCard
             number="01"
-            title="The scattered guest list"
-            problem="Names in WhatsApp groups, Mom's notebook, and three different spreadsheets nobody can find."
-            solution="One list. Import from anywhere. Duplicates caught automatically. Everyone can see it, nobody can break it."
+            title="The 3 AM guest list panic"
+            problem="Names scattered across WhatsApp groups, Mom's notebook, three spreadsheets, and a Google Doc nobody can find. You WILL forget someone important."
+            solution="One source of truth. Import from anywhere. Duplicates caught instantly. Everyone sees the same list — nobody can accidentally break it."
           />
           <ScenarioCard
             number="02"
-            title="Seating 50 tables"
-            problem="Uncle Raj and Uncle Mohan at the same table means drama. The Shahs need 12 seats, not 10."
-            solution="Drag-and-drop with custom table sizes. Set conflict rules. See warnings before they become problems."
+            title="The seating nightmare"
+            problem="Uncle Raj and Uncle Mohan at the same table = drama for decades. The Shahs need 12 seats. The Patels need 14. Your Excel chart just broke for the 6th time."
+            solution="Drag-and-drop with custom table sizes (8, 10, 12, 14 — whatever you need). Set conflict rules. See warnings before they become family feuds."
           />
           <ScenarioCard
             number="03"
-            title="Getting RSVPs from everyone"
-            problem="Aunties ignore emails. Cousins forget apps. Dada doesn't know what a QR code is."
-            solution="One WhatsApp link. Tap your name. Done. Large text, no login. Works for literally everyone."
+            title="The RSVP black hole"
+            problem="Aunties ignore emails. Cousins forget apps. Dada doesn't know what a QR code is. You've sent 3 reminders and still have 200 'maybes.'"
+            solution="One WhatsApp-friendly link. Tap your name. Done. Large text, no login, no app. Your RSVP rate goes from 40% to 90%+ because there's zero friction."
           />
         </div>
       </section>
 
-      {/* How it works — white with warm accents */}
+      {/* How it works — Goal-Gradient + Present Bias */}
       <section className="px-6 py-20 bg-white border-y border-gray-100">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-display font-bold text-gray-900 text-center mb-14">
-            Three steps to sanity
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-4 text-balance">
+            Set up in 2 minutes. Seriously.
           </h2>
+          <p className="text-gray-500 text-center mb-14 max-w-lg mx-auto">No 30-minute onboarding. No tutorial videos. Three steps and you're managing your wedding like a pro.</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
-            <StepCard step="1" title="Add your events" description="Pick from templates or create custom ones. Set dates, venues, dress codes, and who's invited to each." />
-            <StepCard step="2" title="Import your people" description="Upload an Excel sheet or paste names. We handle families, dietary preferences, and duplicates." />
-            <StepCard step="3" title="Share and manage" description="Send RSVP links. Arrange seating. Print place cards. Track responses. All in one place." />
+            <StepCard step="1" title="Add your events" description="Pick from pre-built templates (Mehndi, Sangeet, Haldi, Garba, Ceremony, Reception) or create custom ones. 30 seconds." />
+            <StepCard step="2" title="Import your people" description="Drag in your Excel sheet. We auto-detect names, families, dietary needs, and phone numbers. Duplicates caught. Done." />
+            <StepCard step="3" title="Share & manage" description="Send RSVP links via WhatsApp. Arrange seating with drag-and-drop. Print place cards. Track everything in real-time." />
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
-      <section className="px-6 py-20 max-w-5xl mx-auto">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl font-display font-bold text-gray-900 mb-3">Simple pricing</h2>
-          <p className="text-gray-500">Start free. Upgrade when your guest list grows.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          <PricingCard
-            name="Free"
-            price="$0"
-            period="forever"
-            description="Perfect for smaller celebrations or to try everything out."
-            features={[
-              'Up to 100 guests',
-              '3 events',
-              'Drag & drop seating',
-              'RSVP links',
-              'Photo group manager',
-              'Guest games',
-              'Excel import/export',
-            ]}
-            cta="Start Free"
-            ctaLink="/register"
-          />
-          <PricingCard
-            name="Premium"
-            price="$29"
-            period="one-time"
-            description="For the full Indian wedding experience. No subscriptions."
-            features={[
-              'Unlimited guests',
-              'Unlimited events',
-              'Auto-suggest seating',
-              'Place card PDF export',
-              'Custom wedding website',
-              'QR code table finder',
-              'WhatsApp RSVP links',
-              'Priority support',
-            ]}
-            highlighted
-            cta="Get Premium"
-            ctaLink="/register"
-          />
+      {/* Free forever banner */}
+      <section className="px-6 py-20 max-w-4xl mx-auto text-center">
+        <div className="rounded-3xl border border-wine-200/60 bg-gradient-to-b from-wine-50/80 to-white p-10 sm:p-14 shadow-card">
+          <span className="inline-block text-[11px] font-bold text-wine-700 uppercase tracking-wider bg-wine-100 px-3 py-1.5 rounded-full mb-5">100% Free</span>
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-gray-900 mb-4">Every feature. Unlimited guests. $0.</h2>
+          <p className="text-gray-600 max-w-lg mx-auto mb-8 leading-relaxed">
+            No trials, no tiers, no surprise paywalls. Plan your entire wedding — from the Mehndi to the Reception — without paying a rupee.
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto mb-8">
+            <div className="rounded-xl bg-white border border-gray-100 p-3">
+              <p className="text-lg font-bold text-gray-900">∞</p>
+              <p className="text-xs text-gray-500">Guests</p>
+            </div>
+            <div className="rounded-xl bg-white border border-gray-100 p-3">
+              <p className="text-lg font-bold text-gray-900">∞</p>
+              <p className="text-xs text-gray-500">Events</p>
+            </div>
+            <div className="rounded-xl bg-white border border-gray-100 p-3">
+              <p className="text-lg font-bold text-gray-900">∞</p>
+              <p className="text-xs text-gray-500">Tables</p>
+            </div>
+            <div className="rounded-xl bg-white border border-gray-100 p-3">
+              <p className="text-lg font-bold text-gray-900">∞</p>
+              <p className="text-xs text-gray-500">RSVPs</p>
+            </div>
+          </div>
+          <Link to="/register">
+            <Button size="lg" className="shadow-glow" tabIndex={-1}>Start Planning Free <ArrowRight size={16} /></Button>
+          </Link>
+          <p className="mt-4 text-xs text-gray-400">Optional: $5 for advanced wedding website customization (custom fonts, colors, sections).</p>
         </div>
       </section>
 
-      {/* Comparison table */}
+      {/* Comparison table — Anchoring + Competitive framing */}
       <section className="px-6 py-20 max-w-4xl mx-auto">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-display font-bold text-gray-900 mb-3">Why Phera over the rest</h2>
-          <p className="text-gray-500">Built specifically for Indian wedding complexity.</p>
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-3 text-balance">Zola and WithJoy weren't made for your wedding</h2>
+          <p className="text-gray-500">They support one event, 150 guests, and fixed table sizes. Indian weddings need more.</p>
         </div>
         <div className="overflow-x-auto rounded-2xl border border-gray-200/80 shadow-card">
           <table className="w-full text-sm">
@@ -240,48 +228,47 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* FAQ — warm cream */}
+      {/* FAQ — Objection Handling + Regret Aversion */}
       <section className="px-6 py-20 max-w-3xl mx-auto section-warm">
-        <h2 className="text-3xl font-display font-bold text-gray-900 text-center mb-12">
-          Questions
+        <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-12 text-balance">
+          Quick answers
         </h2>
         <div className="space-y-3">
           <FAQItem
             question="How is this different from Zola or WithJoy?"
-            answer="Those are built for American weddings with 150 guests and one event. Phera handles multiple events with different guest lists, 500+ guests, family-group RSVPs, and seating charts with variable table sizes. If your wedding has a Mehndi, Sangeet, AND Reception, you need this."
+            answer="Those platforms are designed for American weddings — one event, 150 guests, fixed seating. Phera handles 6+ events with different invite lists each, 500–1000 guests, family-group RSVPs, variable table sizes (10, 12, 14+), and WhatsApp-friendly links. If your wedding has a Mehndi, Sangeet, AND Reception with different guest lists — those tools will fight you. This one won't."
           />
           <FAQItem
             question="Can I import my existing guest list?"
-            answer="Yes. Drop in any Excel or CSV file. We detect columns automatically, catch duplicates, and group by family. You can also use our template for a clean start."
+            answer="Yes — any Excel or CSV file. Drag it in, and we auto-detect columns (name, phone, family, dietary, side). Duplicates caught. Families auto-grouped. Takes about 60 seconds for 500 guests."
           />
           <FAQItem
-            question="Do guests need to download an app or create an account?"
-            answer="No. They get a link, search their name, and respond. No login, no download, no friction. Designed for everyone from tech-savvy cousins to grandparents."
+            question="Do guests need to create an account?"
+            answer="No. They get a link (works great via WhatsApp), search their name, and respond. No login, no download, no app store. We designed it so your 80-year-old Dada and your 19-year-old cousin can both figure it out in seconds."
           />
           <FAQItem
             question="What about different guest lists per event?"
-            answer="That's exactly why we exist. Your Mehndi might be 80 people, your Reception 500. Each event has its own invite list, RSVP tracking, and seating chart."
+            answer="That's the core reason Phera exists. Your Mehndi might be 80 people, your Reception 500. Each event has its own invite list, RSVP tracking, and seating chart. No more accidentally inviting the neighbors to the Haldi."
           />
           <FAQItem
-            question="Is it free?"
-            answer="Free up to 100 guests and 3 events. More than enough to try everything. Premium removes all limits."
+            question="Wait — this is actually free?"
+            answer="Yes. Unlimited guests, events, tables, seating charts, RSVPs, photo groups, games — all free, forever. The only optional paid feature is $5 for advanced wedding website customization (custom fonts, colors, and sections). Everything else: $0."
           />
           <FAQItem
-            question="Can I print place cards and seating charts?"
-            answer="Yes. Generate printable place cards, table assignment sheets, and alphabetical guest lookups. Per event. No Canva, no third-party tools."
+            question="Can I print place cards?"
+            answer="Yes. Generate printable place cards (guest name + table number), full table assignment sheets, and alphabetical lookup lists for the venue entrance display. Per event. Export as PDF. No Canva needed."
           />
         </div>
       </section>
 
-      {/* CTA — rich gradient */}
+      {/* Final CTA — Loss Aversion + Present Bias */}
       <section className="relative text-center px-6 py-24 bg-gradient-to-br from-wine-800 via-wine-900 to-gray-900 overflow-hidden">
-        {/* Decorative glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-phera-500/10 blur-3xl"></div>
         <div className="relative max-w-2xl mx-auto">
           <Sparkles className="mx-auto mb-4 text-phera-400" size={28} />
-          <h2 className="text-3xl font-display font-bold text-white mb-3">Your wedding deserves better than spreadsheets</h2>
-          <p className="text-wine-200 mb-8 text-lg">Start free. Plan everything in one place.</p>
-          <Link to="/register"><Button variant="secondary" size="lg" className="hover:scale-[1.02] transition-transform" tabIndex={-1}>Create Your Wedding <ArrowRight size={16} /></Button></Link>
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-3 text-balance">Every hour you spend on spreadsheets is an hour you don't spend enjoying your own wedding</h2>
+          <p className="text-wine-200 mb-8 text-lg">Free. Unlimited. Ready in 2 minutes.</p>
+          <Link to="/register"><Button variant="secondary" size="lg" className="hover:scale-[1.02] transition-transform" tabIndex={-1}>Start Planning Now <ArrowRight size={16} /></Button></Link>
         </div>
       </section>
 
@@ -354,34 +341,6 @@ function FAQItem({ question, answer }) {
   );
 }
 
-function PricingCard({ name, price, period, description, features, highlighted, cta, ctaLink }) {
-  return (
-    <div className={`rounded-2xl border p-6 sm:p-8 transition-all duration-300 ${highlighted ? 'border-wine-300 bg-gradient-to-b from-wine-50/60 to-white shadow-lifted ring-1 ring-wine-200' : 'border-gray-200/80 bg-white shadow-card hover:shadow-lifted'}`}>
-      {highlighted && (
-        <span className="inline-block text-[10px] font-bold text-wine-700 uppercase tracking-wider bg-wine-100 px-2.5 py-1 rounded-full mb-4">Most Popular</span>
-      )}
-      <h3 className="text-lg font-display font-bold text-gray-900">{name}</h3>
-      <div className="mt-2 mb-1">
-        <span className="text-4xl font-display font-bold text-gray-900">{price}</span>
-        <span className="text-sm text-gray-500 ml-1.5">/ {period}</span>
-      </div>
-      <p className="text-sm text-gray-500 mb-6">{description}</p>
-      <Link to={ctaLink}>
-        <Button className="w-full" variant={highlighted ? 'primary' : 'outline'} tabIndex={-1}>
-          {cta} <ArrowRight size={14} />
-        </Button>
-      </Link>
-      <ul className="mt-6 space-y-2.5">
-        {features.map((feature, i) => (
-          <li key={i} className="flex items-center gap-2.5 text-sm text-gray-700">
-            <Check size={14} className="text-green-600 shrink-0" />
-            {feature}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 function ComparisonRow({ feature, phera, zola, withjoy }) {
   const renderCell = (value) => {

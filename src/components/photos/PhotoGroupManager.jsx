@@ -169,16 +169,16 @@ function ShareLinkCard({ title, description, url }) {
   };
 
   return (
-    <div className="rounded-xl border border-wine-100 bg-wine-50/70 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-medium text-gray-900">{title}</p>
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
-          <p className="mt-2 truncate text-xs text-wine-800">{url}</p>
+    <div className="rounded-xl border border-wine-100 bg-wine-50/70 p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-gray-900">{title}</p>
+          <p className="mt-1 hidden sm:block text-sm text-gray-500">{description}</p>
+          <p className="mt-1 sm:mt-2 truncate text-xs text-wine-800 max-w-[calc(100vw-10rem)] sm:max-w-none">{url}</p>
         </div>
-        <Button size="sm" variant="outline" onClick={handleCopy}>
+        <Button size="sm" variant="outline" onClick={handleCopy} className="shrink-0">
           <Copy size={14} />
-          {copied ? 'Copied' : 'Copy'}
+          <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
         </Button>
       </div>
     </div>
@@ -348,11 +348,11 @@ function AdminPhotoGroupManager({ wedding }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Photo Groups</h1>
-          <p className="mt-1 text-sm text-gray-500">Run a live queue for photographers, the MC, guests, and the venue display.</p>
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Photo Groups</h1>
+          <p className="mt-1 text-xs sm:text-sm text-gray-500">Run a live queue for photographers, the MC, guests, and the venue display.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={() => window.open(queueLink, '_blank')} disabled={!wedding?.id}>
@@ -377,7 +377,7 @@ function AdminPhotoGroupManager({ wedding }) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6 min-w-0 overflow-hidden">
+        <div className="space-y-6 min-w-0 overflow-hidden order-2 lg:order-1">
           <div className="grid gap-2 grid-cols-3 sm:gap-4">
             <Card className="border-wine-100 !p-3 sm:!p-4">
               <p className="text-xs sm:text-sm text-gray-500">Pending</p>
@@ -449,7 +449,7 @@ function AdminPhotoGroupManager({ wedding }) {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0 overflow-hidden order-1 lg:order-2">
           <Card title="Shareable links" className="border-wine-100">
             <div className="space-y-3">
               <ShareLinkCard

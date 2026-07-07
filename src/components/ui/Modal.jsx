@@ -16,34 +16,35 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
       <Dialog onClose={onClose} className="relative z-50">
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-200"
+          enter="duration-200 ease-out"
           enterFrom="opacity-0"
           enterTo="opacity-100"
-          leave="ease-in duration-150"
+          leave="duration-150 ease-in"
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" aria-hidden="true" />
         </Transition.Child>
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <Transition.Child
             as={Fragment}
-            enter="ease-out duration-200"
-            enterFrom="opacity-0 scale-95"
-            enterTo="opacity-100 scale-100"
-            leave="ease-in duration-150"
-            leaveFrom="opacity-100 scale-100"
-            leaveTo="opacity-0 scale-95"
+            enter="duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+            enterFrom="opacity-0 translate-y-2 scale-[0.97]"
+            enterTo="opacity-100 translate-y-0 scale-100"
+            leave="duration-150 ease-[cubic-bezier(0.4,0,0.2,1)]"
+            leaveFrom="opacity-100 translate-y-0 scale-100"
+            leaveTo="opacity-0 translate-y-1 scale-[0.98]"
           >
-            <Dialog.Panel className={`w-full ${sizeClasses[size]} rounded-2xl bg-white p-4 md:p-6 shadow-xl max-h-[90dvh] flex flex-col`}>
+            <Dialog.Panel className={`w-full ${sizeClasses[size]} rounded-2xl bg-white p-4 md:p-6 shadow-xl max-h-[85dvh] flex flex-col`}>
               <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                <Dialog.Title className="text-lg font-semibold text-gray-900">
+                <Dialog.Title className="text-lg font-semibold text-gray-900 text-balance">
                   {title}
                 </Dialog.Title>
                 <button
                   onClick={onClose}
-                  className="rounded-lg p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  aria-label="Close dialog"
+                  className="rounded-lg p-2.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors duration-150"
                 >
                   <X size={20} />
                 </button>

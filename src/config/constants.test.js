@@ -6,7 +6,6 @@ import {
   TABLE_SHAPES,
   TABLE_PRESETS,
   TABLE_DEFAULTS,
-  TIERS,
   GUEST_TAGS,
   DIETARY_OPTIONS,
   LANGUAGES,
@@ -80,28 +79,6 @@ describe('constants', () => {
         expect(TABLE_DEFAULTS[shape]).toBeDefined();
         expect(TABLE_DEFAULTS[shape].capacity).toBeGreaterThan(0);
       });
-    });
-  });
-
-  describe('TIERS', () => {
-    it('FREE tier has limits', () => {
-      expect(TIERS.FREE.maxGuests).toBe(50);
-      expect(TIERS.FREE.maxEvents).toBe(2);
-      expect(TIERS.FREE.maxTables).toBe(5);
-    });
-
-    it('PREMIUM tier has unlimited capacity', () => {
-      expect(TIERS.PREMIUM.maxGuests).toBe(Infinity);
-      expect(TIERS.PREMIUM.maxEvents).toBe(Infinity);
-      expect(TIERS.PREMIUM.maxTables).toBe(Infinity);
-    });
-
-    it('PREMIUM includes all features', () => {
-      expect(TIERS.PREMIUM.features).toContain('seating-full');
-      expect(TIERS.PREMIUM.features).toContain('photo-groups');
-      expect(TIERS.PREMIUM.features).toContain('bets');
-      expect(TIERS.PREMIUM.features).toContain('website');
-      expect(TIERS.PREMIUM.features).toContain('excel-import');
     });
   });
 

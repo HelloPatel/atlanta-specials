@@ -64,21 +64,6 @@ export const TABLE_DEFAULTS = {
   custom:       { capacity: 8,  width: 140, height: 100 },
 };
 
-// Freemium tier limits
-export const TIERS = {
-  FREE: {
-    maxGuests: 50,
-    maxEvents: 2,
-    maxTables: 5,
-    features: ['guest-list', 'rsvp-basic', 'seating-basic'],
-  },
-  PREMIUM: {
-    maxGuests: Infinity,
-    maxEvents: Infinity,
-    maxTables: Infinity,
-    features: ['guest-list', 'rsvp-full', 'seating-full', 'photo-groups', 'bets', 'website', 'print', 'excel-import'],
-  },
-};
 
 // Guest tags
 export const GUEST_TAGS = ['VIP', 'Elderly', 'Kids', 'Vegetarian', 'Vegan', 'Wheelchair', 'Family Friend', 'College Friend', 'Work'];

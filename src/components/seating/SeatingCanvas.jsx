@@ -44,6 +44,7 @@ export default function SeatingCanvas() {
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved
   const [copiedFinderLink, setCopiedFinderLink] = useState(false);
   const [mobileSelectedTable, setMobileSelectedTable] = useState(null);
+  const [mobileZoom, setMobileZoom] = useState(0.35);
   const [undoStack, setUndoStack] = useState([]);
   const canvasScrollRef = useRef(null);
   const qrPrintRef = useRef(null);
@@ -449,9 +450,8 @@ export default function SeatingCanvas() {
   if (!activeWedding) return null;
 
   // Mobile: view-only optimized layout
-  const [mobileZoom, setMobileZoom] = useState(0.35);
   const mobileViewContent = (
-    <div className="md:hidden flex flex-col h-[calc(100vh-8rem)]">
+    <div className="md:hidden flex flex-col h-[calc(100dvh-7.5rem)]">
       {/* Mobile header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-2">

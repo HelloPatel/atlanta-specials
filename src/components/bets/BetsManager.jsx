@@ -175,16 +175,16 @@ function ShareLinkCard({ title, description, url }) {
   };
 
   return (
-    <div className="rounded-xl border border-wine-100 bg-wine-50/70 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-medium text-gray-900">{title}</p>
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
-          <p className="mt-2 truncate text-xs text-wine-800">{url}</p>
+    <div className="rounded-xl border border-wine-100 bg-wine-50/70 p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-gray-900">{title}</p>
+          <p className="mt-1 hidden sm:block text-sm text-gray-500">{description}</p>
+          <p className="mt-1 sm:mt-2 truncate text-xs text-wine-800 max-w-[calc(100vw-10rem)] sm:max-w-none">{url}</p>
         </div>
-        <Button size="sm" variant="outline" onClick={handleCopy}>
+        <Button size="sm" variant="outline" onClick={handleCopy} className="shrink-0">
           <Copy size={14} />
-          {copied ? 'Copied' : 'Copy'}
+          <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy'}</span>
         </Button>
       </div>
     </div>
@@ -264,9 +264,9 @@ function AdminBetsManager({ wedding }) {
   return (
     <div className="space-y-6 overflow-hidden">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Bets & Games</h1>
-          <p className="mt-1 text-sm text-gray-500">Create custom questions, collect live votes, and reveal answers in real time.</p>
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Bets & Games</h1>
+          <p className="mt-1 text-xs sm:text-sm text-gray-500">Create custom questions, collect live votes, and reveal answers in real time.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={() => window.open(guestLink, '_blank')}>
@@ -320,7 +320,7 @@ function AdminBetsManager({ wedding }) {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0 overflow-hidden">
           <Card title="Questions" className="border-wine-100">
             {loading ? (
               <p className="text-sm text-gray-500">Loading questions…</p>
@@ -398,7 +398,7 @@ function AdminBetsManager({ wedding }) {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0 overflow-hidden">
           <Card title="Shareable links" className="border-wine-100">
             <div className="space-y-3">
               <ShareLinkCard
