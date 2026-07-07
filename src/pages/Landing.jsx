@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui';
-import VideoEmbed from '../components/ui/VideoEmbed';
+import ProductShowcase from '../components/ui/ProductShowcase';
 import { APP_NAME } from '../config/constants';
 import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles, Play } from 'lucide-react';
 
@@ -37,33 +37,45 @@ export default function Landing() {
   return (
     <div className="min-h-screen font-body">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-4 sm:py-5 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-wine-700 to-wine-900 text-white font-display font-bold text-sm shadow-sm">P</div>
-          <span className="text-lg sm:text-xl font-display font-bold text-gray-900 tracking-tight">{APP_NAME}</span>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link to="/login" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-100 transition-colors link-flourish">Sign in</Link>
-          <Link to="/register" className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-wine-700 hover:bg-wine-800 rounded-lg shadow-sm transition-colors">Start Planning</Link>
+      <header className="fixed top-0 left-0 right-0 z-40">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 max-w-7xl mx-auto mt-3 sm:mt-4 mx-4 sm:mx-auto rounded-2xl toolbar-glass">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-wine-700 to-wine-900 text-white font-display font-bold text-sm shadow-sm">P</div>
+            <span className="text-lg sm:text-xl font-display font-bold text-gray-900 tracking-tight">{APP_NAME}</span>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link to="/login" className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg hover:bg-gray-100/80 transition-all duration-300 ease-spring link-flourish">Sign in</Link>
+            <Link to="/register" className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-wine-700 hover:bg-wine-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 ease-spring hover:scale-[1.02] active:scale-[0.98]">Start Planning</Link>
+          </div>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="relative text-center px-6 pt-12 sm:pt-20 pb-16 sm:pb-28 max-w-4xl mx-auto animate-fade-in">
+      <section className="relative text-center px-6 pt-28 sm:pt-36 pb-16 sm:pb-28 max-w-5xl mx-auto animate-fade-in">
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-gradient-to-b from-wine-50/80 via-phera-50/40 to-transparent blur-3xl"></div>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[700px] rounded-full bg-gradient-to-b from-wine-50/60 via-phera-50/30 to-transparent blur-3xl animate-pulse-soft"></div>
         </div>
-        <p className="text-xs sm:text-sm font-medium text-wine-600 tracking-wide uppercase mb-3 sm:mb-4">For 200 to 1000+ guest weddings</p>
-        <h1 className="text-2xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.1] mb-4 sm:mb-6 text-balance">
+        <p className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-wine-600 tracking-[0.15em] uppercase mb-4 sm:mb-5 px-3 py-1.5 rounded-full bg-wine-50/80 border border-wine-100/60">
+          <Sparkles size={12} /> For 200 to 1000+ guest weddings
+        </p>
+        <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.08] mb-5 sm:mb-7 text-balance">
           One place for your entire<br className="hidden sm:block" />{' '}
-          <span className="text-wine-700">Indian wedding</span>
+          <span className="text-wine-700 relative">
+            Indian wedding
+            <svg className="absolute -bottom-1 left-0 w-full h-3 text-wine-200/60" viewBox="0 0 200 12" preserveAspectRatio="none">
+              <path d="M0 8 Q50 0 100 8 T200 8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          </span>
         </h1>
         <p className="text-sm sm:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
           Guest lists, seating charts, RSVPs, multiple events, different invite lists. All handled. No more WhatsApp chaos.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-          <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 text-base font-semibold text-white bg-wine-700 hover:bg-wine-800 rounded-xl shadow-glow hover:scale-[1.02] transition-all w-full sm:w-auto justify-center">
-            Start Planning Free <ArrowRight size={16} />
+          <Link to="/register" className="group inline-flex items-center gap-2 px-7 py-3.5 text-base font-semibold text-white bg-wine-700 hover:bg-wine-800 rounded-2xl shadow-glow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring w-full sm:w-auto justify-center">
+            Start Planning Free 
+            <span className="inline-flex items-center justify-center size-6 rounded-full bg-white/15 group-hover:translate-x-0.5 transition-transform duration-300 ease-spring">
+              <ArrowRight size={14} />
+            </span>
           </Link>
           <p className="text-xs text-gray-400">Takes 2 minutes. No credit card.</p>
         </div>
@@ -99,25 +111,14 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Demo video section */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-6 sm:pb-8">
-        <div className="text-center mb-4 sm:mb-6">
+      {/* Demo showcase section */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 sm:pb-12">
+        <div className="text-center mb-5 sm:mb-8">
           <h2 className="text-lg sm:text-2xl font-display font-bold text-gray-900 mb-2">See it in action</h2>
-          <p className="text-sm text-gray-600">Watch how to manage 500+ guests in minutes</p>
+          <p className="text-sm text-gray-500">Watch how 500+ guests get organized in minutes</p>
         </div>
-        <div className="rounded-2xl border border-gray-200/80 overflow-hidden shadow-lifted bg-black">
-          <VideoEmbed
-            src=""
-            fallbackImage="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'%3E%3Crect fill='%23f3f4f6' width='1280' height='720'/%3E%3Crect fill='%23e5e7eb' x='40' y='40' width='1200' height='640'/%3E%3Ctext x='640' y='300' font-size='32' font-weight='bold' text-anchor='middle' fill='%236b7280'%3ESeating Chart Demo%3C/text%3E%3Ctext x='640' y='360' font-size='16' text-anchor='middle' fill='%239ca3af'%3E500+ guests, organized in minutes%3C/text%3E%3Ccircle cx='100' cy='120' r='40' fill='%23dc2626'/%3E%3Ccircle cx='120' cy='140' r='35' fill='%23f59e0b'/%3E%3Ccircle cx='140' cy='130' r='38' fill='%2316a34a'/%3E%3Crect x='60' y='180' width='180' height='120' fill='%23f3f4f6' stroke='%23d1d5db' stroke-width='2'/%3E%3Ctext x='150' y='245' font-size='14' text-anchor='middle' fill='%234b5563'%3EDrag Tables%3C/text%3E%3C/svg%3E"
-            title="Seating Chart Demo"
-            autoplay={true}
-            muted={true}
-            loop={true}
-            controls={false}
-            playButtonOverlay={true}
-            className="w-full"
-            aspectRatio="video"
-          />
+        <div className="rounded-[1.25rem] p-1.5 bg-gray-900/5 border border-gray-200/60">
+          <ProductShowcase />
         </div>
       </div>
 
@@ -205,32 +206,27 @@ export default function Landing() {
       </section>
 
       {/* Free forever banner */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-4xl mx-auto text-center">
-        <div className="rounded-2xl sm:rounded-3xl border border-wine-200/60 bg-gradient-to-b from-wine-50/80 to-white p-6 sm:p-12 shadow-card">
-          <span className="inline-block text-[11px] font-bold text-wine-700 uppercase tracking-wider bg-wine-100 px-3 py-1.5 rounded-full mb-4">100% Free</span>
-          <h2 className="text-2xl sm:text-4xl font-display font-bold text-gray-900 mb-3">Every feature. Unlimited guests. Free.</h2>
-          <div className="grid grid-cols-4 gap-2 sm:gap-3 max-w-xl mx-auto mb-5 sm:mb-6">
-            <div className="rounded-xl bg-white border border-gray-100 p-3">
-              <p className="text-lg font-bold text-gray-900">∞</p>
-              <p className="text-xs text-gray-500">Guests</p>
+      <section className="px-4 sm:px-6 py-16 sm:py-24 max-w-4xl mx-auto text-center">
+        <div className="rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-b from-wine-50/40 to-transparent p-1.5 sm:p-2 border border-wine-100/40">
+          <div className="rounded-[1.25rem] sm:rounded-[1.75rem] border border-wine-200/40 bg-gradient-to-b from-white to-wine-50/30 p-6 sm:p-12 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8)]">
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-wine-700 uppercase tracking-[0.15em] bg-wine-100/80 px-3 py-1.5 rounded-full mb-5 border border-wine-200/40">100% Free</span>
+            <h2 className="text-2xl sm:text-4xl font-display font-bold text-gray-900 mb-4">Every feature. Unlimited guests. Free.</h2>
+            <div className="grid grid-cols-4 gap-2 sm:gap-3 max-w-xl mx-auto mb-6 sm:mb-8">
+              {[{ val: '\u221E', label: 'Guests' }, { val: '\u221E', label: 'Events' }, { val: '\u221E', label: 'Tables' }, { val: '\u221E', label: 'RSVPs' }].map((item) => (
+                <div key={item.label} className="rounded-xl bg-white/80 border border-gray-100/80 p-3 sm:p-4 shadow-sm">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900">{item.val}</p>
+                  <p className="text-[10px] sm:text-xs text-gray-500 mt-0.5">{item.label}</p>
+                </div>
+              ))}
             </div>
-            <div className="rounded-xl bg-white border border-gray-100 p-3">
-              <p className="text-lg font-bold text-gray-900">∞</p>
-              <p className="text-xs text-gray-500">Events</p>
-            </div>
-            <div className="rounded-xl bg-white border border-gray-100 p-3">
-              <p className="text-lg font-bold text-gray-900">∞</p>
-              <p className="text-xs text-gray-500">Tables</p>
-            </div>
-            <div className="rounded-xl bg-white border border-gray-100 p-3">
-              <p className="text-lg font-bold text-gray-900">∞</p>
-              <p className="text-xs text-gray-500">RSVPs</p>
-            </div>
+            <Link to="/register" className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-wine-700 text-white font-semibold shadow-glow hover:bg-wine-800 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring">
+              Start Planning Free
+              <span className="inline-flex items-center justify-center size-6 rounded-full bg-white/15 group-hover:translate-x-0.5 transition-transform duration-300 ease-spring">
+                <ArrowRight size={14} />
+              </span>
+            </Link>
+            <p className="mt-4 text-xs text-gray-400">No catch. No paywalls. Just plan your wedding.</p>
           </div>
-          <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-wine-700 text-white font-semibold shadow-glow hover:bg-wine-800 transition-colors">
-            Start Planning Free <ArrowRight size={16} />
-          </Link>
-          <p className="mt-3 text-xs text-gray-400">No catch. No paywalls. Just plan your wedding.</p>
         </div>
       </section>
 
@@ -292,21 +288,27 @@ export default function Landing() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative text-center px-4 sm:px-6 py-14 sm:py-20 bg-gradient-to-br from-wine-800 via-wine-900 to-gray-900 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-phera-500/10 blur-3xl"></div>
+      <section className="relative text-center px-4 sm:px-6 py-20 sm:py-28 bg-gradient-to-br from-wine-800 via-wine-900 to-gray-900 overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-phera-500/8 blur-[120px]"></div>
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full bg-wine-600/10 blur-[80px]"></div>
         <div className="relative max-w-2xl mx-auto">
-          <Sparkles className="mx-auto mb-3 sm:mb-4 text-phera-400" size={24} />
-          <h2 className="text-xl sm:text-3xl font-display font-bold text-white mb-3 text-balance">Your wedding, organized in one place</h2>
-          <p className="text-wine-200 mb-6 sm:mb-8 text-base sm:text-lg">Free. Unlimited. Takes 2 minutes to set up.</p>
-          <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-wine-800 font-semibold hover:bg-gray-100 hover:scale-[1.02] transition-all">
-            Get Started <ArrowRight size={16} />
+          <div className="inline-flex items-center justify-center size-12 rounded-2xl bg-white/10 backdrop-blur-sm mb-5 sm:mb-6 shadow-sm">
+            <Sparkles className="text-phera-400" size={22} />
+          </div>
+          <h2 className="text-2xl sm:text-4xl font-display font-bold text-white mb-3 sm:mb-4 text-balance">Your wedding, organized in one place</h2>
+          <p className="text-wine-200/80 mb-8 sm:mb-10 text-base sm:text-lg leading-relaxed">Free. Unlimited. Takes 2 minutes to set up.</p>
+          <Link to="/register" className="group inline-flex items-center gap-3 px-7 py-3.5 rounded-2xl bg-white text-wine-800 font-semibold hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring shadow-lg">
+            Get Started
+            <span className="inline-flex items-center justify-center size-7 rounded-full bg-wine-100 group-hover:bg-wine-200 group-hover:translate-x-0.5 transition-all duration-300 ease-spring">
+              <ArrowRight size={14} className="text-wine-700" />
+            </span>
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="text-center px-6 py-8 text-sm text-gray-400 bg-gray-50 border-t border-gray-100">
-        <p>&copy; {new Date().getFullYear()} {APP_NAME}</p>
+      <footer className="text-center px-6 py-10 text-sm text-gray-400 bg-gray-50/80 border-t border-gray-100">
+        <p className="font-medium">&copy; {new Date().getFullYear()} {APP_NAME}</p>
       </footer>
     </div>
   );
@@ -314,11 +316,11 @@ export default function Landing() {
 
 function FeatureCard({ icon: Icon, title, description }) {
   return (
-    <div className="reveal group rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted hover:-translate-y-0.5 transition-all duration-300">
-      <div className="flex size-9 sm:size-11 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 mb-3 sm:mb-4 group-hover:from-wine-100 group-hover:to-phera-100 transition-colors">
-        <Icon size={18} className="text-wine-700" />
+    <div className="reveal group rounded-2xl sm:rounded-[1.25rem] border border-gray-200/60 bg-white p-5 sm:p-7 shadow-card hover:shadow-lifted hover:-translate-y-1 transition-all duration-500 ease-spring">
+      <div className="flex size-10 sm:size-12 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-wine-50 to-phera-50 mb-4 sm:mb-5 group-hover:from-wine-100 group-hover:to-phera-100 group-hover:scale-110 transition-all duration-500 ease-spring shadow-sm">
+        <Icon size={20} className="text-wine-700" />
       </div>
-      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">{title}</h3>
+      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1.5 sm:mb-2">{title}</h3>
       <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">{description}</p>
     </div>
   );
@@ -343,11 +345,11 @@ function ScenarioCard({ number, title, problem, solution }) {
 
 function StepCard({ step, title, description }) {
   return (
-    <div>
-      <div className="inline-flex size-10 sm:size-12 items-center justify-center rounded-full bg-gradient-to-br from-wine-100 to-phera-100 text-wine-700 font-display font-bold text-lg sm:text-xl mb-3 sm:mb-4 shadow-sm">
+    <div className="text-center">
+      <div className="inline-flex size-12 sm:size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-wine-100 to-phera-100 text-wine-700 font-display font-bold text-lg sm:text-xl mb-4 sm:mb-5 shadow-sm border border-wine-200/30">
         {step}
       </div>
-      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">{title}</h3>
+      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1.5 sm:mb-2">{title}</h3>
       <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">{description}</p>
     </div>
   );
@@ -356,19 +358,23 @@ function StepCard({ step, title, description }) {
 function FAQItem({ question, answer }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-xl border border-gray-200/80 bg-white overflow-hidden shadow-sm">
+    <div className="rounded-2xl border border-gray-200/60 bg-white overflow-hidden shadow-sm hover:shadow-card transition-shadow duration-300">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-gray-50/50 transition-colors"
+        className="flex w-full items-center justify-between px-5 sm:px-6 py-4 sm:py-5 text-left hover:bg-gray-50/50 transition-colors duration-200"
       >
         <span className="text-xs sm:text-sm font-semibold text-gray-900 pr-4">{question}</span>
-        <span className={`text-gray-300 transition-transform duration-200 text-lg shrink-0 ${open ? 'rotate-180' : ''}`}>&#9662;</span>
+        <span className={`text-gray-400 transition-transform duration-300 ease-spring text-sm shrink-0 ${open ? 'rotate-180' : ''}`}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
+        </span>
       </button>
-      {open && (
-        <div className="px-4 sm:px-6 pb-4 sm:pb-5 animate-fade-in">
-          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{answer}</p>
+      <div className={`grid transition-all duration-300 ease-spring ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">
+          <div className="px-5 sm:px-6 pb-5 sm:pb-6">
+            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{answer}</p>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
