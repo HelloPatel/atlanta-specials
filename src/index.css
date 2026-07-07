@@ -115,8 +115,13 @@ body {
 }
 
 .zone-dancefloor {
-  background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.08) 0%, rgba(168, 85, 247, 0.03) 70%, transparent 100%);
-  border-color: rgba(168, 85, 247, 0.3);
+  background-color: #ecd9bd;
+  background-image:
+    linear-gradient(45deg, rgba(150, 100, 55, 0.16) 25%, transparent 25%, transparent 75%, rgba(150, 100, 55, 0.16) 75%),
+    linear-gradient(45deg, rgba(150, 100, 55, 0.16) 25%, transparent 25%, transparent 75%, rgba(150, 100, 55, 0.16) 75%);
+  background-size: 44px 44px;
+  background-position: 0 0, 22px 22px;
+  border-color: rgba(146, 100, 55, 0.45);
 }
 
 .zone-stage {

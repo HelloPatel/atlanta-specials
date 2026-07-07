@@ -200,6 +200,75 @@ function buildSeatingLayout() {
   return { tables, zones };
 }
 
+// ─── Pad the dataset up to a target guest count with realistic filler ────────
+function padGuests(guests, target) {
+  if (guests.length >= target) return guests;
+  const firstNames = [
+    'Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Krishna',
+    'Ishaan', 'Rohan', 'Ananya', 'Diya', 'Aadhya', 'Saanvi', 'Pari', 'Anika',
+    'Navya', 'Riya', 'Ira', 'Myra', 'Kabir', 'Dev', 'Aryan', 'Kiaan', 'Neel',
+    'Isha', 'Kavya', 'Tara', 'Sara', 'Mira', 'Nisha', 'Priya', 'Sneha', 'Pooja',
+  ];
+  const lastNames = [
+    'Patel', 'Shah', 'Mehta', 'Desai', 'Joshi', 'Trivedi', 'Nair', 'Iyer',
+    'Reddy', 'Rao', 'Gupta', 'Agarwal', 'Kapoor', 'Malhotra', 'Bhatt', 'Modi',
+  ];
+  const cities = [
+    'Atlanta, GA', 'Alpharetta, GA', 'Duluth, GA', 'Marietta, GA', 'Edison, NJ',
+    'Chicago, IL', 'Dallas, TX', 'Houston, TX', 'Ahmedabad, India', 'Surat, India',
+  ];
+  const relations = [
+    'Family Friend', 'Community Friend', 'Cousin', 'Work Friend', 'College Friend',
+    'Neighbor', 'Distant Relative', 'Temple Friend',
+  ];
+  const diets = ['vegetarian', 'vegetarian', 'jain', 'non-veg', 'vegan'];
+  const sides = ['bride', 'groom'];
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  let familyCounter = 10000;
+  while (guests.length < target) {
+    const famSize = Math.min(target - guests.length, 2 + Math.floor(Math.random() * 5));
+    const last = pick(lastNames);
+    const side = pick(sides);
+    const city = pick(cities);
+    const famId = `fam_pad_${++familyCounter}`;
+    const famName = `The ${last} Family`;
+    const relation = pick(relations);
+    const needsHotel = city.includes('India') || Math.random() < 0.3;
+    for (let i = 0; i < famSize; i++) {
+      guests.push({
+        firstName: pick(firstNames),
+        lastName: last,
+        email: Math.random() < 0.5 ? `${pick(firstNames).toLowerCase()}.${last.toLowerCase()}@gmail.com` : '',
+        phone: '',
+        familyId: famSize > 1 ? famId : null,
+        familyName: famSize > 1 ? famName : '',
+        side,
+        relation,
+        dietary: pick(diets),
+        dietaryNotes: '',
+        tableNumber: null,
+        seatIndex: null,
+        rsvpStatus: {},
+        rsvpMethod: 'manual',
+        plusOne: false,
+        plusOneName: '',
+        needsHotel,
+        hotelNotes: '',
+        travelFrom: city,
+        arrivalDate: null,
+        departureDate: null,
+        language: city.includes('India') ? 'gu' : 'en',
+        notes: '',
+        tags: [],
+        importedFrom: 'manual',
+      });
+      if (guests.length >= target) break;
+    }
+  }
+  return guests;
+}
+
 async function main() {
   if (!fs.existsSync(KEY_PATH)) {
     console.error(`Service account key not found at: ${KEY_PATH}`);
@@ -279,7 +348,7 @@ async function main() {
 
   // 4. Seed guests (clear existing, then batch-write with some RSVP status).
   const generateGuests = loadGenerateGuests();
-  const guests = generateGuests();
+  const guests = padGuests(generateGuests(), 315);
   console.log(`Generated ${guests.length} guests.`);
 
   const guestsCol = weddingRef.collection('guests');

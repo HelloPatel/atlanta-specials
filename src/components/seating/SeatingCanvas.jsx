@@ -15,6 +15,7 @@ import RulesPanel from './RulesPanel';
 import { evaluateSeatingRules } from './seatingRules';
 import { autoSuggestSeating } from './seatingAutoSuggest';
 import { generateIndianWeddingLayout, generateMehendiLayout, generateReceptionLayout, generateStaggeredLayout } from './seatingLayouts';
+import { loadFloorPlan, FLOOR_PLAN_ACCEPT } from './floorPlanImport';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -326,20 +327,49 @@ export default function SeatingCanvas() {
     setShowAddTable(false);
   };
 
-  // Bulk add tables from import
-  const addTablesBatch = (configs) => {
-    const newTables = configs.map((config, i) => ({
-      id: uid(),
-      name: config.name || `Table ${tables.length + i + 1}`,
-      shape: config.shape || 'round',
-      capacity: config.capacity || 10,
-      width: config.width || TABLE_DEFAULTS[config.shape]?.width || 120,
-      height: config.height || TABLE_DEFAULTS[config.shape]?.height || 120,
-      x: 80 + (i % 6) * 200,
-      y: 80 + Math.floor(i / 6) * 200,
-      assignedGuests: [],
-    }));
-    setTables((prev) => [...prev, ...newTables]);
+  // Bulk add from import — respects explicit coordinates/size when provided,
+  // routes zone rows (dance floor, stage, DJ, bar…) into zones, and falls back
+  // to a tidy grid for plain table lists.
+  const addTablesBatch = (items) => {
+    const zoneItems = items.filter((c) => c.__zone);
+    const tableItems = items.filter((c) => !c.__zone);
+
+    if (tableItems.length) {
+      setTables((prev) => {
+        const positioned = tableItems.map((config, i) => {
+          const defaults = TABLE_DEFAULTS[config.shape] || TABLE_DEFAULTS.round;
+          const idx = prev.length + i;
+          return {
+            id: uid(),
+            name: config.name || `Table ${idx + 1}`,
+            shape: config.shape || 'round',
+            capacity: config.capacity || defaults?.capacity || 10,
+            width: config.width || defaults?.width || 120,
+            height: config.height || defaults?.height || 120,
+            x: Number.isFinite(config.x) ? config.x : 80 + (idx % 6) * 200,
+            y: Number.isFinite(config.y) ? config.y : 80 + Math.floor(idx / 6) * 200,
+            assignedGuests: [],
+          };
+        });
+        return [...prev, ...positioned];
+      });
+    }
+
+    if (zoneItems.length) {
+      setZones((prev) => [
+        ...prev,
+        ...zoneItems.map((z, i) => ({
+          id: uid(),
+          type: z.type || 'custom',
+          label: z.name || z.label || 'Zone',
+          x: Number.isFinite(z.x) ? z.x : 500 + i * 40,
+          y: Number.isFinite(z.y) ? z.y : 500 + i * 40,
+          width: z.width || 200,
+          height: z.height || 160,
+        })),
+      ]);
+    }
+
     setHasChanges(true);
     setShowImport(false);
   };
@@ -380,21 +410,25 @@ export default function SeatingCanvas() {
   // Apply layout generator (Indian wedding, mehendi, reception, staggered)
   const applyLayoutGenerator = (layoutType) => {
     const guestCount = guests.filter(g => g.rsvpStatus?.[selectedEventId] !== 'declined').length;
+    // Derive a sensible table count from the guest count (generators expect a
+    // table count, not a head count). Reception rounds seat 8; others seat ~10.
+    const seatsPerTable = layoutType === 'reception' ? 8 : 10;
+    const tableCount = Math.max(6, Math.ceil((guestCount || 80) / seatsPerTable) + 1);
     let newTables, newZones;
 
     try {
       switch (layoutType) {
         case 'indianWedding':
-          ({ tables: newTables, zones: newZones } = generateIndianWeddingLayout(guestCount));
+          ({ tables: newTables, zones: newZones } = generateIndianWeddingLayout(tableCount));
           break;
         case 'mehendi':
-          ({ tables: newTables, zones: newZones } = generateMehendiLayout(guestCount));
+          ({ tables: newTables, zones: newZones } = generateMehendiLayout(tableCount));
           break;
         case 'reception':
-          ({ tables: newTables, zones: newZones } = generateReceptionLayout(guestCount));
+          ({ tables: newTables, zones: newZones } = generateReceptionLayout(tableCount));
           break;
         case 'staggered':
-          ({ tables: newTables, zones: newZones } = generateStaggeredLayout(guestCount));
+          ({ tables: newTables, zones: newZones } = generateReceptionLayout(tableCount));
           break;
         default:
           return;
@@ -617,16 +651,20 @@ export default function SeatingCanvas() {
               <Printer size={14} /> Print
             </Button>
 
-            {/* Venue floor plan */}
+            {/* Venue floor plan (image or PDF, auto-compressed) */}
             <label className="cursor-pointer">
-              <input type="file" accept="image/*" className="hidden"
-                onChange={(e) => {
+              <input type="file" accept={FLOOR_PLAN_ACCEPT} className="hidden"
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
-                  if (!file) return;
-                  const reader = new FileReader();
-                  reader.onload = (ev) => { setVenueImage(ev.target.result); setHasChanges(true); };
-                  reader.readAsDataURL(file);
                   e.target.value = '';
+                  if (!file) return;
+                  try {
+                    const { dataUrl } = await loadFloorPlan(file);
+                    setVenueImage(dataUrl);
+                    setHasChanges(true);
+                  } catch (err) {
+                    toast.error('Could not load floor plan: ' + err.message);
+                  }
                 }}
               />
               <span className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
@@ -954,6 +992,50 @@ export default function SeatingCanvas() {
   );
 }
 
+// Canonical zone types + aliases used when importing floor-plan rows.
+const ZONE_ALIASES = {
+  'dance floor': 'dance-floor', 'dancefloor': 'dance-floor', 'dance-floor': 'dance-floor', 'dance': 'dance-floor', 'floor': 'dance-floor',
+  'dj': 'dj', 'dj booth': 'dj', 'booth': 'dj',
+  'stage': 'stage', 'mandap': 'stage', 'riser': 'stage',
+  'bar': 'bar', 'cocktail bar': 'bar',
+  'gift': 'gifts', 'gifts': 'gifts', 'gift table': 'gifts', 'cards': 'gifts',
+  'cake': 'cake', 'cake table': 'cake',
+  'dessert': 'desserts', 'desserts': 'desserts', 'sweets': 'desserts',
+  'photo': 'photo', 'photo booth': 'photo', 'photobooth': 'photo',
+  'entrance': 'entrance', 'entry': 'entrance', 'door': 'entrance', 'doors': 'entrance',
+};
+
+// Convert an imported row into either a table config or a zone item.
+function rowToItem(name, typeRaw, cap, x, y, w, h) {
+  const label = String(name || '').trim();
+  if (!label) return null;
+  const num = (v) => {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : undefined;
+  };
+  const key = String(typeRaw || '').toLowerCase().trim();
+  const zoneType = ZONE_ALIASES[key];
+
+  if (zoneType) {
+    return {
+      __zone: true,
+      type: zoneType,
+      name: label,
+      x: num(x), y: num(y),
+      width: num(w), height: num(h),
+    };
+  }
+
+  const shape = TABLE_DEFAULTS[key] ? key : 'round';
+  return {
+    name: label,
+    shape,
+    capacity: parseInt(cap, 10) || 10,
+    x: num(x), y: num(y),
+    width: num(w), height: num(h),
+  };
+}
+
 function ImportLayoutPanel({ onImport, onClose, existingCount }) {
   const [mode, setMode] = useState('quick'); // 'quick' | 'excel' | 'text'
   const [quickCount, setQuickCount] = useState(10);
@@ -973,21 +1055,24 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
     onImport(configs);
   };
 
-  // Parse text input (CSV-like: "Table 1, round, 10" per line)
+  // Parse text input. Supports:
+  //   "Name, Shape/Type, Seats"                       (simple)
+  //   "Name, Type, Seats, X, Y[, W, H]"               (with coordinates)
+  // Zone rows (dance floor, stage, dj, bar, gifts…) are auto-detected by type.
   const handleTextParse = () => {
     const lines = textInput.trim().split('\n').filter(Boolean);
-    const configs = lines.map((line) => {
-      const parts = line.split(/[,\t]/).map((s) => s.trim());
-      const name = parts[0] || '';
-      const shape = (parts[1] || 'round').toLowerCase();
-      const capacity = parseInt(parts[2]) || 10;
-      const validShape = TABLE_DEFAULTS[shape] ? shape : 'round';
-      return { name, shape: validShape, capacity };
-    });
+    const configs = lines
+      .filter((line) => !/^\s*(name|table)\s*,/i.test(line)) // drop header row
+      .map((line) => {
+        const parts = line.split(/[,\t]/).map((s) => s.trim());
+        return rowToItem(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6]);
+      })
+      .filter(Boolean);
     setPreview(configs);
   };
 
-  // Handle Excel file
+  // Handle Excel/CSV file. Detects columns by header when present:
+  // Name, Shape/Type, Seats/Capacity, X, Y, Width, Height.
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -998,16 +1083,37 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
       const wb = XLSX.read(data);
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      if (!rows.length) { setPreview([]); return; }
 
-      // Skip header row if it looks like headers
-      const start = rows[0]?.some((c) => typeof c === 'string' && /name|table/i.test(c)) ? 1 : 0;
-      const configs = rows.slice(start).filter((r) => r[0]).map((row) => {
-        const name = String(row[0] || '').trim();
-        const shape = (String(row[1] || 'round')).toLowerCase().trim();
-        const capacity = parseInt(row[2]) || 10;
-        const validShape = TABLE_DEFAULTS[shape] ? shape : 'round';
-        return { name, shape: validShape, capacity };
-      });
+      // Detect a header row and map columns by name.
+      const header = rows[0].map((c) => String(c || '').toLowerCase().trim());
+      const hasHeader = header.some((c) => /name|table|shape|type|seat|capacity|^x$|^y$/.test(c));
+      const col = (names) => header.findIndex((h) => names.some((n) => h === n || h.includes(n)));
+      const idx = hasHeader
+        ? {
+            name: col(['name', 'table', 'label']),
+            shape: col(['shape', 'type']),
+            cap: col(['seat', 'capacity', 'guests']),
+            x: header.indexOf('x'),
+            y: header.indexOf('y'),
+            w: col(['width', 'w']),
+            h: col(['height', 'h']),
+          }
+        : { name: 0, shape: 1, cap: 2, x: 3, y: 4, w: 5, h: 6 };
+
+      const body = hasHeader ? rows.slice(1) : rows;
+      const configs = body
+        .filter((r) => r && r[idx.name] != null && String(r[idx.name]).trim())
+        .map((r) =>
+          rowToItem(
+            r[idx.name], r[idx.shape], r[idx.cap],
+            idx.x >= 0 ? r[idx.x] : undefined,
+            idx.y >= 0 ? r[idx.y] : undefined,
+            idx.w >= 0 ? r[idx.w] : undefined,
+            idx.h >= 0 ? r[idx.h] : undefined,
+          )
+        )
+        .filter(Boolean);
 
       setFileData(file.name);
       setPreview(configs);
@@ -1077,12 +1183,12 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
       {/* Text paste */}
       {mode === 'text' && (
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">Paste your table list (one per line):</p>
-          <p className="text-xs text-gray-400">Format: <code className="bg-gray-100 px-1 rounded">Name, Shape, Seats</code></p>
+          <p className="text-sm text-gray-600">Paste your layout (one item per line):</p>
+          <p className="text-xs text-gray-400">Format: <code className="bg-gray-100 px-1 rounded">Name, Type, Seats, X, Y</code> — X/Y optional. Zones (dance floor, stage, DJ, bar, gifts…) are detected automatically.</p>
           <textarea
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
-            placeholder={`Head Table, head-table, 12\nTable 1, round, 10\nTable 2, round, 10\nBar Area, cocktail, 4`}
+            placeholder={`Head Table, head-table, 12, 700, 60\nTable 1, round, 10, 100, 250\nTable 2, round, 10, 320, 250\nDance Floor, dance-floor, , 620, 500\nDJ Booth, dj, , 900, 780`}
             rows={6}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono"
           />
@@ -1090,7 +1196,7 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
             <Button variant="outline" className="flex-1" onClick={handleTextParse}>Preview</Button>
             {preview.length > 0 && (
               <Button className="flex-1" onClick={() => onImport(preview)}>
-                Import {preview.length} Tables
+                Import {preview.length} Item{preview.length === 1 ? '' : 's'}
               </Button>
             )}
           </div>
@@ -1100,10 +1206,11 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
       {/* Excel upload */}
       {mode === 'excel' && (
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">Upload an Excel or CSV with columns: <strong>Name, Shape, Seats</strong></p>
+          <p className="text-sm text-gray-600">Upload an Excel or CSV. Columns: <strong>Name, Type, Seats, X, Y, Width, Height</strong></p>
           <p className="text-xs text-gray-400">
-            Venues often provide table layouts as spreadsheets. Upload it and we'll import the tables.
-            Valid shapes: round, rectangle, square, oval, u-shape, head-table, cocktail
+            Headers are auto-detected in any order. Include X/Y to place items exactly where your
+            floor plan has them; otherwise we lay tables out in a tidy grid. Zone rows
+            (dance floor, stage, DJ, bar, gifts, cake) are recognized automatically.
           </p>
           <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 p-6 cursor-pointer hover:bg-gray-50 transition-colors">
             <Upload size={24} className="text-gray-400" />
@@ -1113,7 +1220,7 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
           </label>
           {preview.length > 0 && (
             <Button className="w-full" onClick={() => onImport(preview)}>
-              Import {preview.length} Tables
+              Import {preview.length} Item{preview.length === 1 ? '' : 's'}
             </Button>
           )}
         </div>
@@ -1126,16 +1233,23 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="text-left px-3 py-1.5 font-medium text-gray-600">Name</th>
-                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Shape</th>
+                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Type</th>
                 <th className="text-center px-3 py-1.5 font-medium text-gray-600">Seats</th>
+                <th className="text-center px-3 py-1.5 font-medium text-gray-600">Position</th>
               </tr>
             </thead>
             <tbody>
               {preview.map((t, i) => (
                 <tr key={i} className="border-b border-gray-50">
-                  <td className="px-3 py-1.5 text-gray-800">{t.name}</td>
-                  <td className="px-3 py-1.5 text-gray-500 capitalize">{t.shape}</td>
-                  <td className="px-3 py-1.5 text-center text-gray-500">{t.capacity}</td>
+                  <td className="px-3 py-1.5 text-gray-800">
+                    {t.name}
+                    {t.__zone && <span className="ml-1 rounded bg-wine-50 px-1 text-[9px] font-semibold uppercase text-wine-600">zone</span>}
+                  </td>
+                  <td className="px-3 py-1.5 text-gray-500 capitalize">{t.__zone ? t.type : t.shape}</td>
+                  <td className="px-3 py-1.5 text-center text-gray-500">{t.__zone ? '—' : t.capacity}</td>
+                  <td className="px-3 py-1.5 text-center text-gray-400">
+                    {Number.isFinite(t.x) && Number.isFinite(t.y) ? `${Math.round(t.x)}, ${Math.round(t.y)}` : 'auto'}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -1223,7 +1337,7 @@ function ZoneElement({ zone, onUpdate, onRemove, zoom }) {
     >
       <div
         style={{ backgroundColor: zone.color || '#f3f4f6' }}
-        className={`w-full h-full ${isDanceFloor ? 'rounded-full zone-dancefloor' : 'rounded-xl'} ${zone.type === 'stage' || zone.type === 'dj' ? 'zone-stage' : ''} ${zone.type === 'bar' ? 'zone-bar' : ''} border-2 border-dashed flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing zone-element`}
+        className={`w-full h-full rounded-xl ${isDanceFloor ? 'zone-dancefloor' : ''} ${zone.type === 'stage' || zone.type === 'dj' ? 'zone-stage' : ''} ${zone.type === 'bar' ? 'zone-bar' : ''} border-2 border-dashed flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing zone-element`}
         onMouseDown={handleGripDown}
         onTouchStart={handleGripDown}
       >

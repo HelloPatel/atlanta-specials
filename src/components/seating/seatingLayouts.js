@@ -172,64 +172,119 @@ export function generateMehendiLayout(totalTables, venueWidth = 1000, venueHeigh
 }
 
 /**
- * Reception layout - formal, multiple head tables
+ * Standard reception layout (matches the classic banquet template):
+ *   - Head table at the TOP center
+ *   - Gifts + Cake stations just below the head table
+ *   - A large SQUARE dance floor in the center
+ *   - DJ booth at the BOTTOM center (opposite the head table)
+ *   - Round tables split into two equal blocks flanking the dance floor,
+ *     two columns per side, labelled A, B, C, D, ... across each row.
  */
-export function generateReceptionLayout(totalTables, venueWidth = 1000, venueHeight = 800) {
-  const layout = {
-    headTable: {
-      x: venueWidth / 2 - 150,
-      y: 80,
-      width: 300,
-      height: 80,
-      type: 'stage',
-      label: 'Head Table (Bride & Groom)',
-    },
-    danceFloor: {
-      x: venueWidth / 2 - 120,
-      y: venueHeight - 280,
-      width: 240,
-      height: 180,
-      type: 'dance-floor',
-      label: 'Dance Floor',
-    },
-  };
+export function generateReceptionLayout(totalTables, venueWidth = 1400) {
+  const regularTables = Math.max(2, totalTables - 1);
+  const rows = Math.ceil(regularTables / 4); // 4 rounds per row (2 left, 2 right)
+  const centerX = venueWidth / 2;
 
-  // Arrange regular tables in a circular pattern around head table
-  const regularTables = totalTables - 1; // Subtract head table
-  const positions = generateStaggeredLayout(regularTables, 100, 220, 4);
+  const rowStartY = 250;
+  const rowSpacing = 180;
+  const columnHeight = rows * rowSpacing;
+
+  // Two columns per side, leaving a central aisle for the dance floor.
+  const leftCols = [100, 320];
+  const rightCols = [venueWidth - 420, venueWidth - 200];
 
   const tables = [];
 
-  // Head table
+  // Head table — top center.
   tables.push({
     id: 'table-head',
     name: 'Head Table',
-    x: layout.headTable.x,
-    y: layout.headTable.y,
-    width: 300,
-    height: 80,
-    capacity: 12,
+    x: centerX - 170,
+    y: 60,
+    width: 340,
+    height: 70,
+    capacity: 10,
     shape: 'head-table',
     isHeadTable: true,
     label: 'Bride & Groom',
   });
 
-  // Regular tables
+  // Round tables, filled row by row: [left-1, left-2, right-1, right-2].
+  const colOrder = [leftCols[0], leftCols[1], rightCols[0], rightCols[1]];
   for (let i = 0; i < regularTables; i++) {
+    const row = Math.floor(i / 4);
+    const col = i % 4;
     tables.push({
       id: `table-${i + 1}`,
       name: `Table ${i + 1}`,
-      x: positions[i].x,
-      y: positions[i].y,
+      x: colOrder[col],
+      y: rowStartY + row * rowSpacing,
       width: 120,
       height: 120,
-      capacity: 10,
+      capacity: 8,
       shape: 'round',
       eventType: 'reception',
     });
   }
 
-  return { tables, zones: [layout.headTable, layout.danceFloor] };
+  // Central square dance floor, vertically centered against the table columns.
+  const danceSize = Math.min(360, Math.max(300, columnHeight - 260));
+  const danceFloor = {
+    x: centerX - danceSize / 2,
+    y: rowStartY + Math.max(120, (columnHeight - danceSize) / 2),
+    width: danceSize,
+    height: danceSize,
+    type: 'dance-floor',
+    label: 'Dance Floor',
+  };
+
+  const gifts = {
+    x: centerX - 110,
+    y: 150,
+    width: 90,
+    height: 70,
+    type: 'gifts',
+    label: 'Gifts',
+  };
+  const cake = {
+    x: centerX + 20,
+    y: 150,
+    width: 90,
+    height: 70,
+    type: 'cake',
+    label: 'Cake',
+  };
+
+  // DJ booth + stage — placed next to each other on the entrance-facing side
+  // of the dance floor (the bottom, opposite the head table). Performers face
+  // the crowd and the entrance doors.
+  const deckY = danceFloor.y + danceFloor.height + 30;
+  const stage = {
+    x: centerX - 210,
+    y: deckY,
+    width: 240,
+    height: 90,
+    type: 'stage',
+    label: 'Stage',
+  };
+  const dj = {
+    x: centerX + 50,
+    y: deckY,
+    width: 160,
+    height: 90,
+    type: 'dj',
+    label: 'DJ Booth',
+  };
+  const entrance = {
+    x: centerX - 70,
+    y: deckY + 130,
+    width: 140,
+    height: 50,
+    type: 'entrance',
+    label: 'Entrance',
+  };
+
+  return { tables, zones: [danceFloor, gifts, cake, stage, dj, entrance] };
 }
 
 /**
