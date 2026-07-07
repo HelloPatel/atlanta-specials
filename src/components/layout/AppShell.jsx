@@ -1,11 +1,17 @@
-import { Outlet, NavLink } from 'react-router-dom';
-import { useState } from 'react';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import Sidebar from './Sidebar';
 import CommandPalette from './CommandPalette';
 import { Menu, LayoutDashboard, Users, Grid3X3, Mail, MoreHorizontal } from 'lucide-react';
 
 export default function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mainRef = useRef(null);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [pathname]);
 
   return (
     <div className="flex h-dvh bg-gray-50">
@@ -41,7 +47,7 @@ export default function AppShell() {
         <Sidebar />
       </div>
 
-      <main className="flex-1 overflow-y-auto pt-14 pb-16 md:pt-0 md:pb-0">
+      <main ref={mainRef} className="flex-1 overflow-y-auto pt-14 pb-16 md:pt-0 md:pb-0">
         <div className="mx-auto max-w-7xl px-4 md:px-6 py-5 md:py-8">
           <Outlet />
         </div>
@@ -57,9 +63,9 @@ export default function AppShell() {
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="More navigation options"
-            className="flex flex-col items-center gap-0.5 px-2 py-1 text-gray-400 active:scale-90 transition-transform"
+            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-gray-400 active:scale-90 transition-all"
           >
-            <MoreHorizontal size={20} />
+            <MoreHorizontal size={20} strokeWidth={1.75} />
             <span className="text-[10px] font-medium">More</span>
           </button>
         </div>
