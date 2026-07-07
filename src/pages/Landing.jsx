@@ -20,16 +20,16 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="relative text-center px-6 pt-16 sm:pt-20 pb-24 sm:pb-28 max-w-4xl mx-auto animate-fade-in">
+      <section className="relative text-center px-6 pt-12 sm:pt-20 pb-16 sm:pb-28 max-w-4xl mx-auto animate-fade-in">
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-gradient-to-b from-wine-50/80 via-phera-50/40 to-transparent blur-3xl"></div>
         </div>
-        <p className="text-sm font-medium text-wine-600 tracking-wide uppercase mb-4">Built for 200, 500, and 1000+ guest weddings</p>
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.1] mb-6 text-balance">
+        <p className="text-xs sm:text-sm font-medium text-wine-600 tracking-wide uppercase mb-3 sm:mb-4">Built for 200, 500, and 1000+ guest weddings</p>
+        <h1 className="text-2xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.1] mb-4 sm:mb-6 text-balance">
           Stop managing your shaadi<br className="hidden sm:block" />
           <span className="text-wine-700">from 7 WhatsApp groups</span>
         </h1>
-        <p className="text-base sm:text-lg text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
+        <p className="text-sm sm:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
           Your Mom has a notebook. Your sister has a spreadsheet. Your cousin made a Google Form nobody filled out.
           Phera replaces the mess with one calm place — built specifically for the chaos of Indian weddings.
         </p>
@@ -41,38 +41,38 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Social proof bar — Bandwagon Effect */}
+      {/* Social proof bar */}
       <div className="border-y border-gray-200/60 bg-white/80 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-center gap-4 sm:gap-8 flex-wrap text-sm text-gray-500">
-          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Multi-event support</span>
-          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Family-group RSVPs</span>
-          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Drag & drop seating</span>
-          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> 100% free forever</span>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-center gap-3 sm:gap-8 flex-wrap text-xs sm:text-sm text-gray-500">
+          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Multi-event</span>
+          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Family RSVPs</span>
+          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> Drag & drop</span>
+          <span className="flex items-center gap-1.5"><Check size={14} className="text-green-600" /> 100% free</span>
         </div>
       </div>
 
       {/* Stats bar */}
-      <div className="max-w-4xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      <div className="max-w-4xl mx-auto px-6 py-6 sm:py-10 grid grid-cols-4 gap-3 sm:gap-6 text-center">
         <div>
-          <p className="text-3xl font-display font-bold text-wine-700 tabular-nums">6+</p>
-          <p className="text-sm text-gray-500 mt-1">Event types</p>
+          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">6+</p>
+          <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Events</p>
         </div>
         <div>
-          <p className="text-3xl font-display font-bold text-wine-700 tabular-nums">1000+</p>
-          <p className="text-sm text-gray-500 mt-1">Guest capacity</p>
+          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">1000+</p>
+          <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Guests</p>
         </div>
         <div>
-          <p className="text-3xl font-display font-bold text-wine-700 tabular-nums">60s</p>
-          <p className="text-sm text-gray-500 mt-1">Excel import</p>
+          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">60s</p>
+          <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Import</p>
         </div>
         <div>
-          <p className="text-3xl font-display font-bold text-wine-700 tabular-nums">$0</p>
-          <p className="text-sm text-gray-500 mt-1">Always free</p>
+          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">$0</p>
+          <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Always</p>
         </div>
       </div>
 
       {/* Visual mockup — breaks up text */}
-      <div className="max-w-5xl mx-auto px-6 pb-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-6 sm:pb-8">
         <div className="rounded-2xl border border-gray-200/80 bg-white shadow-lifted overflow-hidden">
           <div className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
             <div className="size-2.5 rounded-full bg-red-300"></div>
@@ -110,14 +110,14 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Features — benefit-focused, Jobs to Be Done framing */}
-      <section className="px-6 py-16 sm:py-20 max-w-6xl mx-auto section-warm">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-3 text-balance">
+      {/* Features */}
+      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-6xl mx-auto section-warm">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
             Everything your shaadi actually needs
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           <FeatureCard
             icon={Calendar}
             title="6 events, different guest lists"
@@ -152,13 +152,13 @@ export default function Landing() {
       </section>
 
       {/* Pain → Solution */}
-      <section className="px-6 py-16 sm:py-20 max-w-5xl mx-auto section-blush">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-3 text-balance">
+      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto section-blush">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
             Sound familiar?
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
           <ScenarioCard
             number="01"
             title="The scattered guest list"
@@ -181,12 +181,12 @@ export default function Landing() {
       </section>
 
       {/* How it works */}
-      <section className="px-6 py-16 sm:py-20 bg-white border-y border-gray-100">
+      <section className="px-4 sm:px-6 py-12 sm:py-20 bg-white border-y border-gray-100">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-12 text-balance">
+          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-8 sm:mb-12 text-balance">
             Set up in 2 minutes
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-10 text-center">
             <StepCard step="1" title="Add your events" description="Pick from templates (Mehndi, Sangeet, Haldi, Ceremony, Reception) or create custom ones." />
             <StepCard step="2" title="Import your people" description="Drag in your Excel. Auto-detect names, families, dietary needs. Duplicates caught." />
             <StepCard step="3" title="Share & manage" description="Send RSVP links via WhatsApp. Arrange seating. Print place cards. Track everything." />
@@ -195,11 +195,11 @@ export default function Landing() {
       </section>
 
       {/* Free forever banner */}
-      <section className="px-6 py-16 sm:py-20 max-w-4xl mx-auto text-center">
-        <div className="rounded-3xl border border-wine-200/60 bg-gradient-to-b from-wine-50/80 to-white p-8 sm:p-12 shadow-card">
+      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-4xl mx-auto text-center">
+        <div className="rounded-2xl sm:rounded-3xl border border-wine-200/60 bg-gradient-to-b from-wine-50/80 to-white p-6 sm:p-12 shadow-card">
           <span className="inline-block text-[11px] font-bold text-wine-700 uppercase tracking-wider bg-wine-100 px-3 py-1.5 rounded-full mb-4">100% Free</span>
-          <h2 className="text-3xl sm:text-4xl font-display font-bold text-gray-900 mb-3">Every feature. Unlimited guests. $0.</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto mb-6">
+          <h2 className="text-2xl sm:text-4xl font-display font-bold text-gray-900 mb-3">Every feature. Unlimited guests. $0.</h2>
+          <div className="grid grid-cols-4 gap-2 sm:gap-3 max-w-xl mx-auto mb-5 sm:mb-6">
             <div className="rounded-xl bg-white border border-gray-100 p-3">
               <p className="text-lg font-bold text-gray-900">∞</p>
               <p className="text-xs text-gray-500">Guests</p>
@@ -225,18 +225,18 @@ export default function Landing() {
       </section>
 
       {/* Comparison table */}
-      <section className="px-6 py-16 sm:py-20 max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">Zola and WithJoy weren't made for your wedding</h2>
+      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-4xl mx-auto">
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">Zola and WithJoy weren't made for your wedding</h2>
         </div>
-        <div className="overflow-x-auto rounded-2xl border border-gray-200/80 shadow-card">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-xl sm:rounded-2xl border border-gray-200/80 shadow-card">
+          <table className="w-full text-xs sm:text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Feature</th>
-                <th className="py-3 px-4 font-display font-bold text-wine-700">Phera</th>
-                <th className="py-3 px-4 font-semibold text-gray-500">Zola</th>
-                <th className="py-3 px-4 font-semibold text-gray-500">WithJoy</th>
+                <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 font-semibold text-gray-700">Feature</th>
+                <th className="py-2.5 sm:py-3 px-2 sm:px-4 font-display font-bold text-wine-700">Phera</th>
+                <th className="py-2.5 sm:py-3 px-2 sm:px-4 font-semibold text-gray-500">Zola</th>
+                <th className="py-2.5 sm:py-3 px-2 sm:px-4 font-semibold text-gray-500">WithJoy</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -256,9 +256,9 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* FAQ — Objection Handling + Regret Aversion */}
-      <section className="px-6 py-20 max-w-3xl mx-auto section-warm">
-        <h2 className="text-2xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-12 text-balance">
+      {/* FAQ */}
+      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-3xl mx-auto section-warm">
+        <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-8 sm:mb-12 text-balance">
           Quick answers
         </h2>
         <div className="space-y-3">
@@ -282,12 +282,12 @@ export default function Landing() {
       </section>
 
       {/* Final CTA */}
-      <section className="relative text-center px-6 py-20 bg-gradient-to-br from-wine-800 via-wine-900 to-gray-900 overflow-hidden">
+      <section className="relative text-center px-4 sm:px-6 py-14 sm:py-20 bg-gradient-to-br from-wine-800 via-wine-900 to-gray-900 overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-phera-500/10 blur-3xl"></div>
         <div className="relative max-w-2xl mx-auto">
-          <Sparkles className="mx-auto mb-4 text-phera-400" size={28} />
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-white mb-3 text-balance">Stop spending hours on spreadsheets</h2>
-          <p className="text-wine-200 mb-8 text-lg">Free. Unlimited. Ready in 2 minutes.</p>
+          <Sparkles className="mx-auto mb-3 sm:mb-4 text-phera-400" size={24} />
+          <h2 className="text-xl sm:text-3xl font-display font-bold text-white mb-3 text-balance">Stop spending hours on spreadsheets</h2>
+          <p className="text-wine-200 mb-6 sm:mb-8 text-base sm:text-lg">Free. Unlimited. Ready in 2 minutes.</p>
           <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-wine-800 font-semibold hover:bg-gray-100 hover:scale-[1.02] transition-all">
             Start Planning Now <ArrowRight size={16} />
           </Link>
@@ -304,28 +304,28 @@ export default function Landing() {
 
 function FeatureCard({ icon: Icon, title, description }) {
   return (
-    <div className="group rounded-2xl border border-gray-200/80 bg-white p-6 shadow-card hover:shadow-lifted hover:-translate-y-1 transition-all duration-300">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 mb-4 group-hover:from-wine-100 group-hover:to-phera-100 transition-colors">
-        <Icon size={20} className="text-wine-700" />
+    <div className="group rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted hover:-translate-y-0.5 transition-all duration-300">
+      <div className="flex size-9 sm:size-11 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 mb-3 sm:mb-4 group-hover:from-wine-100 group-hover:to-phera-100 transition-colors">
+        <Icon size={18} className="text-wine-700" />
       </div>
-      <h3 className="text-base font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
+      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">{title}</h3>
+      <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">{description}</p>
     </div>
   );
 }
 
 function ScenarioCard({ number, title, problem, solution }) {
   return (
-    <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-card hover:shadow-lifted transition-all duration-300">
-      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-wine-50 text-xs font-bold text-wine-600">{number}</span>
-      <h3 className="text-base font-semibold text-gray-900 mt-3 mb-4">{title}</h3>
-      <div className="mb-4">
-        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">The mess</p>
-        <p className="text-sm text-gray-500">{problem}</p>
+    <div className="rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted transition-all duration-300">
+      <span className="inline-flex size-7 sm:size-8 items-center justify-center rounded-full bg-wine-50 text-[10px] sm:text-xs font-bold text-wine-600">{number}</span>
+      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mt-2 sm:mt-3 mb-3 sm:mb-4">{title}</h3>
+      <div className="mb-3 sm:mb-4">
+        <p className="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">The mess</p>
+        <p className="text-xs sm:text-sm text-gray-500">{problem}</p>
       </div>
-      <div className="pt-3 border-t border-gray-100">
-        <p className="text-[11px] font-semibold text-wine-600 uppercase tracking-wider mb-1">With Phera</p>
-        <p className="text-sm text-gray-700 leading-relaxed">{solution}</p>
+      <div className="pt-2 sm:pt-3 border-t border-gray-100">
+        <p className="text-[10px] sm:text-[11px] font-semibold text-wine-600 uppercase tracking-wider mb-1">With Phera</p>
+        <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">{solution}</p>
       </div>
     </div>
   );
@@ -334,11 +334,11 @@ function ScenarioCard({ number, title, problem, solution }) {
 function StepCard({ step, title, description }) {
   return (
     <div>
-      <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-wine-100 to-phera-100 text-wine-700 font-display font-bold text-xl mb-4 shadow-sm">
+      <div className="inline-flex size-10 sm:size-12 items-center justify-center rounded-full bg-gradient-to-br from-wine-100 to-phera-100 text-wine-700 font-display font-bold text-lg sm:text-xl mb-3 sm:mb-4 shadow-sm">
         {step}
       </div>
-      <h3 className="text-base font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
+      <h3 className="text-sm sm:text-base font-semibold text-gray-900 mb-1 sm:mb-2">{title}</h3>
+      <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -349,14 +349,14 @@ function FAQItem({ question, answer }) {
     <div className="rounded-xl border border-gray-200/80 bg-white overflow-hidden shadow-sm">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-6 py-4 text-left hover:bg-gray-50/50 transition-colors"
+        className="flex w-full items-center justify-between px-4 sm:px-6 py-3 sm:py-4 text-left hover:bg-gray-50/50 transition-colors"
       >
-        <span className="text-sm font-semibold text-gray-900 pr-4">{question}</span>
-        <span className={`text-gray-300 transition-transform duration-200 text-lg ${open ? 'rotate-180' : ''}`}>&#9662;</span>
+        <span className="text-xs sm:text-sm font-semibold text-gray-900 pr-4">{question}</span>
+        <span className={`text-gray-300 transition-transform duration-200 text-lg shrink-0 ${open ? 'rotate-180' : ''}`}>&#9662;</span>
       </button>
       {open && (
-        <div className="px-6 pb-5 animate-fade-in">
-          <p className="text-sm text-gray-600 leading-relaxed">{answer}</p>
+        <div className="px-4 sm:px-6 pb-4 sm:pb-5 animate-fade-in">
+          <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{answer}</p>
         </div>
       )}
     </div>
@@ -368,14 +368,14 @@ function ComparisonRow({ feature, phera, zola, withjoy }) {
   const renderCell = (value) => {
     if (value === true) return <span className="text-green-600 font-bold">✓</span>;
     if (value === false) return <span className="text-gray-300">✗</span>;
-    return <span className="text-amber-600 text-xs font-medium">{value}</span>;
+    return <span className="text-amber-600 text-[10px] sm:text-xs font-medium">{value}</span>;
   };
   return (
     <tr className="hover:bg-gray-50/50">
-      <td className="py-2.5 px-4 text-gray-700">{feature}</td>
-      <td className="py-2.5 px-4 text-center">{renderCell(phera)}</td>
-      <td className="py-2.5 px-4 text-center">{renderCell(zola)}</td>
-      <td className="py-2.5 px-4 text-center">{renderCell(withjoy)}</td>
+      <td className="py-2 sm:py-2.5 px-3 sm:px-4 text-gray-700">{feature}</td>
+      <td className="py-2 sm:py-2.5 px-2 sm:px-4 text-center">{renderCell(phera)}</td>
+      <td className="py-2 sm:py-2.5 px-2 sm:px-4 text-center">{renderCell(zola)}</td>
+      <td className="py-2 sm:py-2.5 px-2 sm:px-4 text-center">{renderCell(withjoy)}</td>
     </tr>
   );
 }
