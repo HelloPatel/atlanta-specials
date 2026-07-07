@@ -55,10 +55,21 @@ service cloud.firestore {
         allow write: if isEditor(weddingId);
       }
 
-      // RSVP responses — anyone can submit (public), editors can read
+      // RSVP responses — anyone can submit (public), editors can read.
+      // Validate/size-cap public writes to prevent spam and oversized docs.
       match /rsvpResponses/{responseId} {
         allow read: if hasAccess(weddingId);
-        allow create: if true;
+        allow create: if request.resource.data.respondentName is string
+          && request.resource.data.respondentName.size() <= 200
+          && request.resource.data.familyName is string
+          && request.resource.data.familyName.size() <= 200
+          && request.resource.data.email is string
+          && request.resource.data.email.size() <= 200
+          && request.resource.data.phone is string
+          && request.resource.data.phone.size() <= 50
+          && request.resource.data.message is string
+          && request.resource.data.message.size() <= 2000
+          && request.resource.data.method in ['web', 'whatsapp', 'manual'];
         allow update, delete: if isEditor(weddingId);
       }
 
@@ -87,10 +98,9 @@ service cloud.firestore {
       }
     }
 
-    // ─── Legacy: wedding photo queue ────────────────────────────────
-    match /wedding/{docId} {
-      allow read, write: if true;
-    }
+    // ─── Legacy: unused collections (locked down; fall through to deny) ──
+    // The old singular `wedding` photo-queue collection is no longer used by
+    // the live app (only referenced by dead App.legacy.jsx). Deny all access.
 
     // ─── Legacy: other collections ──────────────────────────────────
     match /submissions/{docId} {

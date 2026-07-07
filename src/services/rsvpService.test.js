@@ -18,7 +18,8 @@ vi.mock('../../config/constants', () => ({
   COLLECTIONS: { WEDDINGS: 'weddings', GUESTS: 'guests', EVENTS: 'events' },
 }));
 
-import { getRsvpLink, getWhatsAppRsvpLink, getHouseholdRsvpLink } from './rsvpService';
+import { getRsvpLink, getWhatsAppRsvpLink, getHouseholdRsvpLink, submitRsvpResponse } from './rsvpService';
+import { addDoc } from 'firebase/firestore';
 
 describe('rsvpService', () => {
   describe('getRsvpLink', () => {
@@ -82,6 +83,40 @@ describe('rsvpService', () => {
       const link = getHouseholdRsvpLink('abc123', null, 'test-slug');
       expect(link).toContain('/rsvp/test-slug');
       expect(link).not.toContain('?g=');
+    });
+  });
+
+  describe('submitRsvpResponse', () => {
+    beforeEach(() => {
+      vi.mocked(addDoc).mockReset();
+      vi.mocked(addDoc).mockResolvedValue({ id: 'resp-1' });
+    });
+
+    it('truncates oversized free-text fields to their caps', async () => {
+      await submitRsvpResponse('w1', {
+        respondentName: 'a'.repeat(500),
+        message: 'm'.repeat(5000),
+        phone: '9'.repeat(200),
+      });
+      const payload = vi.mocked(addDoc).mock.calls[0][1];
+      expect(payload.respondentName).toHaveLength(200);
+      expect(payload.message).toHaveLength(2000);
+      expect(payload.phone).toHaveLength(50);
+    });
+
+    it('defaults dietary and method for empty input', async () => {
+      await submitRsvpResponse('w1', {});
+      const payload = vi.mocked(addDoc).mock.calls[0][1];
+      expect(payload.dietary).toBe('vegetarian');
+      expect(payload.method).toBe('web');
+      expect(payload.message).toBe('');
+    });
+
+    it('coerces non-string free-text fields to empty strings', async () => {
+      await submitRsvpResponse('w1', { message: { evil: true }, respondentName: 42 });
+      const payload = vi.mocked(addDoc).mock.calls[0][1];
+      expect(payload.message).toBe('');
+      expect(payload.respondentName).toBe('');
     });
   });
 });

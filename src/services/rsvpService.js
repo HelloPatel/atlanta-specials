@@ -45,21 +45,22 @@ function responsesRef(weddingId) {
 }
 
 export async function submitRsvpResponse(weddingId, response) {
+  const cap = (val, max) => (typeof val === 'string' ? val.slice(0, max) : '');
   const docRef = await addDoc(responsesRef(weddingId), {
     guestId: response.guestId || null,
-    familyName: response.familyName || '',
-    respondentName: response.respondentName || '',
-    phone: response.phone || '',
-    email: response.email || '',
+    familyName: cap(response.familyName, 200),
+    respondentName: cap(response.respondentName, 200),
+    phone: cap(response.phone, 50),
+    email: cap(response.email, 200),
     // Per-event responses: { eventId: 'accepted'|'declined' }
     eventResponses: response.eventResponses || {},
     // Family members attending per event: { eventId: [{ name, dietary }] }
     familyMembers: response.familyMembers || {},
-    dietary: response.dietary || 'vegetarian',
-    dietaryNotes: response.dietaryNotes || '',
-    message: response.message || '',
+    dietary: cap(response.dietary, 100) || 'vegetarian',
+    dietaryNotes: cap(response.dietaryNotes, 500),
+    message: cap(response.message, 2000),
     needsHotel: response.needsHotel || false,
-    travelFrom: response.travelFrom || '',
+    travelFrom: cap(response.travelFrom, 200),
     submittedAt: serverTimestamp(),
     method: response.method || 'web', // 'web' | 'whatsapp' | 'manual'
   });
