@@ -91,6 +91,8 @@ export const WEBSITE_THEMES = {
   },
 };
 
+export const WEBSITE_HERO_PATTERNS = ['none', 'mandala', 'floral', 'geometric', 'paisley'];
+
 export function getThemeConfig(themeKey) {
   return WEBSITE_THEMES[themeKey] || WEBSITE_THEMES['classic-rose'];
 }
@@ -106,10 +108,15 @@ export function createDefaultWebsiteConfig(eventIds = []) {
       date: '',
       tagline: '',
       backgroundImage: '',
+      pattern: 'none',
     },
     websiteStory: {
       enabled: false,
       text: '',
+    },
+    websiteGallery: {
+      enabled: false,
+      images: [],
     },
     websiteHotels: {
       enabled: false,
@@ -119,10 +126,27 @@ export function createDefaultWebsiteConfig(eventIds = []) {
       enabled: false,
       items: [],
     },
+    websiteRsvp: {
+      enabled: false,
+      buttonText: 'RSVP Now',
+    },
+    websiteCustomColors: {
+      primary: '',
+      accent: '',
+      background: '',
+    },
     websiteFooter: "We can't wait to celebrate with you!",
     websitePublished: false,
     websiteEventIds: eventIds,
   };
+}
+
+function normalizeHexColor(value) {
+  return /^#[0-9a-fA-F]{6}$/.test(value || '') ? value : '';
+}
+
+function normalizeHeroPattern(value) {
+  return WEBSITE_HERO_PATTERNS.includes(value) ? value : 'none';
 }
 
 export function normalizeWebsiteConfig(wedding = {}, eventIds = []) {
@@ -134,10 +158,17 @@ export function normalizeWebsiteConfig(wedding = {}, eventIds = []) {
       date: wedding.websiteHero?.date || wedding.weddingDate || defaults.websiteHero.date,
       tagline: wedding.websiteHero?.tagline || defaults.websiteHero.tagline,
       backgroundImage: wedding.websiteHero?.backgroundImage || defaults.websiteHero.backgroundImage,
+      pattern: normalizeHeroPattern(wedding.websiteHero?.pattern),
     },
     websiteStory: {
       enabled: Boolean(wedding.websiteStory?.enabled),
       text: wedding.websiteStory?.text || '',
+    },
+    websiteGallery: {
+      enabled: Boolean(wedding.websiteGallery?.enabled),
+      images: Array.isArray(wedding.websiteGallery?.images)
+        ? wedding.websiteGallery.images.filter((image) => typeof image === 'string' && image).slice(0, 12)
+        : [],
     },
     websiteHotels: {
       enabled: Boolean(wedding.websiteHotels?.enabled),
@@ -159,9 +190,14 @@ export function normalizeWebsiteConfig(wedding = {}, eventIds = []) {
           }))
         : [],
     },
-    websiteGallery: {
-      enabled: Boolean(wedding.websiteGallery?.enabled),
-      images: Array.isArray(wedding.websiteGallery?.images) ? wedding.websiteGallery.images : [],
+    websiteRsvp: {
+      enabled: Boolean(wedding.websiteRsvp?.enabled),
+      buttonText: wedding.websiteRsvp?.buttonText || 'RSVP Now',
+    },
+    websiteCustomColors: {
+      primary: normalizeHexColor(wedding.websiteCustomColors?.primary),
+      accent: normalizeHexColor(wedding.websiteCustomColors?.accent),
+      background: normalizeHexColor(wedding.websiteCustomColors?.background),
     },
     websiteFooter: wedding.websiteFooter || defaults.websiteFooter,
     websitePublished: Boolean(wedding.websitePublished),
@@ -176,10 +212,17 @@ export function sanitizeWebsiteConfig(config) {
       date: config.websiteHero?.date || '',
       tagline: config.websiteHero?.tagline?.trim() || '',
       backgroundImage: config.websiteHero?.backgroundImage || '',
+      pattern: normalizeHeroPattern(config.websiteHero?.pattern),
     },
     websiteStory: {
       enabled: Boolean(config.websiteStory?.enabled),
       text: config.websiteStory?.text?.trim() || '',
+    },
+    websiteGallery: {
+      enabled: Boolean(config.websiteGallery?.enabled),
+      images: (config.websiteGallery?.images || [])
+        .filter((image) => typeof image === 'string' && image)
+        .slice(0, 12),
     },
     websiteHotels: {
       enabled: Boolean(config.websiteHotels?.enabled),
@@ -200,6 +243,15 @@ export function sanitizeWebsiteConfig(config) {
           url: item?.url?.trim() || '',
         }))
         .filter((item) => item.name || item.url),
+    },
+    websiteRsvp: {
+      enabled: Boolean(config.websiteRsvp?.enabled),
+      buttonText: config.websiteRsvp?.buttonText?.trim() || 'RSVP Now',
+    },
+    websiteCustomColors: {
+      primary: normalizeHexColor(config.websiteCustomColors?.primary),
+      accent: normalizeHexColor(config.websiteCustomColors?.accent),
+      background: normalizeHexColor(config.websiteCustomColors?.background),
     },
     websiteFooter: config.websiteFooter?.trim() || "We can't wait to celebrate with you!",
     websitePublished: Boolean(config.websitePublished),

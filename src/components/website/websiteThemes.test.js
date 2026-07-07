@@ -5,6 +5,7 @@ import {
   getCoupleDisplayName,
   createDefaultWebsiteConfig,
   normalizeWebsiteConfig,
+  sanitizeWebsiteConfig,
 } from './websiteThemes';
 
 describe('websiteThemes', () => {
@@ -88,6 +89,9 @@ describe('websiteThemes', () => {
       expect(config.websitePublished).toBe(false);
       expect(config.websiteEventIds).toEqual([]);
       expect(config.websiteHero.date).toBe('');
+      expect(config.websiteHero.pattern).toBe('none');
+      expect(config.websiteGallery.images).toEqual([]);
+      expect(config.websiteRsvp.buttonText).toBe('RSVP Now');
     });
 
     it('accepts event IDs', () => {
@@ -108,14 +112,23 @@ describe('websiteThemes', () => {
     it('preserves existing values', () => {
       const wedding = {
         websiteTheme: 'royal-gold',
-        websiteHero: { date: '2025-12-14', tagline: 'Love wins' },
+        websiteHero: { date: '2025-12-14', tagline: 'Love wins', pattern: 'paisley' },
         websiteStory: { enabled: true, text: 'Our story...' },
+        websiteRsvp: { enabled: true, buttonText: 'Reply Today' },
+        websiteCustomColors: { primary: '#112233', accent: '#445566', background: '#778899' },
       };
       const result = normalizeWebsiteConfig(wedding, []);
       expect(result.websiteTheme).toBe('royal-gold');
       expect(result.websiteHero.date).toBe('2025-12-14');
       expect(result.websiteHero.tagline).toBe('Love wins');
+       expect(result.websiteHero.pattern).toBe('paisley');
       expect(result.websiteStory.text).toBe('Our story...');
+      expect(result.websiteRsvp).toEqual({ enabled: true, buttonText: 'Reply Today' });
+      expect(result.websiteCustomColors).toEqual({
+        primary: '#112233',
+        accent: '#445566',
+        background: '#778899',
+      });
     });
 
     it('uses weddingDate as hero date fallback', () => {
@@ -144,6 +157,50 @@ describe('websiteThemes', () => {
       const wedding = { websiteHotels: { enabled: true, items: null } };
       const result = normalizeWebsiteConfig(wedding, []);
       expect(result.websiteHotels.items).toEqual([]);
+    });
+
+    it('limits gallery images and normalizes invalid pattern values', () => {
+      const wedding = {
+        websiteHero: { pattern: 'unknown' },
+        websiteGallery: {
+          enabled: true,
+          images: Array.from({ length: 15 }, (_, index) => `data:image/jpeg;base64,${index}`),
+        },
+      };
+      const result = normalizeWebsiteConfig(wedding, []);
+      expect(result.websiteHero.pattern).toBe('none');
+      expect(result.websiteGallery.enabled).toBe(true);
+      expect(result.websiteGallery.images).toHaveLength(12);
+    });
+  });
+
+  describe('sanitizeWebsiteConfig', () => {
+    it('sanitizes new website builder fields', () => {
+      const result = sanitizeWebsiteConfig({
+        websiteHero: { pattern: 'mandala' },
+        websiteGallery: {
+          enabled: true,
+          images: ['data:image/jpeg;base64,1', '', null, 'data:image/jpeg;base64,2'],
+        },
+        websiteRsvp: { enabled: true, buttonText: '  Save My Seat  ' },
+        websiteCustomColors: {
+          primary: '#123456',
+          accent: 'not-a-color',
+          background: '#abcdef',
+        },
+      });
+
+      expect(result.websiteHero.pattern).toBe('mandala');
+      expect(result.websiteGallery).toEqual({
+        enabled: true,
+        images: ['data:image/jpeg;base64,1', 'data:image/jpeg;base64,2'],
+      });
+      expect(result.websiteRsvp).toEqual({ enabled: true, buttonText: 'Save My Seat' });
+      expect(result.websiteCustomColors).toEqual({
+        primary: '#123456',
+        accent: '',
+        background: '#abcdef',
+      });
     });
   });
 });

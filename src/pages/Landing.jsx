@@ -111,7 +111,7 @@ export default function Landing() {
       </div>
 
       {/* Features */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-6xl mx-auto section-warm">
+      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-6xl mx-auto section-warm bg-pattern-floral relative">
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
             Everything your shaadi actually needs
@@ -152,7 +152,7 @@ export default function Landing() {
       </section>
 
       {/* Pain → Solution */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto section-blush">
+      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto section-blush bg-pattern-mandala relative">
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
             Sound familiar?

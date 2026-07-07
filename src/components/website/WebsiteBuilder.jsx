@@ -5,6 +5,7 @@ import {
   Eye,
   Globe,
   ImagePlus,
+  Palette,
   Pencil,
   Plus,
   Save,
@@ -18,6 +19,7 @@ import { saveWebsiteConfig } from '../../services/websiteService';
 import WeddingWebsitePreview from './WeddingWebsitePreview';
 import {
   WEBSITE_THEMES,
+  WEBSITE_HERO_PATTERNS,
   getCoupleDisplayName,
   getPublicWeddingWebsiteLink,
   normalizeWebsiteConfig,
@@ -25,6 +27,13 @@ import {
 } from './websiteThemes';
 
 const websiteThemes = Object.values(WEBSITE_THEMES);
+const heroPatternLabels = {
+  none: 'None',
+  mandala: 'Mandala Pattern',
+  floral: 'Floral Overlay',
+  geometric: 'Geometric',
+  paisley: 'Paisley',
+};
 
 function Toggle({ checked, onChange, label, disabled = false, helperText }) {
   return (
@@ -98,7 +107,9 @@ export default function WebsiteBuilder() {
   const [config, setConfig] = useState(() => normalizeWebsiteConfig());
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploadingHero, setUploadingHero] = useState(false);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [showCustomColors, setShowCustomColors] = useState(false);
 
   useEffect(() => {
     if (!activeWedding) return undefined;
@@ -113,6 +124,7 @@ export default function WebsiteBuilder() {
   const websiteUrl = activeWedding ? getPublicWeddingWebsiteLink(activeWedding.id, activeWedding.slug) : '';
   const selectedEventIds = new Set(config.websiteEventIds || []);
   const coupleDisplayName = getCoupleDisplayName(activeWedding);
+  const activeTheme = WEBSITE_THEMES[config.websiteTheme] || websiteThemes[0];
 
   const selectedEventsCount = events.filter((event) => selectedEventIds.has(event.id)).length;
 
@@ -152,6 +164,20 @@ export default function WebsiteBuilder() {
     });
   };
 
+  const handleRemoveGalleryImage = (index) => {
+    updateSection('websiteGallery', {
+      ...config.websiteGallery,
+      images: config.websiteGallery.images.filter((_, imageIndex) => imageIndex !== index),
+    });
+  };
+
+  const handleCustomColorChange = (field, value) => {
+    updateSection('websiteCustomColors', {
+      ...config.websiteCustomColors,
+      [field]: value,
+    });
+  };
+
   const handleSave = async (published = config.websitePublished) => {
     setSaving(true);
     try {
@@ -173,12 +199,32 @@ export default function WebsiteBuilder() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setUploading(true);
+    setUploadingHero(true);
     try {
       const dataUrl = await fileToDataUrl(file);
       setHeroValue('backgroundImage', dataUrl);
     } finally {
-      setUploading(false);
+      setUploadingHero(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleGalleryUpload = async (event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+
+    setUploadingGallery(true);
+    try {
+      const remainingSlots = Math.max(0, 12 - config.websiteGallery.images.length);
+      if (remainingSlots === 0) return;
+
+      const uploadedImages = await Promise.all(files.slice(0, remainingSlots).map((file) => fileToDataUrl(file)));
+      updateSection('websiteGallery', {
+        ...config.websiteGallery,
+        images: [...config.websiteGallery.images, ...uploadedImages].slice(0, 12),
+      });
+    } finally {
+      setUploadingGallery(false);
       event.target.value = '';
     }
   };
@@ -269,6 +315,66 @@ export default function WebsiteBuilder() {
                   );
                 })}
               </div>
+              <div className="mt-6 rounded-3xl border border-gray-200 bg-gray-50 p-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCustomColors((current) => !current)}
+                  className="flex w-full items-center justify-between gap-3 text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-wine-700 shadow-sm">
+                      <Palette size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Customize Colors</p>
+                      <p className="text-xs text-gray-500">Override the selected theme with your own brand colors.</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-wine-700">{showCustomColors ? 'Hide' : 'Show'}</span>
+                </button>
+
+                {showCustomColors && (
+                  <div className="mt-4 grid gap-4 md:grid-cols-3">
+                    {[
+                      { key: 'primary', label: 'Primary Color', fallback: activeTheme.primary },
+                      { key: 'accent', label: 'Accent Color', fallback: activeTheme.accent },
+                      { key: 'background', label: 'Background Color', fallback: activeTheme.background },
+                    ].map((colorField) => (
+                      <div key={colorField.key} className="rounded-2xl border border-gray-200 bg-white p-4">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">{colorField.label}</label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="color"
+                            value={config.websiteCustomColors?.[colorField.key] || colorField.fallback}
+                            disabled={!canEdit}
+                            onChange={(event) => handleCustomColorChange(colorField.key, event.target.value)}
+                            className="h-11 w-14 rounded-lg border border-gray-300 bg-white p-1 disabled:bg-gray-50"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {(config.websiteCustomColors?.[colorField.key] || colorField.fallback).toUpperCase()}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {config.websiteCustomColors?.[colorField.key] ? 'Custom override applied' : `Using ${activeTheme.name} default`}
+                            </p>
+                          </div>
+                        </div>
+                        {config.websiteCustomColors?.[colorField.key] && canEdit && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="mt-3"
+                            onClick={() => handleCustomColorChange(colorField.key, '')}
+                          >
+                            Reset
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </Card>
 
             <Card title="Hero Section">
@@ -293,12 +399,26 @@ export default function WebsiteBuilder() {
                   />
                 </div>
                 <div className="md:col-span-2">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Background Style</label>
+                  <select
+                    value={config.websiteHero.pattern || 'none'}
+                    onChange={(event) => setHeroValue('pattern', event.target.value)}
+                    disabled={!canEdit}
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 disabled:bg-gray-50 disabled:text-gray-500"
+                  >
+                    {WEBSITE_HERO_PATTERNS.map((pattern) => (
+                      <option key={pattern} value={pattern}>{heroPatternLabels[pattern] || pattern}</option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-xs text-gray-500">Choose a decorative overlay to add more personality to your hero banner.</p>
+                </div>
+                <div className="md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-gray-700">Hero Background Image</label>
                   <div className="flex flex-wrap items-center gap-3">
                     <label className={`inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium ${canEdit ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default bg-gray-50 text-gray-500'}`}>
                       <input type="file" accept="image/*" className="hidden" disabled={!canEdit} onChange={handleImageUpload} />
                       <ImagePlus size={16} />
-                      {uploading ? 'Uploading...' : config.websiteHero.backgroundImage ? 'Replace Image' : 'Upload Image'}
+                      {uploadingHero ? 'Uploading...' : config.websiteHero.backgroundImage ? 'Replace Image' : 'Upload Image'}
                     </label>
                     {config.websiteHero.backgroundImage && canEdit && (
                       <Button
@@ -380,6 +500,61 @@ export default function WebsiteBuilder() {
                   placeholder="Tell your story here..."
                   className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 disabled:bg-gray-50 disabled:text-gray-500"
                 />
+              </div>
+            </Card>
+
+            <Card title="Photo Gallery">
+              <div className="space-y-4">
+                <Toggle
+                  checked={config.websiteGallery.enabled}
+                  onChange={(enabled) => updateSection('websiteGallery', { ...config.websiteGallery, enabled })}
+                  disabled={!canEdit}
+                  label="Show photo gallery"
+                  helperText="Upload up to 12 favorite photos to create a beautiful memory wall for guests."
+                />
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-gray-300 px-4 py-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {config.websiteGallery.images.length} of 12 images uploaded
+                    </p>
+                    <p className="text-xs text-gray-500">Images are saved as optimized base64 files, just like the hero image.</p>
+                  </div>
+                  <label className={`inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium ${canEdit && config.websiteGallery.images.length < 12 ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default bg-gray-50 text-gray-500'}`}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      disabled={!canEdit || config.websiteGallery.images.length >= 12}
+                      onChange={handleGalleryUpload}
+                    />
+                    <ImagePlus size={16} />
+                    {uploadingGallery ? 'Uploading...' : config.websiteGallery.images.length >= 12 ? 'Gallery Full' : 'Upload Images'}
+                  </label>
+                </div>
+                {config.websiteGallery.images.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500">
+                    Add photos from your engagement shoot, travels, or favorite memories together.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                    {config.websiteGallery.images.map((image, index) => (
+                      <div key={`gallery-${index}`} className="relative overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+                        <img src={image} alt={`Gallery upload ${index + 1}`} className="aspect-square h-full w-full object-cover" />
+                        {canEdit && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGalleryImage(index)}
+                            className="absolute right-3 top-3 rounded-full bg-white/90 p-2 text-red-600 shadow-sm transition hover:bg-white"
+                            aria-label={`Remove gallery image ${index + 1}`}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </Card>
 
@@ -532,6 +707,25 @@ export default function WebsiteBuilder() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </Card>
+
+            <Card title="RSVP Link">
+              <div className="space-y-4">
+                <Toggle
+                  checked={config.websiteRsvp.enabled}
+                  onChange={(enabled) => updateSection('websiteRsvp', { ...config.websiteRsvp, enabled })}
+                  disabled={!canEdit}
+                  label="Show RSVP button"
+                  helperText="Display a clear RSVP call-to-action on the public website."
+                />
+                <Input
+                  label="Button Text"
+                  value={config.websiteRsvp.buttonText}
+                  onChange={(event) => updateSection('websiteRsvp', { ...config.websiteRsvp, buttonText: event.target.value })}
+                  disabled={!canEdit}
+                  placeholder="RSVP Now"
+                />
               </div>
             </Card>
 
