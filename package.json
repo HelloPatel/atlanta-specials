@@ -45,6 +45,7 @@
     "globals": "^15.9.0",
     "happy-dom": "^20.10.6",
     "jsdom": "^29.1.1",
+    "playwright": "^1.61.1",
     "postcss": "^8.5.12",
     "tailwindcss": "^4.2.4",
     "vite": "^5.4.1",

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui';
 import ProductShowcase from '../components/ui/ProductShowcase';
+import FeatureTiles from '../components/ui/FeatureTiles';
 import { APP_NAME } from '../config/constants';
 import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles, Play } from 'lucide-react';
 
@@ -128,38 +129,10 @@ export default function Landing() {
           <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
             What you get
           </h2>
+          <p className="text-xs sm:text-sm text-gray-500">Tap any tile to see it in action.</p>
         </div>
-        <RevealGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
-          <FeatureCard
-            icon={Calendar}
-            title="Multiple events, separate guest lists"
-            description="Mehndi gets 80 guests. Sangeet gets 200. Reception gets 500. Each one tracked separately."
-          />
-          <FeatureCard
-            icon={Users}
-            title="Import 500 guests in 60 seconds"
-            description="Paste from Excel. Columns auto-detected, families grouped, duplicates caught."
-          />
-          <FeatureCard
-            icon={Grid3X3}
-            title="Drag and drop seating"
-            description="Mix table sizes (8, 10, 12, 14). Set keep-apart rules. Print place cards directly."
-          />
-          <FeatureCard
-            icon={Mail}
-            title="RSVPs via WhatsApp link"
-            description="One link. Guests tap their name and respond. No login, no app download needed."
-          />
-          <FeatureCard
-            icon={Camera}
-            title="Photo group shot list"
-            description="Live queue on a screen at the venue. MC calls each group. Never miss a combination."
-          />
-          <FeatureCard
-            icon={Trophy}
-            title="Guest games and predictions"
-            description="Live voting on phones. Real-time leaderboard on the big screen. Keeps guests engaged."
-          />
+        <RevealGrid>
+          <FeatureTiles />
         </RevealGrid>
       </section>
       {/* Pain → Solution */}

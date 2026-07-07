@@ -29,3 +29,7 @@ build
 .env*.local
 
 screenshots/
+
+# Firebase service account keys (never commit)
+serviceAccountKey*.json
+**/serviceAccountKey*.json
