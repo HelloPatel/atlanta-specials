@@ -93,12 +93,28 @@ export default function Dashboard() {
         </Card>
 
         <Card title="Setup checklist">
-          <div className="space-y-3">
-            <ChecklistItem done={eventCount > 0} label="Add your events (Mehndi, Sangeet, Ceremony, etc.)" />
-            <ChecklistItem done={guestCount > 0} label="Import or add your guest list" />
-            <ChecklistItem done={guestCount > 0 && events.some((e) => !e.inviteAll && (e.guestIds || []).length > 0)} label="Assign guests to events" />
-            <ChecklistItem done={seatedCount > 0} label="Arrange seating for at least one event" />
-            <ChecklistItem done={rsvpOpen} label="Open RSVPs for guests" />
+          {(() => {
+            const checks = [eventCount > 0, guestCount > 0, guestCount > 0 && events.some((e) => !e.inviteAll && (e.guestIds || []).length > 0), seatedCount > 0, rsvpOpen];
+            const done = checks.filter(Boolean).length;
+            const pct = Math.round((done / checks.length) * 100);
+            return (
+              <>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500">{done}/5</span>
+                </div>
+                {pct === 100 && <p className="text-sm text-green-600 font-medium mb-2">All done! You're ready to go. 🎉</p>}
+              </>
+            );
+          })()}
+          <div className="space-y-1">
+            <ChecklistItem done={eventCount > 0} label="Add your events (Mehndi, Sangeet, Ceremony, etc.)" to="/events" />
+            <ChecklistItem done={guestCount > 0} label="Import or add your guest list" to="/guests" />
+            <ChecklistItem done={guestCount > 0 && events.some((e) => !e.inviteAll && (e.guestIds || []).length > 0)} label="Assign guests to events" to="/events" />
+            <ChecklistItem done={seatedCount > 0} label="Arrange seating for at least one event" to="/seating" />
+            <ChecklistItem done={rsvpOpen} label="Open RSVPs for guests" to="/rsvp" />
           </div>
         </Card>
       </div>
@@ -268,14 +284,20 @@ function QuickStat({ icon: Icon, label, value, to }) {
   );
 }
 
-function ChecklistItem({ done, label }) {
+function ChecklistItem({ done, label, to }) {
+  const navigate = useNavigate();
   return (
-    <div className="flex items-center gap-3">
-      <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${done ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+    <button
+      onClick={() => !done && to && navigate(to)}
+      className={`flex items-center gap-3 w-full text-left rounded-lg px-2 py-1.5 transition-colors ${!done && to ? 'hover:bg-gray-50 cursor-pointer' : ''}`}
+      disabled={done}
+    >
+      <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 ${done ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
         {done && <span className="text-white text-xs">✓</span>}
       </div>
-      <span className={`text-sm ${done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{label}</span>
-    </div>
+      <span className={`text-sm flex-1 ${done ? 'text-gray-400 line-through' : 'text-gray-700'}`}>{label}</span>
+      {!done && to && <span className="text-xs text-wine-600 font-medium">Go →</span>}
+    </button>
   );
 }
 

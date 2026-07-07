@@ -21,6 +21,7 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
           xlsx: ['xlsx'],
+          html2canvas: ['html2canvas'],
         },
       },
     },
