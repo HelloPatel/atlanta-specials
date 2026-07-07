@@ -6,8 +6,8 @@ export default function RSVPManager() {
   const { isViewer } = useWedding();
 
   return (
-    <div className="flex gap-6">
-      <div className="flex-1">
+    <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex-1 min-w-0">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">RSVP</h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -17,7 +17,7 @@ export default function RSVPManager() {
         </div>
         <RSVPAdmin />
       </div>
-      <div className="w-80 flex-shrink-0 hidden lg:block">
+      <div className="w-full lg:w-72 xl:w-80 flex-shrink-0">
         <CollaboratorsPanel />
       </div>
     </div>

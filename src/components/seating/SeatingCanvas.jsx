@@ -451,38 +451,33 @@ export default function SeatingCanvas() {
 
   // Mobile: view-only optimized layout
   const mobileViewContent = (
-    <div className="md:hidden flex flex-col h-[calc(100dvh-7.5rem)]">
+    <div className="md:hidden flex flex-col h-[calc(100dvh-7.5rem)] overflow-hidden -mx-4 -my-5">
       {/* Mobile header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-white shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
           <select
             value={selectedEventId || ''}
             onChange={(e) => setSelectedEventId(e.target.value)}
-            className="rounded-lg border border-gray-300 px-2 py-1.5 text-xs"
+            className="rounded-lg border border-gray-300 px-2 py-1.5 text-xs max-w-[120px]"
+            aria-label="Select event"
           >
             {events.map((evt) => <option key={evt.id} value={evt.id}>{evt.name}</option>)}
           </select>
-          <span className="text-xs text-gray-500">{tables.length} tables • {assignedGuestIds.size}/{guests.length} seated</span>
+          <span className="text-xs text-gray-500 truncate">{tables.length} tables • {assignedGuestIds.size}/{guests.length}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button onClick={() => setMobileZoom(z => Math.max(0.15, z - 0.05))} className="w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-sm font-bold">−</button>
-          <button onClick={() => setMobileZoom(z => Math.min(0.6, z + 0.05))} className="w-7 h-7 rounded-full bg-gray-100 text-gray-600 text-sm font-bold">+</button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button onClick={() => setMobileZoom(z => Math.max(0.15, z - 0.05))} className="size-7 rounded-full bg-gray-100 text-gray-600 text-sm font-bold" aria-label="Zoom out">−</button>
+          <button onClick={() => setMobileZoom(z => Math.min(0.6, z + 0.05))} className="size-7 rounded-full bg-gray-100 text-gray-600 text-sm font-bold" aria-label="Zoom in">+</button>
           {hasChanges && (
             <Button size="sm" onClick={handleSave}><Save size={12} /> Save</Button>
           )}
         </div>
       </div>
 
-      {/* Info banner */}
-      <div className="px-3 py-1.5 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 flex items-center gap-2">
-        <span>👆</span>
-        <span>Tap a table to see guests. Pinch +/− to zoom.</span>
-      </div>
-
       {/* Zoomed-out canvas — tap tables to view guests */}
-      <div className="flex-1 overflow-auto bg-gray-50 relative">
+      <div className="flex-1 overflow-auto bg-gray-50 relative touch-pan-x touch-pan-y min-h-0">
         {events.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm p-6 text-center">
             <p>Add events first to start seating</p>
           </div>
         ) : tables.length === 0 && zones.length === 0 ? (
@@ -497,8 +492,6 @@ export default function SeatingCanvas() {
               width: '3000px',
               height: '2000px',
               position: 'relative',
-              minWidth: '3000px',
-              minHeight: '2000px',
               transition: 'transform 0.2s ease-out',
             }}
           >
@@ -565,7 +558,7 @@ export default function SeatingCanvas() {
 
       {/* Mobile table detail bottom sheet */}
       {mobileSelectedTable && (
-        <div className="border-t border-gray-200 bg-white max-h-[40vh] overflow-auto animate-slide-up">
+        <div className="border-t border-gray-200 bg-white max-h-[35dvh] overflow-auto animate-slide-up shrink-0">
           <div className="sticky top-0 bg-white px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-gray-900">{mobileSelectedTable.name}</h3>
