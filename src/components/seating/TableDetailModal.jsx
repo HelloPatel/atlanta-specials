@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../ui';
 import { ArrowRight, ArrowLeft, Users, X, ArrowLeftRight } from 'lucide-react';
+import { isIndividualSeat } from './seatingSeat';
 
 const DIETARY_ICONS = {
   vegetarian: '🥬',
@@ -41,7 +42,7 @@ export default function TableDetailModal({ tables, guests, tableId, onClose, onM
   const compare = tables.find((t) => t.id === compareId) || null;
 
   const otherTables = useMemo(
-    () => tables.filter((t) => t.id !== tableId),
+    () => tables.filter((t) => t.id !== tableId && !isIndividualSeat(t)),
     [tables, tableId]
   );
 

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
 import { Trash2, Edit3, GripVertical, Check, Users, AlertTriangle, RotateCw } from 'lucide-react';
+import { isIndividualSeat } from './seatingSeat';
 
 const SHAPE_OPTIONS = [
   { value: 'round', label: 'Round' },
@@ -29,7 +30,7 @@ export default function TableComponent({ table, guests, warnings = [], selected 
   const [editForm, setEditForm] = useState({});
   const dragStart = useRef(null);
 
-  const { setNodeRef, isOver } = useDroppable({ id: table.id });
+  const { setNodeRef, isOver } = useDroppable({ id: table.id, disabled: isIndividualSeat(table) });
 
   const assignedGuests = (table.assignedGuests || [])
     .map((id) => guests.find((g) => g.id === id))

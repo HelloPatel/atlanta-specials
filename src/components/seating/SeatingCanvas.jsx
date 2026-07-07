@@ -17,6 +17,7 @@ import { autoSuggestSeating } from './seatingAutoSuggest';
 import { generateIndianWeddingLayout, generateMehendiLayout, generateReceptionLayout, generateStaggeredLayout } from './seatingLayouts';
 import { loadFloorPlan, FLOOR_PLAN_ACCEPT } from './floorPlanImport';
 import { itemBox, resolveNoOverlap } from './seatingCollision';
+import { isIndividualSeat } from './seatingSeat';
 import TableDetailModal from './TableDetailModal';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -293,7 +294,8 @@ export default function SeatingCanvas() {
     if (!window.confirm(confirmMsg)) return;
 
     pushUndo();
-    const { assignments, overflow } = autoSuggestSeating(unassignedGuests, tables, rules);
+    const seatableTables = tables.filter((t) => !isIndividualSeat(t));
+    const { assignments, overflow } = autoSuggestSeating(unassignedGuests, seatableTables, rules);
     const seatedCount = [...assignments.values()].reduce((sum, arr) => sum + arr.length, 0);
     const updatedTables = tables.map((t) => {
       const newGuests = assignments.get(t.id) || [];
@@ -556,10 +558,9 @@ export default function SeatingCanvas() {
     const guestId = active.id;
     const targetTableId = over.id;
 
-    pushUndo();
-
     if (targetTableId === 'unassigned-zone') {
       // Remove from table
+      pushUndo();
       setTables((prev) => prev.map((t) => ({
         ...t,
         assignedGuests: (t.assignedGuests || []).filter((id) => id !== guestId),
@@ -571,6 +572,15 @@ export default function SeatingCanvas() {
     // Find target table
     const targetTable = tables.find((t) => t.id === targetTableId);
     if (!targetTable) return;
+
+    // Individual ceremony seats (single chairs) are not assignable — guests can
+    // only be placed on multi-seat tables.
+    if (isIndividualSeat(targetTable)) {
+      toast.error('Assign guests to tables, not individual seats');
+      return;
+    }
+
+    pushUndo();
 
     // Check capacity — allow up to capacity + 2 max overflow
     const currentCount = (targetTable.assignedGuests || []).length;
@@ -626,6 +636,14 @@ export default function SeatingCanvas() {
   // Move a guest from whatever table they're on to a target table (used by the
   // table-detail compare/swap modal). Passing null target unseats the guest.
   const moveGuestToTable = useCallback((guestId, targetTableId) => {
+    // Never move a guest onto an individual ceremony seat.
+    if (targetTableId) {
+      const target = tables.find((t) => t.id === targetTableId);
+      if (isIndividualSeat(target)) {
+        toast.error('Assign guests to tables, not individual seats');
+        return;
+      }
+    }
     pushUndo();
     setTables((prev) => prev.map((t) => {
       const filtered = (t.assignedGuests || []).filter((id) => id !== guestId);
@@ -635,7 +653,7 @@ export default function SeatingCanvas() {
       return { ...t, assignedGuests: filtered };
     }));
     setHasChanges(true);
-  }, [pushUndo]);
+  }, [pushUndo, tables, toast]);
 
   if (!activeWedding) return null;
 
