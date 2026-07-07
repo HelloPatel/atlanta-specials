@@ -1,8 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui';
 import { APP_NAME } from '../config/constants';
 import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles } from 'lucide-react';
+
+function useReveal() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.querySelectorAll('.reveal').forEach((child) => child.classList.add('revealed'));
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
 
 export default function Landing() {
   return (
@@ -117,7 +139,7 @@ export default function Landing() {
             Everything your shaadi actually needs
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+        <RevealGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           <FeatureCard
             icon={Calendar}
             title="6 events, different guest lists"
@@ -148,9 +170,8 @@ export default function Landing() {
             title="Guest games & predictions"
             description="Live voting on phones. Real-time leaderboard on the big screen. Guests talk about it for months."
           />
-        </div>
+        </RevealGrid>
       </section>
-
       {/* Pain → Solution */}
       <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto section-blush bg-pattern-mandala relative">
         <div className="text-center mb-8 sm:mb-12">
@@ -158,7 +179,7 @@ export default function Landing() {
             Sound familiar?
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+        <RevealGrid className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
           <ScenarioCard
             number="01"
             title="The scattered guest list"
@@ -177,7 +198,7 @@ export default function Landing() {
             problem="Aunties ignore emails. Cousins forget apps. 200 'maybes' after 3 reminders."
             solution="One WhatsApp link. Tap name. Done. RSVP rate: 40% → 90%+."
           />
-        </div>
+        </RevealGrid>
       </section>
 
       {/* How it works */}
@@ -220,7 +241,7 @@ export default function Landing() {
           <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-wine-700 text-white font-semibold shadow-glow hover:bg-wine-800 transition-colors">
             Start Planning Free <ArrowRight size={16} />
           </Link>
-          <p className="mt-3 text-xs text-gray-400">Optional: $5 for advanced wedding website customization.</p>
+          <p className="mt-3 text-xs text-gray-400">No catch. No upgrades. Just plan your wedding.</p>
         </div>
       </section>
 
@@ -276,7 +297,7 @@ export default function Landing() {
           />
           <FAQItem
             question="Wait — this is actually free?"
-            answer="Yes. Unlimited guests, events, tables, seating charts, RSVPs — all free, forever. Only $5 optional for advanced wedding website customization."
+            answer="Yes. Unlimited guests, events, tables, seating charts, RSVPs — all free, forever. No hidden upgrades."
           />
         </div>
       </section>
@@ -304,7 +325,7 @@ export default function Landing() {
 
 function FeatureCard({ icon: Icon, title, description }) {
   return (
-    <div className="group rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted hover:-translate-y-0.5 transition-all duration-300">
+    <div className="reveal group rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted hover:-translate-y-0.5 transition-all duration-300">
       <div className="flex size-9 sm:size-11 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 mb-3 sm:mb-4 group-hover:from-wine-100 group-hover:to-phera-100 transition-colors">
         <Icon size={18} className="text-wine-700" />
       </div>
@@ -316,7 +337,7 @@ function FeatureCard({ icon: Icon, title, description }) {
 
 function ScenarioCard({ number, title, problem, solution }) {
   return (
-    <div className="rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted transition-all duration-300">
+    <div className="reveal rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted transition-all duration-300">
       <span className="inline-flex size-7 sm:size-8 items-center justify-center rounded-full bg-wine-50 text-[10px] sm:text-xs font-bold text-wine-600">{number}</span>
       <h3 className="text-sm sm:text-base font-semibold text-gray-900 mt-2 sm:mt-3 mb-3 sm:mb-4">{title}</h3>
       <div className="mb-3 sm:mb-4">
@@ -377,5 +398,14 @@ function ComparisonRow({ feature, phera, zola, withjoy }) {
       <td className="py-2 sm:py-2.5 px-2 sm:px-4 text-center">{renderCell(zola)}</td>
       <td className="py-2 sm:py-2.5 px-2 sm:px-4 text-center">{renderCell(withjoy)}</td>
     </tr>
+  );
+}
+
+function RevealGrid({ className, children }) {
+  const ref = useReveal();
+  return (
+    <div ref={ref} className={className}>
+      {children}
+    </div>
   );
 }

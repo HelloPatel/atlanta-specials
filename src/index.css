@@ -144,3 +144,27 @@ body {
   pointer-events: none;
   z-index: 0;
 }
+
+/* Scroll-reveal animation — elements fade+slide up on enter */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  opacity: 0;
+}
+.reveal.revealed {
+  animation: reveal-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.reveal.revealed:nth-child(2) { animation-delay: 80ms; }
+.reveal.revealed:nth-child(3) { animation-delay: 160ms; }
+.reveal.revealed:nth-child(4) { animation-delay: 240ms; }
+.reveal.revealed:nth-child(5) { animation-delay: 320ms; }
+.reveal.revealed:nth-child(6) { animation-delay: 400ms; }
