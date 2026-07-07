@@ -455,9 +455,8 @@ export default function SeatingCanvas() {
 
   if (!activeWedding) return null;
 
-  // Mobile: view-only optimized layout
+  // Mobile: view-only optimized layout (no @dnd-kit hooks to avoid bundle issues)
   const mobileViewContent = (
-    <DndContext>
     <div className="md:hidden flex flex-col h-[calc(100dvh-7.5rem)] overflow-hidden -mx-4 -my-5">
       {/* Mobile header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-white shrink-0">
@@ -529,6 +528,11 @@ export default function SeatingCanvas() {
             ))}
             {tables.map((table) => {
               const isSelected = mobileSelectedTable?.id === table.id;
+              const assigned = (table.assignedGuests || []).length;
+              const isFull = assigned >= table.capacity;
+              const isOver = assigned > table.capacity;
+              const shapeClass = table.shape === 'round' || table.shape === 'oval' || table.shape === 'cocktail'
+                ? 'rounded-full' : 'rounded-xl';
               return (
                 <div
                   key={table.id}
@@ -543,16 +547,24 @@ export default function SeatingCanvas() {
                     zIndex: isSelected ? 10 : 1,
                   }}
                 >
-                  <TableComponent
-                    table={{ ...table, x: 0, y: 0 }}
-                    guests={guests}
-                    warnings={ruleEvaluation.tableWarnings[table.id] || []}
-                    onUpdate={() => {}}
-                    onRemove={() => {}}
-                    onDrag={() => {}}
-                    onRemoveGuest={() => {}}
-                    zoom={mobileZoom}
-                  />
+                  {/* Simple table visual (no @dnd-kit hooks) */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 40, top: 30,
+                      width: table.width || 120,
+                      height: table.height || 120,
+                      transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
+                    }}
+                    className={`border-2 flex flex-col items-center justify-center ${shapeClass} ${
+                      isOver ? 'border-red-400 bg-red-50' : isFull ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-white'
+                    }`}
+                  >
+                    <span className="text-xs font-semibold text-gray-700 leading-tight">{table.name}</span>
+                    <span className={`text-[10px] font-bold mt-0.5 ${isOver ? 'text-red-600' : 'text-gray-500'}`}>
+                      {assigned}/{table.capacity}
+                    </span>
+                  </div>
                   {isSelected && (
                    <div className="absolute inset-0 rounded-xl ring-4 ring-wine-400/50 pointer-events-none" />
                   )}
@@ -617,7 +629,6 @@ export default function SeatingCanvas() {
         )}
       </div>
     </div>
-    </DndContext>
   );
 
   return (
