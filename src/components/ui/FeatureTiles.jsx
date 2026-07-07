@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Calendar, Users, Grid3X3, Mail, Camera, Trophy, Play, Pause } from 'lucide-react';
 
 const FEATURES = [
@@ -46,25 +46,32 @@ const FEATURES = [
   },
 ];
 
-// Aesthetic animated placeholder shown until a real recording exists (or if it
-// fails to load). Keeps the panel feeling premium rather than broken.
-function DemoFallback({ label }) {
+// Persistent, on-brand animated placeholder. It always sits behind the media
+// frame so there is never a blank/broken flash — a real recording (if present)
+// simply fades in on top of it.
+function DemoFallback({ label, icon: Icon }) {
   return (
     <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-wine-50 via-ivory-50 to-phera-50">
       <div className="absolute -left-10 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-wine-200/40 blur-2xl animate-float" />
       <div className="absolute -right-8 top-1/3 h-32 w-32 rounded-full bg-phera-200/40 blur-2xl animate-float" style={{ animationDelay: '1.2s' }} />
-      <div className="relative flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-wine-500/70">Preview</span>
+      <div className="relative flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
+        <span className="flex size-11 items-center justify-center rounded-2xl bg-white/70 text-wine-700 shadow-sm ring-1 ring-white/60 backdrop-blur-sm">
+          {Icon && <Icon size={20} />}
+        </span>
         <span className="text-sm font-medium text-gray-600">{label}</span>
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-wine-500/70">
+          <span className="size-1.5 rounded-full bg-wine-400 animate-pulse" /> Live preview
+        </span>
       </div>
     </div>
   );
 }
 
-function FeatureTile({ feature, isOpen, onToggle }) {
+function FeatureTile({ feature, index, revealed, isOpen, onToggle }) {
   const { icon: Icon, title, description, caption, key } = feature;
   const videoRef = useRef(null);
-  const [videoOk, setVideoOk] = useState(true);
+  const [videoReady, setVideoReady] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const [playing, setPlaying] = useState(true);
 
   const togglePlay = (e) => {
@@ -76,10 +83,13 @@ function FeatureTile({ feature, isOpen, onToggle }) {
 
   return (
     <div
-      className={`reveal group rounded-2xl sm:rounded-[1.25rem] border bg-white p-5 sm:p-7 shadow-card transition-all duration-500 ease-spring ${
+      style={{ transitionDelay: revealed ? `${index * 70}ms` : '0ms' }}
+      className={`group rounded-2xl sm:rounded-[1.25rem] border bg-white p-5 sm:p-7 shadow-card transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        revealed ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-8 opacity-0 blur-[6px]'
+      } ${
         isOpen
           ? 'border-wine-200 shadow-lifted ring-1 ring-wine-100'
-          : 'border-gray-200/60 hover:shadow-lifted hover:-translate-y-1'
+          : 'border-gray-200/60 hover:-translate-y-1 hover:shadow-lifted'
       }`}
     >
       <button
@@ -115,31 +125,35 @@ function FeatureTile({ feature, isOpen, onToggle }) {
         <div className="overflow-hidden">
           {/* Double-bezel media frame */}
           <div className="rounded-[1.25rem] bg-gray-900/[0.04] p-1.5 ring-1 ring-black/5">
-            <div className="relative aspect-video overflow-hidden rounded-[calc(1.25rem-0.375rem)] bg-gray-100 shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
-              {videoOk ? (
+            <div className="relative aspect-video overflow-hidden rounded-[calc(1.25rem-0.375rem)] shadow-[inset_0_1px_1px_rgba(255,255,255,0.4)]">
+              {/* Placeholder is always the base layer — no blank flash */}
+              <DemoFallback label={caption} icon={Icon} />
+
+              {/* Real recording (if one exists) fades in on top once it loads */}
+              {isOpen && !videoFailed && (
                 <video
                   ref={videoRef}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${videoReady ? 'opacity-100' : 'opacity-0'}`}
                   src={`/demos/${key}.webm`}
-                  poster={`/demos/${key}.png`}
                   muted
                   loop
                   playsInline
-                  autoPlay={isOpen}
-                  preload="metadata"
-                  onError={() => setVideoOk(false)}
+                  autoPlay
+                  preload="auto"
+                  onLoadedData={() => setVideoReady(true)}
+                  onError={() => setVideoFailed(true)}
                 />
-              ) : (
-                <DemoFallback label={caption} />
               )}
 
-              {/* Caption overlay */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent px-4 py-3">
-                <p className="text-[11px] sm:text-xs font-medium text-white/95">{caption}</p>
-              </div>
+              {/* Caption overlay only when a real video is showing */}
+              {videoReady && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent px-4 py-3">
+                  <p className="text-[11px] sm:text-xs font-medium text-white/95">{caption}</p>
+                </div>
+              )}
 
               {/* Play/pause control (only meaningful when a real video is present) */}
-              {videoOk && (
+              {videoReady && (
                 <button
                   type="button"
                   onClick={togglePlay}
@@ -159,13 +173,36 @@ function FeatureTile({ feature, isOpen, onToggle }) {
 
 export default function FeatureTiles() {
   const [openKey, setOpenKey] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const gridRef = useRef(null);
+
+  // Self-contained reveal driven by React state so it survives re-renders when
+  // a tile is expanded (the previous imperative `.reveal` class was clobbered
+  // by React on toggle, causing tiles to flash out and back in).
+  useEffect(() => {
+    const el = gridRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) { setRevealed(true); observer.disconnect(); }
+        });
+      },
+      { threshold: 0.08, rootMargin: '0px 0px 60px 0px' }
+    );
+    observer.observe(el);
+    const fallback = setTimeout(() => setRevealed(true), 1500);
+    return () => { observer.disconnect(); clearTimeout(fallback); };
+  }, []);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 items-start">
-      {FEATURES.map((f) => (
+    <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 items-start">
+      {FEATURES.map((f, i) => (
         <FeatureTile
           key={f.key}
           feature={f}
+          index={i}
+          revealed={revealed}
           isOpen={openKey === f.key}
           onToggle={() => setOpenKey((cur) => (cur === f.key ? null : f.key))}
         />

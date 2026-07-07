@@ -295,3 +295,15 @@ body {
   from { opacity: 0; transform: translate(-50%, 16px); }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
+
+/* Prevent iOS Safari from auto-zooming the viewport when focusing a form
+   control. Mobile Safari zooms in whenever an input's font-size is below 16px,
+   which caused a jarring "zoom" on the login screen. Enforce a 16px minimum on
+   touch-sized screens only, so desktop density is unchanged. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

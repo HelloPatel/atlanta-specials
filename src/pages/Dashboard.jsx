@@ -128,7 +128,7 @@ export default function Dashboard() {
 
       {/* Guest analytics — shows after guests are added */}
       {guestCount > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <Card title="Dietary Breakdown">
             <div className="space-y-2">
               {(() => {
@@ -171,23 +171,6 @@ export default function Dashboard() {
                       </div>
                       <span className="text-xs text-gray-500 w-8 text-right">{count}</span>
                     </div>
-                  </div>
-                ));
-              })()}
-            </div>
-          </Card>
-
-          <Card title="Top Families">
-            <div className="space-y-1.5">
-              {(() => {
-                const fam = {};
-                guests.forEach((g) => {
-                  if (g.familyName) fam[g.familyName] = (fam[g.familyName] || 0) + 1;
-                });
-                return Object.entries(fam).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, count]) => (
-                  <div key={name} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 truncate max-w-[140px]">{name}</span>
-                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{count} members</span>
                   </div>
                 ));
               })()}

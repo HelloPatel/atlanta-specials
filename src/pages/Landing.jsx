@@ -131,9 +131,7 @@ export default function Landing() {
           </h2>
           <p className="text-xs sm:text-sm text-gray-500">Tap any tile to see it in action.</p>
         </div>
-        <RevealGrid>
-          <FeatureTiles />
-        </RevealGrid>
+        <FeatureTiles />
       </section>
       {/* Pain → Solution */}
       <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto section-blush bg-pattern-mandala relative">

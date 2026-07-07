@@ -239,17 +239,17 @@ export default function GuestList() {
               <option value="groom">Groom's Side</option>
             </select>
 
-            <select value={filterDietary} onChange={(e) => setFilterDietary(e.target.value)} className="flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            <select value={filterDietary} onChange={(e) => setFilterDietary(e.target.value)} className="hidden flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm sm:block">
               <option value="all">All Dietary</option>
               {DIETARY_OPTIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
             </select>
 
-            <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="hidden flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm sm:block">
               <option value="all">All Tags</option>
               {GUEST_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
 
-            <select value={filterRsvp} onChange={(e) => setFilterRsvp(e.target.value)} className="flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            <select value={filterRsvp} onChange={(e) => setFilterRsvp(e.target.value)} className="hidden flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm sm:block">
               <option value="all">All RSVP</option>
               <option value="responded">Responded</option>
               <option value="pending">Not Responded</option>
