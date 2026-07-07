@@ -603,11 +603,11 @@ export default function SeatingCanvas() {
                     <li key={gId} className="py-2 flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{g.firstName} {g.lastName}</p>
-                        {g.family && <p className="text-xs text-gray-500">{g.family}</p>}
+                        {g.familyName && <p className="text-xs text-gray-500">{g.familyName}</p>}
                       </div>
                       <div className="flex items-center gap-2">
-                        {g.dietaryPreference && g.dietaryPreference !== 'none' && (
-                          <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{g.dietaryPreference}</span>
+                        {g.dietary && g.dietary !== 'unspecified' && (
+                          <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{g.dietary}</span>
                         )}
                         {g.tags?.includes('elderly') && <span className="text-xs">👴</span>}
                         {g.tags?.includes('child') && <span className="text-xs">👶</span>}
