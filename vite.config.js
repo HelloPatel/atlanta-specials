@@ -10,6 +10,9 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.js'],
     css: false,
   },
+  optimizeDeps: {
+    include: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+  },
   build: {
     outDir: 'build',
     rollupOptions: {
@@ -18,7 +21,6 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
           xlsx: ['xlsx'],
-          dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
         },
       },
     },

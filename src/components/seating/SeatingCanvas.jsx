@@ -17,6 +17,9 @@ import { autoSuggestSeating } from './seatingAutoSuggest';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+// Detect mobile once at module level to avoid SSR issues
+const IS_MOBILE = typeof window !== 'undefined' && window.innerWidth < 768;
+
 export default function SeatingCanvas() {
   const { activeWedding } = useWedding();
   const toast = useToast();
@@ -49,7 +52,10 @@ export default function SeatingCanvas() {
   const canvasScrollRef = useRef(null);
   const qrPrintRef = useRef(null);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  // Only initialize DnD sensors on desktop — avoids @dnd-kit issues on iOS Safari
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  );
 
   // Subscribe to data
   useEffect(() => {
