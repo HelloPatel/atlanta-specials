@@ -340,8 +340,8 @@ function CreateWeddingModal({ open, onClose }) {
         {error && (
           <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
         )}
-        <Input label="Partner 1 Name" value={name1} onChange={(e) => setName1(e.target.value)} placeholder="Brijal" required />
-        <Input label="Partner 2 Name" value={name2} onChange={(e) => setName2(e.target.value)} placeholder="Rushi" required />
+        <Input label="Partner 1 Name" value={name1} onChange={(e) => setName1(e.target.value)} placeholder="Anjali" required />
+        <Input label="Partner 2 Name" value={name2} onChange={(e) => setName2(e.target.value)} placeholder="Arjun" required />
         <Input label="Wedding Date (optional)" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>

@@ -1579,7 +1579,7 @@ const VENUE_LAYOUTS = (() => {
     {
       name: 'Large Reception (30 rounds)',
       description: 'Head table at top, stage at bottom, staggered tables left & right of dance floor',
-      icon: '🏛️',
+      icon: Grid3X3,
       tables: [
         { name: 'Head Table', shape: 'head-table', capacity: 12, width: 340, height: 60, x: 730, y: 60 },
         ...(() => {
@@ -1611,7 +1611,7 @@ const VENUE_LAYOUTS = (() => {
     {
       name: 'Medium Reception (20 rounds)',
       description: 'Head table at top, stage at bottom, staggered rounds on each side',
-      icon: '🎊',
+      icon: CircleDot,
       tables: [
         { name: 'Head Table', shape: 'head-table', capacity: 10, width: 300, height: 60, x: 650, y: 60 },
         ...(() => {
@@ -1639,7 +1639,7 @@ const VENUE_LAYOUTS = (() => {
     {
       name: 'Estate Hall (mixed)',
       description: 'Head table at top, stage at bottom, staggered estate tables on sides',
-      icon: '🍽️',
+      icon: Square,
       tables: [
         { name: 'Head Table', shape: 'head-table', capacity: 14, width: 360, height: 60, x: 650, y: 60 },
         // Left side: 3 staggered estate tables
@@ -1665,7 +1665,7 @@ const VENUE_LAYOUTS = (() => {
     {
       name: 'Indian Wedding Reception (40 rounds)',
       description: 'Head table at top, stage/DJ at bottom, staggered tables left & right of dance floor',
-      icon: '🪷',
+      icon: Wine,
       tables: [
         { name: 'Head Table', shape: 'head-table', capacity: 14, width: 400, height: 60, x: 750, y: 60 },
         ...(() => {
@@ -1700,7 +1700,7 @@ const VENUE_LAYOUTS = (() => {
     {
       name: 'Intimate Dinner (10 rounds)',
       description: 'Sweetheart table at top, staggered tables left & right of dance floor',
-      icon: '💕',
+      icon: Cake,
       tables: [
         { name: 'Sweetheart', shape: 'round', capacity: 2, width: 70, height: 70, x: 650, y: 60 },
         // Left staggered (5)
@@ -1721,7 +1721,7 @@ const VENUE_LAYOUTS = (() => {
     {
       name: 'Estate Tables + Stage (25 rounds)',
       description: 'Head table at top, stage/DJ at bottom, 3 estate tables in U around stage, staggered rounds on sides',
-      icon: '👑',
+      icon: Gift,
       tables: [
         { name: 'Head Table', shape: 'head-table', capacity: 14, width: 400, height: 60, x: 700, y: 60 },
         // 3 estate tables in U-shape around stage at bottom
@@ -1759,7 +1759,7 @@ const VENUE_LAYOUTS = (() => {
     {
       name: 'Ceremony: Mandap with Arc Seating',
       description: 'Individual chairs fanned in arcs around a central aisle, all facing the mandap',
-      icon: '🔥',
+      icon: Wand2,
       tables: (() => {
         // Individual chairs (capacity 1) arranged in concentric arcs centred on
         // the mandap so every seat has a clear view. A central aisle splits the
@@ -1828,25 +1828,25 @@ function VenuePresetsPanel({ onApply, onClose, onApplyGenerator }) {
       id: 'indianWedding',
       name: 'Indian Wedding Reception',
       description: 'Mandap/stage, bride & groom family sides, dance floor, bar, cocktail area',
-      icon: '🎉',
+      icon: Wine,
     },
     {
       id: 'mehendi',
       name: 'Mehendi Celebration',
       description: 'Casual layout with performance stage, dance area, cocktail seating',
-      icon: '🌺',
+      icon: Music,
     },
     {
       id: 'reception',
       name: 'Formal Reception',
       description: 'Head table, circular arrangement, stage, dance floor',
-      icon: '👑',
+      icon: Grid3X3,
     },
     {
       id: 'staggered',
       name: 'Staggered Seating',
       description: 'Organic, non-grid arrangement with offset rows',
-      icon: '✨',
+      icon: Wand2,
     },
   ];
 
@@ -1855,7 +1855,7 @@ function VenuePresetsPanel({ onApply, onClose, onApplyGenerator }) {
       <p className="text-sm text-gray-600">
         Choose a layout based on your venue type or event. You can customize tables and zones after.
       </p>
-      <p className="text-xs text-amber-600 font-medium">⚠️ This will replace your current layout.</p>
+      <p className="text-xs text-amber-600 font-medium flex items-center gap-1"><AlertTriangle size={13} /> This will replace your current layout.</p>
 
       {/* Tab selector */}
       <div className="flex gap-2 border-b border-gray-200">
@@ -1894,8 +1894,8 @@ function VenuePresetsPanel({ onApply, onClose, onApplyGenerator }) {
               }}
               className="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-wine-50 hover:border-wine-200 transition-colors text-left"
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-wine-50 flex items-center justify-center text-lg">
-                {layout.icon}
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-wine-50 flex items-center justify-center text-wine-600">
+                {layout.icon && <layout.icon size={18} />}
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-900">{layout.name}</div>
@@ -1923,8 +1923,8 @@ function VenuePresetsPanel({ onApply, onClose, onApplyGenerator }) {
               }}
               className="flex items-start gap-3 rounded-xl border border-gray-200 p-4 hover:bg-wine-50 hover:border-wine-200 transition-colors text-left"
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-wine-50 flex items-center justify-center text-lg">
-                {layout.icon}
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-wine-50 flex items-center justify-center text-wine-600">
+                {layout.icon && <layout.icon size={18} />}
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-900">{layout.name}</div>

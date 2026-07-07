@@ -184,7 +184,7 @@ export default function CollaboratorsPanel() {
               type="text"
               value={inviteName}
               onChange={(e) => setInviteName(e.target.value)}
-              placeholder="e.g. Mom, Brijal, Wedding Planner"
+              placeholder="e.g. Mom, Anjali, Wedding Planner"
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-wine-600 focus:ring-1 focus:ring-wine-600"
             />
           </div>

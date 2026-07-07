@@ -265,7 +265,7 @@ function generateGuests() {
   guests.push(
     g('Vikram', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Father of Groom', tags: ['VIP', 'immediate-family'], travelFrom: 'Cumming, GA', phone: '678-555-0501', email: 'vikram.patel@gmail.com', language: 'gu' }),
     g('Sonal', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Mother of Groom', tags: ['VIP', 'immediate-family'], travelFrom: 'Cumming, GA', phone: '678-555-0502', language: 'gu' }),
-    g('Rushi', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Groom', tags: ['VIP', 'immediate-family'], travelFrom: 'Atlanta, GA', email: 'patel.rushi512@gmail.com' }),
+    g('Arjun', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Groom', tags: ['VIP', 'immediate-family'], travelFrom: 'Atlanta, GA', email: 'arjun.patel@gmail.com' }),
     g('Nisha', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Sister of Groom', tags: ['immediate-family'], travelFrom: 'Charlotte, NC', needsHotel: true }),
     g('Jayanti', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Grandmother (Ba)', tags: ['VIP', 'elderly'], dietary: 'vegetarian', language: 'gu', notes: 'Needs ground floor seating, mobility issues' }),
     g('Kantilal', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Grandfather (Dada)', tags: ['VIP', 'elderly'], language: 'gu', notes: 'Hard of hearing, seat near speakers' }),

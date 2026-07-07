@@ -268,7 +268,7 @@ export default function GuestList() {
           <Button onClick={() => setShowAddModal(true)} className="flex-shrink-0 whitespace-nowrap"><Plus size={16} /> Add Guest</Button>
           <Button variant="outline" onClick={() => setShowImportModal(true)} className="flex-shrink-0 whitespace-nowrap"><Upload size={16} /> Import</Button>
           <Button variant="outline" onClick={async () => {
-            const input = prompt('Enter guest names (comma-separated):\nExample: Rushi Patel, Brijal Shah, Ankit Patel');
+            const input = prompt('Enter guest names (comma-separated):\nExample: Arjun Patel, Anjali Shah, Rohan Mehta');
             if (!input) return;
             const names = input.split(',').map((n) => n.trim()).filter(Boolean);
             const newGuests = names.map((n) => {
@@ -873,6 +873,17 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
 
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
+  // Per-event RSVP editing (three-state: accepted / declined / cleared).
+  // Admin-entered changes are tagged as a manual source.
+  const setEventRsvp = (eventId, status) => {
+    setForm((f) => {
+      const rsvpStatus = { ...(f.rsvpStatus || {}) };
+      if (status === null) delete rsvpStatus[eventId];
+      else rsvpStatus[eventId] = status;
+      return { ...f, rsvpStatus, rsvpMethod: 'manual', rsvpUpdatedAt: Date.now() };
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
@@ -944,6 +955,40 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
         )}
 
         <Input label="Traveling From" value={form.travelFrom || ''} onChange={(e) => update('travelFrom', e.target.value)} placeholder="City" />
+
+        {/* Per-event RSVP */}
+        {events.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">RSVP by event</label>
+            <div className="space-y-1.5">
+              {events.map((ev) => {
+                const status = (form.rsvpStatus || {})[ev.id] || null;
+                const opts = [
+                  { v: 'accepted', label: 'Yes', on: 'bg-green-600 text-white', off: 'text-green-700 hover:bg-green-50' },
+                  { v: 'declined', label: 'No', on: 'bg-red-600 text-white', off: 'text-red-700 hover:bg-red-50' },
+                  { v: null, label: '—', on: 'bg-gray-500 text-white', off: 'text-gray-500 hover:bg-gray-100' },
+                ];
+                return (
+                  <div key={ev.id} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
+                    <span className="text-sm text-gray-700 truncate">{ev.name}</span>
+                    <div className="flex overflow-hidden rounded-lg border border-gray-200 flex-shrink-0">
+                      {opts.map((o, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setEventRsvp(ev.id, o.v)}
+                          className={`px-3 py-1 text-xs font-semibold transition-colors ${status === o.v ? o.on : `bg-white ${o.off}`} ${i > 0 ? 'border-l border-gray-200' : ''}`}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Tags */}
         <div>
