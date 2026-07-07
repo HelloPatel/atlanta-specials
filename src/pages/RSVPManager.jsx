@@ -8,9 +8,9 @@ export default function RSVPManager() {
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1 min-w-0">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">RSVP</h1>
-          <p className="text-sm text-gray-500 mt-1">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">RSVP</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">
             Track responses and manage guest RSVPs per event
             {isViewer && <span className="ml-2 text-amber-600 font-medium">(Read-only)</span>}
           </p>

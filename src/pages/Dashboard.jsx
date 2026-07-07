@@ -55,17 +55,17 @@ export default function Dashboard() {
 
   return (
     <div className="animate-fade-in">
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-4 sm:mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-gray-900">
             {activeWedding.coupleName1} & {activeWedding.coupleName2}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Your wedding at a glance</p>
+          <p className="text-xs sm:text-sm text-gray-500 mt-1">Your wedding at a glance</p>
         </div>
         {daysUntilWedding !== null && daysUntilWedding > 0 && (
-          <div className="text-right hidden md:block">
-            <p className="text-3xl font-display font-bold text-wine-700">{daysUntilWedding}</p>
-            <p className="text-xs text-gray-500">days to go</p>
+          <div className="text-right">
+            <p className="text-2xl sm:text-3xl font-display font-bold text-wine-700">{daysUntilWedding}</p>
+            <p className="text-[10px] sm:text-xs text-gray-500">days to go</p>
           </div>
         )}
       </div>
