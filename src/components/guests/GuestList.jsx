@@ -4,7 +4,7 @@ import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatc
 import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating } from '../../services/seatingService';
 import { Button, Input, Badge, Modal, useToast } from '../ui';
-import { Search, Plus, Upload, Download, Trash2, Edit3, Filter, Users, ChevronDown } from 'lucide-react';
+import { Search, Plus, Upload, Download, Trash2, Edit3 } from 'lucide-react';
 import { parseFile, autoMapColumns, mapRowsToGuests, findDuplicates, exportGuestsToExcel, downloadGuestTemplate } from '../../utils/excelImport';
 import { DIETARY_OPTIONS, SIDES, GUEST_TAGS, RSVP_STATUS } from '../../config/constants';
 
@@ -201,102 +201,90 @@ export default function GuestList() {
       )}
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 md:gap-3">
-        <div className="relative flex-1 min-w-[160px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search guests..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-wine-600 focus:ring-1 focus:ring-wine-600"
-          />
+      <div className="space-y-2.5">
+        {/* Filters row */}
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search guests..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-wine-600 focus:ring-1 focus:ring-wine-600"
+            />
+          </div>
+
+          {/* Scrollable filter strip on mobile, inline on desktop */}
+          <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:contents sm:overflow-visible sm:px-0 sm:pb-0">
+            {/* View toggle: family cards vs flat list */}
+            <div className="inline-flex flex-shrink-0 rounded-lg border border-gray-300 bg-gray-50 p-0.5">
+              <button
+                onClick={() => setViewMode('family')}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  viewMode === 'family' ? 'bg-white text-wine-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >Families</button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
+                  viewMode === 'list' ? 'bg-white text-wine-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >List</button>
+            </div>
+
+            <select value={filterSide} onChange={(e) => setFilterSide(e.target.value)} className="flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+              <option value="all">All Sides</option>
+              <option value="bride">Bride's Side</option>
+              <option value="groom">Groom's Side</option>
+            </select>
+
+            <select value={filterDietary} onChange={(e) => setFilterDietary(e.target.value)} className="flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+              <option value="all">All Dietary</option>
+              {DIETARY_OPTIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+            </select>
+
+            <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+              <option value="all">All Tags</option>
+              {GUEST_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+
+            <select value={filterRsvp} onChange={(e) => setFilterRsvp(e.target.value)} className="flex-shrink-0 rounded-lg border border-gray-300 px-3 py-2 text-sm">
+              <option value="all">All RSVP</option>
+              <option value="responded">Responded</option>
+              <option value="pending">Not Responded</option>
+              <option value="accepted">Accepted</option>
+              <option value="declined">Declined</option>
+            </select>
+          </div>
         </div>
 
-        <select value={filterSide} onChange={(e) => setFilterSide(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-          <option value="all">All Sides</option>
-          <option value="bride">Bride's Side</option>
-          <option value="groom">Groom's Side</option>
-        </select>
-
-        {/* View toggle: family cards vs flat list */}
-        <div className="inline-flex rounded-lg border border-gray-300 bg-gray-50 p-0.5">
-          <button
-            onClick={() => setViewMode('family')}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-              viewMode === 'family' ? 'bg-white text-wine-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >Families</button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-              viewMode === 'list' ? 'bg-white text-wine-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >List</button>
+        {/* Actions row — neat single scrollable row on mobile, wraps on desktop */}
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+          <Button onClick={() => setShowAddModal(true)} className="flex-shrink-0 whitespace-nowrap"><Plus size={16} /> Add Guest</Button>
+          <Button variant="outline" onClick={() => setShowImportModal(true)} className="flex-shrink-0 whitespace-nowrap"><Upload size={16} /> Import</Button>
+          <Button variant="outline" onClick={async () => {
+            const input = prompt('Enter guest names (comma-separated):\nExample: Rushi Patel, Brijal Shah, Ankit Patel');
+            if (!input) return;
+            const names = input.split(',').map((n) => n.trim()).filter(Boolean);
+            const newGuests = names.map((n) => {
+              const parts = n.split(/\s+/);
+              const firstName = parts[0] || '';
+              const lastName = parts.slice(1).join(' ') || '';
+              return { firstName, lastName, side: 'bride', dietary: 'vegetarian', tags: [] };
+            });
+            await importGuestsBatch(activeWedding.id, newGuests);
+            toast.success(`Added ${newGuests.length} guests`);
+          }} className="flex-shrink-0 whitespace-nowrap" title="Quickly add multiple guests by name">
+            <Plus size={16} /> Quick Add
+          </Button>
+          <Button variant="outline" onClick={downloadGuestTemplate} className="flex-shrink-0 whitespace-nowrap">
+            <Download size={16} /> Template
+          </Button>
+          <Button variant="outline" onClick={() => exportGuestsToExcel(guests)} className="flex-shrink-0 whitespace-nowrap">
+            <Download size={16} /> Export
+          </Button>
         </div>
-
-        <div className="hidden md:contents">
-          <select value={filterDietary} onChange={(e) => setFilterDietary(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-            <option value="all">All Dietary</option>
-            {DIETARY_OPTIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
-          </select>
-
-          <select value={filterTag} onChange={(e) => setFilterTag(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-            <option value="all">All Tags</option>
-            {GUEST_TAGS.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-
-          <select value={filterRsvp} onChange={(e) => setFilterRsvp(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-            <option value="all">All RSVP</option>
-            <option value="responded">Responded</option>
-            <option value="pending">Not Responded</option>
-            <option value="accepted">Accepted</option>
-            <option value="declined">Declined</option>
-          </select>
-        </div>
-
-        <Button onClick={() => setShowAddModal(true)} size="sm" className="md:hidden"><Plus size={16} /></Button>
-        <Button onClick={() => setShowAddModal(true)} className="hidden md:inline-flex"><Plus size={16} /> Add Guest</Button>
-        <Button variant="outline" onClick={() => setShowImportModal(true)} className="hidden md:inline-flex"><Upload size={16} /> Import</Button>
-        <Button variant="outline" onClick={downloadGuestTemplate} className="hidden md:inline-flex">
-          <Download size={16} /> Template
-        </Button>
-        <Button variant="outline" onClick={() => exportGuestsToExcel(guests)} className="hidden md:inline-flex">
-          <Download size={16} /> Export
-        </Button>
-        <Button variant="outline" onClick={async () => {
-          const ungrouped = guests.filter((g) => !g.familyName && g.lastName);
-          if (ungrouped.length === 0) { toast.info('All guests already have families assigned'); return; }
-          const groups = {};
-          ungrouped.forEach((g) => {
-            const key = (g.lastName || '').trim().toLowerCase();
-            if (!groups[key]) groups[key] = [];
-            groups[key].push(g);
-          });
-          const multiGroups = Object.entries(groups).filter(([, arr]) => arr.length > 1);
-          if (multiGroups.length === 0) { toast.info('No family groups detected (need 2+ guests with same last name)'); return; }
-          if (!confirm(`Auto-group ${multiGroups.length} families (${multiGroups.reduce((s, [, a]) => s + a.length, 0)} guests)?`)) return;
-          const updates = multiGroups.flatMap(([, arr]) => arr.map((g) => ({ id: g.id, familyName: `The ${arr[0].lastName} Family` })));
-          await updateGuestsBatch(activeWedding.id, updates);
-          toast.success(`Grouped ${updates.length} guests into ${multiGroups.length} families`);
-        }} className="hidden md:inline-flex" title="Group guests by last name into families">
-          <Users size={16} /> Auto-Group
-        </Button>
-        <Button variant="outline" onClick={async () => {
-          const input = prompt('Enter guest names (comma-separated):\nExample: Rushi Patel, Brijal Shah, Ankit Patel');
-          if (!input) return;
-          const names = input.split(',').map((n) => n.trim()).filter(Boolean);
-          const newGuests = names.map((n) => {
-            const parts = n.split(/\s+/);
-            const firstName = parts[0] || '';
-            const lastName = parts.slice(1).join(' ') || '';
-            return { firstName, lastName, side: 'bride', dietary: 'vegetarian', tags: [] };
-          });
-          await importGuestsBatch(activeWedding.id, newGuests);
-          toast.success(`Added ${newGuests.length} guests`);
-        }} className="hidden md:inline-flex" title="Quickly add multiple guests by name">
-          <Plus size={16} /> Quick Add
-        </Button>
       </div>
 
       {/* Duplicate warning */}
