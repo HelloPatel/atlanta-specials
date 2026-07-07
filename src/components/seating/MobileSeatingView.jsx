@@ -57,9 +57,8 @@ export default function MobileSeatingView() {
     [rules, tables, guests],
   );
 
-  if (!activeWedding) return null;
-
-  // Calculate canvas bounds
+  // Calculate canvas bounds — must run before any conditional return so the
+  // hook order stays stable across renders (React error #310).
   const canvasBounds = useMemo(() => {
     if (tables.length === 0) return { width: 600, height: 400 };
     let maxX = 0, maxY = 0;
@@ -69,6 +68,8 @@ export default function MobileSeatingView() {
     });
     return { width: Math.max(600, maxX), height: Math.max(400, maxY) };
   }, [tables]);
+
+  if (!activeWedding) return null;
 
   return (
     <div className="flex flex-col h-[calc(100dvh-7.5rem)] overflow-hidden -mx-4 -my-5">
@@ -258,8 +259,8 @@ export default function MobileSeatingView() {
                         {g.dietary && g.dietary !== 'unspecified' && (
                           <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">{g.dietary}</span>
                         )}
-                        {g.tags?.includes('elderly') && <span className="text-xs">👴</span>}
-                        {g.tags?.includes('child') && <span className="text-xs">👶</span>}
+                        {g.tags?.includes('elderly') && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Elder</span>}
+                        {g.tags?.includes('child') && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Child</span>}
                       </div>
                     </li>
                   );
