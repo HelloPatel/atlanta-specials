@@ -262,6 +262,21 @@ export default function SeatingCanvas() {
     setShowRules(false);
   }, [tables, zoom]);
 
+  const pushUndo = useCallback(() => {
+    setUndoStack((prev) => [...prev.slice(-19), JSON.stringify(tables)]);
+  }, [tables]);
+
+  const handleUndo = useCallback(() => {
+    setUndoStack((prev) => {
+      if (prev.length === 0) return prev;
+      const last = prev[prev.length - 1];
+      setTables(JSON.parse(last));
+      setHasChanges(true);
+      toast.info('Undone');
+      return prev.slice(0, -1);
+    });
+  }, [toast]);
+
   const handleAutoSuggest = useCallback(() => {
     if (unassignedGuests.length === 0 || tables.length === 0) return;
     const confirmMsg = `Auto-seat ${unassignedGuests.length} unassigned guest${unassignedGuests.length === 1 ? '' : 's'} across available tables?\n\nThis keeps families together and respects your seating rules. You can undo with Ctrl+Z.`;
@@ -308,21 +323,6 @@ export default function SeatingCanvas() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [hasChanges, handleSave, undoStack]);
-
-  const pushUndo = useCallback(() => {
-    setUndoStack((prev) => [...prev.slice(-19), JSON.stringify(tables)]);
-  }, [tables]);
-
-  const handleUndo = useCallback(() => {
-    setUndoStack((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      setTables(JSON.parse(last));
-      setHasChanges(true);
-      toast.info('Undone');
-      return prev.slice(0, -1);
-    });
-  }, [toast]);
 
   // Add table — accepts a preset or custom config
   const addTable = (config) => {
