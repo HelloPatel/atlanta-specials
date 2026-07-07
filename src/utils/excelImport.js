@@ -127,20 +127,29 @@ export function mapRowsToGuests(rows, columnMapping) {
  */
 export function findDuplicates(existingGuests, newGuests) {
   const norm = (v) => (v ?? '').toString().toLowerCase().trim();
-  return newGuests.map((ng, idx) => {
-    const match = existingGuests.find((eg) => {
-      const nameMatch =
-        norm(eg.firstName) !== '' &&
-        norm(eg.firstName) === norm(ng.firstName) &&
-        norm(eg.lastName) === norm(ng.lastName) &&
-        norm(eg.familyName) !== '' &&
-        norm(eg.familyName) === norm(ng.familyName);
-      const emailMatch = ng.email && norm(eg.email) === norm(ng.email);
-      const phoneMatch = ng.phone && eg.phone === ng.phone;
-      return nameMatch || emailMatch || phoneMatch;
-    });
-    return match ? { index: idx, existing: match, incoming: ng } : null;
-  }).filter(Boolean);
+  const isMatch = (a, b) => {
+    const nameMatch =
+      norm(a.firstName) !== '' &&
+      norm(a.firstName) === norm(b.firstName) &&
+      norm(a.lastName) === norm(b.lastName) &&
+      norm(a.familyName) !== '' &&
+      norm(a.familyName) === norm(b.familyName);
+    const emailMatch = b.email && norm(a.email) === norm(b.email);
+    const phoneMatch = b.phone && a.phone === b.phone;
+    return nameMatch || emailMatch || phoneMatch;
+  };
+
+  const accepted = [];
+  const dupes = [];
+  newGuests.forEach((ng, idx) => {
+    // Match against guests already in the wedding...
+    let match = existingGuests.find((eg) => isMatch(eg, ng));
+    // ...and against earlier rows in this same import batch (within-family/import dedup).
+    if (!match) match = accepted.find((ag) => isMatch(ag, ng));
+    if (match) dupes.push({ index: idx, existing: match, incoming: ng });
+    else accepted.push(ng);
+  });
+  return dupes;
 }
 
 /**

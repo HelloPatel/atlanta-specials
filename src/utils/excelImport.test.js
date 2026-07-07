@@ -177,5 +177,25 @@ describe('excelImport', () => {
       const dupes = findDuplicates(existing, incoming);
       expect(dupes).toHaveLength(2);
     });
+
+    it('flags a repeated name within the same import batch (same family)', () => {
+      const incoming = [
+        { firstName: 'Amit', lastName: 'Patel', familyName: 'The Patel Family' },
+        { firstName: 'Amit', lastName: 'Patel', familyName: 'The Patel Family' },
+      ];
+      const dupes = findDuplicates([], incoming);
+      expect(dupes).toHaveLength(1);
+      expect(dupes[0].index).toBe(1);
+      expect(dupes[0].existing.firstName).toBe('Amit');
+    });
+
+    it('does NOT flag a repeated name across families within a batch', () => {
+      const incoming = [
+        { firstName: 'Amit', lastName: 'Patel', familyName: 'The Patel Family' },
+        { firstName: 'Amit', lastName: 'Shah', familyName: 'The Shah Family' },
+      ];
+      const dupes = findDuplicates([], incoming);
+      expect(dupes).toHaveLength(0);
+    });
   });
 });
