@@ -268,7 +268,7 @@ function generateGuests() {
     g('Rushi', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Groom', tags: ['VIP', 'immediate-family'], travelFrom: 'Atlanta, GA', email: 'patel.rushi512@gmail.com' }),
     g('Nisha', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Sister of Groom', tags: ['immediate-family'], travelFrom: 'Charlotte, NC', needsHotel: true }),
     g('Jayanti', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Grandmother (Ba)', tags: ['VIP', 'elderly'], dietary: 'vegetarian', language: 'gu', notes: 'Needs ground floor seating, mobility issues' }),
-    g('Kantilal', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Grandfather (Dada)', tags: ['VIP', 'elderly'], language: 'gu', notes: 'Hard of hearing — seat near speakers' }),
+    g('Kantilal', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Grandfather (Dada)', tags: ['VIP', 'elderly'], language: 'gu', notes: 'Hard of hearing, seat near speakers' }),
     g('Jignesh', 'Patel', { familyId: fam19, familyName: 'The Patel Family (Groom)', side: 'groom', relation: 'Brother of Groom', tags: ['immediate-family'], travelFrom: 'Cumming, GA' }),
   );
 
@@ -318,7 +318,7 @@ function generateGuests() {
   // --- Groom's College Friends (Groomsmen + others) ---
   guests.push(
     g('Sahil', 'Mehta', { side: 'groom', relation: 'Best Friend / Best Man', travelFrom: 'New York, NY', needsHotel: true, email: 'sahil.mehta@icloud.com', dietary: 'non-veg', tags: ['VIP'], plusOne: true, plusOneName: 'Amanda Roberts' }),
-    g('Kevin', 'O\'Brien', { side: 'groom', relation: 'College Friend (Groomsman)', travelFrom: 'Chicago, IL', needsHotel: true, email: 'kevin.obrien@gmail.com', dietary: 'non-veg', notes: 'First Indian wedding — send itinerary' }),
+    g('Kevin', 'O\'Brien', { side: 'groom', relation: 'College Friend (Groomsman)', travelFrom: 'Chicago, IL', needsHotel: true, email: 'kevin.obrien@gmail.com', dietary: 'non-veg', notes: 'First Indian wedding, send itinerary' }),
     g('Raj', 'Malhotra', { side: 'groom', relation: 'College Friend (Groomsman)', travelFrom: 'Atlanta, GA', email: 'raj.malhotra@tech.com', dietary: 'non-veg' }),
     g('Chris', 'Anderson', { side: 'groom', relation: 'College Friend (Groomsman)', travelFrom: 'Denver, CO', needsHotel: true, email: 'c.anderson@yahoo.com', dietary: 'non-veg', plusOne: true, plusOneName: 'Katie Anderson' }),
     g('Darshan', 'Rana', { side: 'groom', relation: 'College Friend', travelFrom: 'Boston, MA', needsHotel: true, email: 'darshan.rana@outlook.com' }),

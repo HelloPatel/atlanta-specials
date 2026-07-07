@@ -1214,7 +1214,7 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
       {/* Text paste */}
       {mode === 'text' && (
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">Paste your table list — one per line:</p>
+          <p className="text-sm text-gray-600">Paste your table list (one per line):</p>
           <p className="text-xs text-gray-400">Format: <code className="bg-gray-100 px-1 rounded">Name, Shape, Seats</code></p>
           <textarea
             value={textInput}
