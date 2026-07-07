@@ -117,16 +117,28 @@ export function mapRowsToGuests(rows, columnMapping) {
 
 /**
  * Find potential duplicates in a list of guests.
+ *
+ * Name matches only count as duplicates WITHIN the same family. Indian guest
+ * lists repeat first and last names heavily across different families (many
+ * "Raj Patel"s who aren't the same person), so a bare name match would flag
+ * distinct people. A shared, non-empty family is required before trusting a
+ * name-based duplicate. Email and phone are unique identifiers, so they still
+ * match across families.
  */
 export function findDuplicates(existingGuests, newGuests) {
+  const norm = (v) => (v ?? '').toString().toLowerCase().trim();
   return newGuests.map((ng, idx) => {
-    const match = existingGuests.find(
-      (eg) =>
-        (eg.firstName?.toLowerCase() === ng.firstName?.toLowerCase() &&
-          eg.lastName?.toLowerCase() === ng.lastName?.toLowerCase()) ||
-        (ng.email && eg.email?.toLowerCase() === ng.email?.toLowerCase()) ||
-        (ng.phone && eg.phone === ng.phone)
-    );
+    const match = existingGuests.find((eg) => {
+      const nameMatch =
+        norm(eg.firstName) !== '' &&
+        norm(eg.firstName) === norm(ng.firstName) &&
+        norm(eg.lastName) === norm(ng.lastName) &&
+        norm(eg.familyName) !== '' &&
+        norm(eg.familyName) === norm(ng.familyName);
+      const emailMatch = ng.email && norm(eg.email) === norm(ng.email);
+      const phoneMatch = ng.phone && eg.phone === ng.phone;
+      return nameMatch || emailMatch || phoneMatch;
+    });
     return match ? { index: idx, existing: match, incoming: ng } : null;
   }).filter(Boolean);
 }

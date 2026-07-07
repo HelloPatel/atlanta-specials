@@ -119,16 +119,28 @@ describe('excelImport', () => {
 
   describe('findDuplicates', () => {
     const existing = [
-      { id: 'e1', firstName: 'Rushi', lastName: 'Patel', email: 'rushi@test.com', phone: '5551234' },
-      { id: 'e2', firstName: 'Priya', lastName: 'Shah', email: 'priya@test.com' },
+      { id: 'e1', firstName: 'Rushi', lastName: 'Patel', familyName: 'Patel Family', email: 'rushi@test.com', phone: '5551234' },
+      { id: 'e2', firstName: 'Priya', lastName: 'Shah', familyName: 'Shah Family', email: 'priya@test.com' },
     ];
 
-    it('detects duplicate by name match', () => {
-      const incoming = [{ firstName: 'Rushi', lastName: 'Patel' }];
+    it('detects duplicate by name match within the same family', () => {
+      const incoming = [{ firstName: 'Rushi', lastName: 'Patel', familyName: 'Patel Family' }];
       const dupes = findDuplicates(existing, incoming);
       expect(dupes).toHaveLength(1);
       expect(dupes[0].existing.id).toBe('e1');
       expect(dupes[0].index).toBe(0);
+    });
+
+    it('does NOT flag the same name in a different family', () => {
+      const incoming = [{ firstName: 'Rushi', lastName: 'Patel', familyName: 'Mehta Family' }];
+      const dupes = findDuplicates(existing, incoming);
+      expect(dupes).toHaveLength(0);
+    });
+
+    it('does NOT flag a name match when family is missing', () => {
+      const incoming = [{ firstName: 'Rushi', lastName: 'Patel' }];
+      const dupes = findDuplicates(existing, incoming);
+      expect(dupes).toHaveLength(0);
     });
 
     it('detects duplicate by email match', () => {
@@ -144,23 +156,23 @@ describe('excelImport', () => {
       expect(dupes).toHaveLength(1);
     });
 
-    it('is case-insensitive for name matching', () => {
-      const incoming = [{ firstName: 'RUSHI', lastName: 'patel' }];
+    it('is case-insensitive for name and family matching', () => {
+      const incoming = [{ firstName: 'RUSHI', lastName: 'patel', familyName: 'PATEL FAMILY' }];
       const dupes = findDuplicates(existing, incoming);
       expect(dupes).toHaveLength(1);
     });
 
     it('returns empty array when no duplicates', () => {
-      const incoming = [{ firstName: 'NewPerson', lastName: 'NewFamily' }];
+      const incoming = [{ firstName: 'NewPerson', lastName: 'NewFamily', familyName: 'New Family' }];
       const dupes = findDuplicates(existing, incoming);
       expect(dupes).toHaveLength(0);
     });
 
     it('handles multiple duplicates', () => {
       const incoming = [
-        { firstName: 'Rushi', lastName: 'Patel' },
-        { firstName: 'Priya', lastName: 'Shah' },
-        { firstName: 'New', lastName: 'Guest' },
+        { firstName: 'Rushi', lastName: 'Patel', familyName: 'Patel Family' },
+        { firstName: 'Priya', lastName: 'Shah', familyName: 'Shah Family' },
+        { firstName: 'New', lastName: 'Guest', familyName: 'Other Family' },
       ];
       const dupes = findDuplicates(existing, incoming);
       expect(dupes).toHaveLength(2);

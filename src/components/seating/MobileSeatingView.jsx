@@ -69,6 +69,21 @@ export default function MobileSeatingView() {
     return { width: Math.max(600, maxX), height: Math.max(400, maxY) };
   }, [tables]);
 
+  // Auto-zoom so the whole layout fits the phone width on first load / event
+  // change (mirrors the desktop fit-to-view behaviour).
+  useEffect(() => {
+    if (tables.length === 0 && zones.length === 0) return;
+    let maxX = 600, maxY = 400;
+    [...tables, ...zones].forEach((el) => {
+      maxX = Math.max(maxX, (el.x || 0) + (el.width || 120) + 100);
+      maxY = Math.max(maxY, (el.y || 0) + (el.height || 120) + 80);
+    });
+    const availW = (typeof window !== 'undefined' ? window.innerWidth : 380) - 24;
+    const fit = Math.max(0.15, Math.min(0.6, availW / maxX));
+    setMobileZoom(fit);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEventId, tables.length, zones.length]);
+
   if (!activeWedding) return null;
 
   return (

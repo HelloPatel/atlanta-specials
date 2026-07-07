@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Calendar, Users, Grid3X3, Mail, Camera, Trophy, Play, Pause } from 'lucide-react';
+import { Calendar, Users, Grid3X3, Camera, Trophy, Play, Pause, Maximize2 } from 'lucide-react';
+import VideoModal from './VideoModal';
 
 const FEATURES = [
   {
@@ -13,7 +14,7 @@ const FEATURES = [
     key: 'import',
     icon: Users,
     title: 'Import 500 guests in 60 seconds',
-    description: 'Upload from Excel or CSV. Columns auto-detected, families grouped, duplicates caught.',
+    description: 'Upload from Excel or CSV. Columns auto-detected, families grouped, duplicates caught within each family.',
     caption: 'Upload a spreadsheet, watch columns map themselves.',
   },
   {
@@ -22,13 +23,6 @@ const FEATURES = [
     title: 'Drag and drop seating',
     description: 'Mix table sizes (8, 10, 12, 14). Set keep-apart rules. Dance floor, stage and bar zones.',
     caption: 'Drag guests onto tables around the dance floor.',
-  },
-  {
-    key: 'rsvp',
-    icon: Mail,
-    title: 'RSVPs via WhatsApp link',
-    description: 'One link. Guests tap their name and respond. No login, no app download needed.',
-    caption: 'Guests tap their name and respond in seconds.',
   },
   {
     key: 'photos',
@@ -73,6 +67,7 @@ function FeatureTile({ feature, index, revealed, isOpen, onToggle }) {
   const [videoReady, setVideoReady] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [playing, setPlaying] = useState(true);
+  const [maximized, setMaximized] = useState(false);
 
   const togglePlay = (e) => {
     e.stopPropagation();
@@ -152,21 +147,33 @@ function FeatureTile({ feature, index, revealed, isOpen, onToggle }) {
                 </div>
               )}
 
-              {/* Play/pause control (only meaningful when a real video is present) */}
+              {/* Play/pause + maximize controls (only when a real video is present) */}
               {videoReady && (
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all duration-300 hover:bg-black/50 active:scale-95"
-                  aria-label={playing ? 'Pause' : 'Play'}
-                >
-                  {playing ? <Pause size={13} fill="currentColor" /> : <Play size={13} fill="currentColor" className="translate-x-[1px]" />}
-                </button>
+                <div className="absolute right-3 top-3 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={togglePlay}
+                    className="flex size-8 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all duration-300 hover:bg-black/50 active:scale-95"
+                    aria-label={playing ? 'Pause' : 'Play'}
+                  >
+                    {playing ? <Pause size={13} fill="currentColor" /> : <Play size={13} fill="currentColor" className="translate-x-[1px]" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setMaximized(true); }}
+                    className="flex size-8 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all duration-300 hover:bg-black/50 active:scale-95"
+                    aria-label="Maximize"
+                  >
+                    <Maximize2 size={13} />
+                  </button>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      <VideoModal open={maximized} src={`/demos/${key}.webm`} caption={caption} onClose={() => setMaximized(false)} />
     </div>
   );
 }

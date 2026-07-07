@@ -43,7 +43,7 @@ export default function AppShell() {
       )}
 
       {/* Desktop sidebar */}
-      <div className="hidden md:block">
+      <div className="hidden md:block h-full shrink-0">
         <Sidebar />
       </div>
 

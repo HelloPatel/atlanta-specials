@@ -16,6 +16,8 @@ import { evaluateSeatingRules } from './seatingRules';
 import { autoSuggestSeating } from './seatingAutoSuggest';
 import { generateIndianWeddingLayout, generateMehendiLayout, generateReceptionLayout, generateStaggeredLayout } from './seatingLayouts';
 import { loadFloorPlan, FLOOR_PLAN_ACCEPT } from './floorPlanImport';
+import { itemBox, resolveNoOverlap } from './seatingCollision';
+import TableDetailModal from './TableDetailModal';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -65,6 +67,7 @@ export default function SeatingCanvas() {
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved
   const [copiedFinderLink, setCopiedFinderLink] = useState(false);
   const [undoStack, setUndoStack] = useState([]);
+  const [detailTableId, setDetailTableId] = useState(null);
   const canvasScrollRef = useRef(null);
   const qrPrintRef = useRef(null);
   const shouldFitRef = useRef(false);
@@ -588,15 +591,51 @@ export default function SeatingCanvas() {
     setHasChanges(true);
   };
 
-  // Table position drag via grip handle
+  // Table position drag via grip handle — collision-aware (no overlap allowed)
   const handleTableDrag = useCallback((tableId, deltaX, deltaY) => {
-    setTables((prev) => prev.map((t) =>
-      t.id === tableId
-        ? { ...t, x: t.x + deltaX / zoom, y: t.y + deltaY / zoom }
-        : t
-    ));
+    setTables((prev) => {
+      const moving = prev.find((t) => t.id === tableId);
+      if (!moving) return prev;
+      const proposedX = (moving.x || 0) + deltaX / zoom;
+      const proposedY = (moving.y || 0) + deltaY / zoom;
+      const obstacles = [
+        ...prev.filter((t) => t.id !== tableId).map((t) => itemBox(t, 'table')),
+        ...zones.map((z) => itemBox(z, 'zone')),
+      ];
+      const { x, y } = resolveNoOverlap('table', moving.width, moving.height, proposedX, proposedY, obstacles);
+      return prev.map((t) => (t.id === tableId ? { ...t, x, y } : t));
+    });
     setHasChanges(true);
-  }, [zoom]);
+  }, [zoom, zones]);
+
+  // Zone position drag — absolute positioning + collision-aware (no overlap)
+  const handleZoneMove = useCallback((zoneId, absX, absY) => {
+    setZones((prev) => {
+      const moving = prev.find((z) => z.id === zoneId);
+      if (!moving) return prev;
+      const obstacles = [
+        ...prev.filter((z) => z.id !== zoneId).map((z) => itemBox(z, 'zone')),
+        ...tables.map((t) => itemBox(t, 'table')),
+      ];
+      const { x, y } = resolveNoOverlap('zone', moving.width, moving.height, absX, absY, obstacles);
+      return prev.map((z) => (z.id === zoneId ? { ...z, x, y } : z));
+    });
+    setHasChanges(true);
+  }, [tables]);
+
+  // Move a guest from whatever table they're on to a target table (used by the
+  // table-detail compare/swap modal). Passing null target unseats the guest.
+  const moveGuestToTable = useCallback((guestId, targetTableId) => {
+    pushUndo();
+    setTables((prev) => prev.map((t) => {
+      const filtered = (t.assignedGuests || []).filter((id) => id !== guestId);
+      if (targetTableId && t.id === targetTableId) {
+        return { ...t, assignedGuests: [...filtered, guestId] };
+      }
+      return { ...t, assignedGuests: filtered };
+    }));
+    setHasChanges(true);
+  }, [pushUndo]);
 
   if (!activeWedding) return null;
 
@@ -849,6 +888,7 @@ export default function SeatingCanvas() {
                 {zones.map((zone) => (
                   <ZoneElement key={zone.id} zone={zone}
                     onUpdate={(updates) => updateZone(zone.id, updates)}
+                    onMove={(x, y) => handleZoneMove(zone.id, x, y)}
                     onRemove={() => removeZone(zone.id)}
                     zoom={zoom} />
                 ))}
@@ -860,9 +900,11 @@ export default function SeatingCanvas() {
                     table={table}
                     guests={guests}
                     warnings={ruleEvaluation.tableWarnings[table.id] || []}
+                    selected={detailTableId === table.id}
                     onUpdate={(updates) => updateTable(table.id, updates)}
                     onRemove={() => removeTable(table.id)}
                     onDrag={(dx, dy) => handleTableDrag(table.id, dx, dy)}
+                    onOpenDetail={() => setDetailTableId(table.id)}
                     onRemoveGuest={(guestId) => {
                       setTables((prev) => prev.map((t) =>
                         t.id === table.id
@@ -1015,6 +1057,14 @@ export default function SeatingCanvas() {
         violations={ruleEvaluation.violations}
         onChange={handleRulesChange}
         onFocusTable={handleFocusTable}
+      />
+
+      <TableDetailModal
+        tables={tables}
+        guests={guests}
+        tableId={detailTableId}
+        onClose={() => setDetailTableId(null)}
+        onMoveGuest={moveGuestToTable}
       />
 
       <Modal open={showQrModal} onClose={() => setShowQrModal(false)} title="Table Finder QR Code" size="lg">
@@ -1342,7 +1392,7 @@ function Grid3XIcon() {
 
 // ─── Zone element (non-seatable, draggable) ─────────────────────────────────
 
-function ZoneElement({ zone, onUpdate, onRemove, zoom }) {
+function ZoneElement({ zone, onUpdate, onMove, onRemove, zoom }) {
   const dragStart = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(zone.label);
@@ -1353,15 +1403,17 @@ function ZoneElement({ zone, onUpdate, onRemove, zoom }) {
     e.stopPropagation();
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-    dragStart.current = { x: clientX, y: clientY };
+    // Capture the pointer origin AND the zone origin once, then drive an
+    // absolute position from the total delta (prevents per-frame jitter).
+    dragStart.current = { px: clientX, py: clientY, zx: zone.x || 0, zy: zone.y || 0 };
     const handleMove = (me) => {
       if (!dragStart.current) return;
       const cx = me.touches ? me.touches[0].clientX : me.clientX;
       const cy = me.touches ? me.touches[0].clientY : me.clientY;
-      const dx = cx - dragStart.current.x;
-      const dy = cy - dragStart.current.y;
-      dragStart.current = { x: cx, y: cy };
-      onUpdate({ x: (zone.x || 0) + dx / zoom, y: (zone.y || 0) + dy / zoom });
+      const nextX = dragStart.current.zx + (cx - dragStart.current.px) / zoom;
+      const nextY = dragStart.current.zy + (cy - dragStart.current.py) / zoom;
+      if (onMove) onMove(nextX, nextY);
+      else onUpdate({ x: nextX, y: nextY });
     };
     const handleUp = () => {
       dragStart.current = null;
@@ -1374,7 +1426,7 @@ function ZoneElement({ zone, onUpdate, onRemove, zoom }) {
     window.addEventListener('mouseup', handleUp);
     window.addEventListener('touchmove', handleMove, { passive: false });
     window.addEventListener('touchend', handleUp);
-  }, [zone.x, zone.y, zoom, onUpdate]);
+  }, [zone.x, zone.y, zoom, onUpdate, onMove]);
 
   const zonePreset = ZONE_PRESETS.find((z) => z.type === zone.type);
   const ZoneIcon = zonePreset?.icon || CircleDot;
@@ -1687,39 +1739,51 @@ const VENUE_LAYOUTS = (() => {
       ],
     },
     {
-      name: 'Ceremony: Mandap with Row Seating',
-      description: 'Mandap at center, rows of chairs on both sides with center aisle',
+      name: 'Ceremony: Mandap with Arc Seating',
+      description: 'Individual chairs fanned in arcs around a central aisle, all facing the mandap',
       icon: '🔥',
       tables: (() => {
-        const rows = [];
-        const rowCount = 7;
-        const seatsPerRow = 8;
-        const centerX = 1200;
-        const aisleGap = 100;
-        const rowWidth = 400;
-        const rowHeight = 40;
-        const startY = 600;
-        const rowSpacing = 140; // 40h + 60pad + 40gap
-
+        // Individual chairs (capacity 1) arranged in concentric arcs centred on
+        // the mandap so every seat has a clear view. A central aisle splits the
+        // fan; outer rows are wider and hold more chairs.
+        const chairs = [];
+        const Fx = 1200;          // focal point (mandap centre) x
+        const Fy = 300;           // focal point y — chairs sit below, facing up
+        const chairSize = 34;
+        const rowCount = 6;
+        const R0 = 300;           // radius of the front row from the focal point
+        const rowGap = 62;        // radial spacing between rows
+        const halfSpan = (78 * Math.PI) / 180;  // fan half-width
+        const aisleHalf = (7 * Math.PI) / 180;  // central walkway half-angle
+        const seatArc = 56;       // target arc distance between chairs
+        let n = 0;
         for (let r = 0; r < rowCount; r++) {
-          rows.push({
-            name: `L${r + 1}`, shape: 'rectangle', capacity: seatsPerRow,
-            width: rowWidth, height: rowHeight,
-            x: centerX - aisleGap - rowWidth, y: startY + r * rowSpacing,
-          });
-          rows.push({
-            name: `R${r + 1}`, shape: 'rectangle', capacity: seatsPerRow,
-            width: rowWidth, height: rowHeight,
-            x: centerX + aisleGap, y: startY + r * rowSpacing,
-          });
+          const R = R0 + r * rowGap;
+          const count = Math.max(6, Math.round((2 * halfSpan * R) / seatArc));
+          for (let i = 0; i < count; i++) {
+            const theta = count === 1 ? 0 : -halfSpan + (i * (2 * halfSpan)) / (count - 1);
+            if (Math.abs(theta) < aisleHalf) continue; // leave the aisle open
+            const cx = Fx + R * Math.sin(theta);
+            const cy = Fy + R * Math.cos(theta);
+            chairs.push({
+              name: `S${++n}`,
+              shape: 'square',
+              capacity: 1,
+              width: chairSize,
+              height: chairSize,
+              // convert desired chair centre → stored top-left (shape offset 40/30)
+              x: cx - 40 - chairSize / 2,
+              y: cy - 30 - chairSize / 2,
+              rotation: Math.round((theta * 180) / Math.PI), // fan toward the mandap
+            });
+          }
         }
-        return rows;
+        return chairs;
       })(),
       zones: [
-        { type: 'stage', label: 'Mandap', width: 300, height: 220, x: 1050, y: 100, color: '#fee2e2' },
-        { type: 'custom', label: 'Floral Arch', width: 200, height: 60, x: 1100, y: 400, color: '#fce7f3' },
-        { type: 'custom', label: 'Aisle', width: 60, height: 980, x: 1170, y: 560, color: '#f1f5f9' },
-        { type: 'entrance', label: 'Entrance', width: 140, height: 50, x: 1130, y: 1600, color: '#f1f5f9' },
+        { type: 'stage', label: 'Mandap', width: 300, height: 220, x: 1050, y: 60, color: '#fee2e2' },
+        { type: 'custom', label: 'Aisle', width: 70, height: 620, x: 1165, y: 320, color: '#f1f5f9' },
+        { type: 'entrance', label: 'Entrance', width: 140, height: 50, x: 1130, y: 980, color: '#f1f5f9' },
       ],
     },
   ];

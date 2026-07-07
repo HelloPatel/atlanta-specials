@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
+import { Maximize2 } from 'lucide-react';
 import ProductShowcase from './ProductShowcase';
+import VideoModal from './VideoModal';
 
 /**
  * Real recorded walkthrough layered over the coded ProductShowcase.
@@ -11,6 +13,7 @@ export default function HeroDemo() {
   const videoRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [maximized, setMaximized] = useState(false);
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-[calc(1.25rem-0.375rem)] bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)]">
@@ -36,12 +39,29 @@ export default function HeroDemo() {
       )}
 
       {ready && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent px-4 py-3">
-          <p className="text-[11px] sm:text-xs font-medium text-white/95">
-            From guest list to seating to RSVPs, all in one place.
-          </p>
-        </div>
+        <>
+          <button
+            type="button"
+            onClick={() => setMaximized(true)}
+            aria-label="Maximize"
+            className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all duration-300 hover:bg-black/50 active:scale-95"
+          >
+            <Maximize2 size={15} />
+          </button>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent px-4 py-3">
+            <p className="text-[11px] sm:text-xs font-medium text-white/95">
+              From guest list to seating to RSVPs, all in one place.
+            </p>
+          </div>
+        </>
       )}
+
+      <VideoModal
+        open={maximized}
+        src="/demos/hero.webm"
+        caption="From guest list to seating to RSVPs, all in one place."
+        onClose={() => setMaximized(false)}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useDroppable, useDraggable } from '@dnd-kit/core';
-import { Trash2, Edit3, GripVertical, Check, Users, X, AlertTriangle, RotateCw } from 'lucide-react';
+import { Trash2, Edit3, GripVertical, Check, Users, AlertTriangle, RotateCw } from 'lucide-react';
 
 const SHAPE_OPTIONS = [
   { value: 'round', label: 'Round' },
@@ -24,17 +24,8 @@ const SHAPE_DEFAULTS = {
   custom: { width: 150, height: 100, capacity: 10 },
 };
 
-const DIETARY_ICONS = {
-  vegetarian: '🥬',
-  vegan: '🌱',
-  'non-veg': '🍗',
-  jain: '🙏',
-  other: '🍽️',
-};
-
-export default function TableComponent({ table, guests, warnings = [], onUpdate, onRemove, onDrag, onRemoveGuest }) {
+export default function TableComponent({ table, guests, warnings = [], selected = false, onUpdate, onRemove, onDrag, onRemoveGuest, onOpenDetail }) {
   const [isEditing, setIsEditing] = useState(false);
-  const [showGuestPanel, setShowGuestPanel] = useState(false);
   const [editForm, setEditForm] = useState({});
   const dragStart = useRef(null);
 
@@ -46,14 +37,6 @@ export default function TableComponent({ table, guests, warnings = [], onUpdate,
 
   const isOverCapacity = assignedGuests.length > table.capacity;
   const hasWarnings = warnings.length > 0;
-
-  // Group guests by family for the panel
-  const guestsByFamily = assignedGuests.reduce((acc, g) => {
-    const key = g.familyName || '__individual';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(g);
-    return acc;
-  }, {});
 
   const handleGripMouseDown = useCallback((e) => {
     // Handle both mouse and touch
@@ -107,7 +90,6 @@ export default function TableComponent({ table, guests, warnings = [], onUpdate,
       rotation: table.rotation || 0,
     });
     setIsEditing(true);
-    setShowGuestPanel(false);
   };
 
   const handleSaveEdit = () => {
@@ -130,16 +112,7 @@ export default function TableComponent({ table, guests, warnings = [], onUpdate,
   const handleTableClick = (e) => {
     if (isEditing) return;
     e.stopPropagation();
-    setShowGuestPanel((prev) => !prev);
-  };
-
-  const handleRemoveGuest = (guestId) => {
-    if (onRemoveGuest) {
-      onRemoveGuest(guestId);
-    } else {
-      // Fallback: update table's assignedGuests directly
-      onUpdate({ assignedGuests: (table.assignedGuests || []).filter((id) => id !== guestId) });
-    }
+    onOpenDetail?.(table);
   };
 
   const shapeStyles = {
@@ -199,7 +172,7 @@ export default function TableComponent({ table, guests, warnings = [], onUpdate,
         className={`
           border-2 flex flex-col items-center justify-center transition-colors cursor-grab active:cursor-grabbing
           ${shapeStyles[table.shape]}
-          ${isOver ? 'border-wine-600 bg-wine-50 shadow-lg ring-2 ring-wine-300' : isOverCapacity ? 'border-red-400 bg-red-50' : hasWarnings ? 'border-amber-400 bg-amber-50 ring-1 ring-amber-200' : showGuestPanel ? 'border-wine-400 bg-wine-50/50 ring-1 ring-wine-200' : 'border-gray-300 bg-white hover:border-gray-400'}
+          ${isOver ? 'border-wine-600 bg-wine-50 shadow-lg ring-2 ring-wine-300' : isOverCapacity ? 'border-red-400 bg-red-50' : hasWarnings ? 'border-amber-400 bg-amber-50 ring-1 ring-amber-200' : selected ? 'border-wine-400 bg-wine-50/50 ring-1 ring-wine-200' : 'border-gray-300 bg-white hover:border-gray-400'}
         `}
         onMouseDown={handleGripMouseDown}
         onTouchStart={handleGripMouseDown}
@@ -303,104 +276,6 @@ export default function TableComponent({ table, guests, warnings = [], onUpdate,
         )}
       </div>
 
-      {/* Guest list popover — shows on click */}
-      {showGuestPanel && !isEditing && assignedGuests.length > 0 && (
-        <div
-          className="absolute z-20 bg-white rounded-xl shadow-xl border border-gray-200 w-64 max-h-80 overflow-hidden"
-          style={{ left: table.width + 50, top: 0 }}
-          onClick={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-            <div className="flex items-center gap-1.5">
-              <Users size={12} className="text-wine-600" />
-              <span className="text-xs font-semibold text-gray-700">{table.name}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${isOverCapacity ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
-                {assignedGuests.length}/{table.capacity}
-              </span>
-            </div>
-            <button onClick={() => setShowGuestPanel(false)} className="p-0.5 rounded hover:bg-gray-200 text-gray-400">
-              <X size={12} />
-            </button>
-          </div>
-
-          {/* Guest list grouped by family */}
-          <div className="overflow-y-auto max-h-64 p-2 space-y-2">
-            {Object.entries(guestsByFamily).map(([family, members]) => (
-              <div key={family}>
-                {family !== '__individual' && (
-                  <div className="flex items-center gap-1 mb-1">
-                    <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
-                      👨‍👩‍👧‍👦 {family}
-                    </span>
-                  </div>
-                )}
-                {members.map((guest) => (
-                  <div key={guest.id} className="flex items-center gap-2 py-1 px-1.5 rounded-lg hover:bg-gray-50 group/item">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-gray-800 truncate">
-                        {guest.firstName} {guest.lastName}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {guest.dietary && (
-                          <span className="text-[10px] text-gray-500" title={guest.dietary}>
-                            {DIETARY_ICONS[guest.dietary] || '🍽️'} {guest.dietary}
-                          </span>
-                        )}
-                        {guest.side && (
-                          <span className={`text-[10px] px-1 py-0.5 rounded ${guest.side === 'bride' ? 'bg-pink-50 text-pink-600' : 'bg-blue-50 text-blue-600'}`}>
-                            {guest.side}
-                          </span>
-                        )}
-                        {(guest.tags || []).includes('VIP') && (
-                          <span className="text-[10px] px-1 py-0.5 rounded bg-yellow-50 text-yellow-700">⭐ VIP</span>
-                        )}
-                        {(guest.tags || []).includes('Elderly') && (
-                          <span className="text-[10px] px-1 py-0.5 rounded bg-purple-50 text-purple-600">👴 Elderly</span>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveGuest(guest.id)}
-                      className="opacity-0 group-hover/item:opacity-100 p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-500 transition-opacity flex-shrink-0"
-                      title="Remove from table"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          {/* Footer with quick stats */}
-          <div className="px-3 py-1.5 border-t border-gray-100 bg-gray-50 rounded-b-xl flex items-center gap-2 text-[10px] text-gray-500">
-            {Object.keys(guestsByFamily).filter(k => k !== '__individual').length > 0 && (
-              <span>{Object.keys(guestsByFamily).filter(k => k !== '__individual').length} families</span>
-            )}
-            {assignedGuests.filter(g => g.dietary === 'vegetarian' || g.dietary === 'jain' || g.dietary === 'vegan').length > 0 && (
-              <span>🥬 {assignedGuests.filter(g => g.dietary === 'vegetarian' || g.dietary === 'jain' || g.dietary === 'vegan').length} veg</span>
-            )}
-            {assignedGuests.filter(g => g.dietary === 'non-veg').length > 0 && (
-              <span>🍗 {assignedGuests.filter(g => g.dietary === 'non-veg').length} non-veg</span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Empty table click hint */}
-      {showGuestPanel && !isEditing && assignedGuests.length === 0 && (
-        <div
-          className="absolute z-20 bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-2"
-          style={{ left: table.width + 50, top: 20 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <p className="text-xs text-gray-500">No guests seated yet.</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Drag guests from the sidebar onto this table.</p>
-        </div>
-      )}
-
       {/* Hover actions */}
       <div className="absolute left-1/2 -translate-x-1/2 top-0 hidden group-hover:flex gap-1 bg-white rounded-lg shadow-md border px-1 py-0.5 z-10">
         <button
@@ -414,7 +289,7 @@ export default function TableComponent({ table, guests, warnings = [], onUpdate,
         <button onClick={startEdit} className="p-1 rounded hover:bg-gray-100" title="Edit (or double-click table)">
           <Edit3 size={12} className="text-gray-500" />
         </button>
-        <button onClick={(e) => { e.stopPropagation(); setShowGuestPanel(true); }} className="p-1 rounded hover:bg-gray-100" title="View guests">
+        <button onClick={(e) => { e.stopPropagation(); onOpenDetail?.(table); }} className="p-1 rounded hover:bg-gray-100" title="View guests / compare tables">
           <Users size={12} className="text-gray-500" />
         </button>
         <button onClick={(e) => { e.stopPropagation(); onUpdate({ rotation: ((table.rotation || 0) + 45) % 360 }); }} className="p-1 rounded hover:bg-gray-100" title="Rotate 45°">

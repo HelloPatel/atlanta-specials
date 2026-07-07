@@ -124,49 +124,53 @@ export default function Landing() {
       </div>
 
       {/* Features */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-6xl mx-auto section-warm bg-pattern-floral relative">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
-            What you get
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500">Tap any tile to see it in action.</p>
+      <section className="section-warm bg-pattern-floral relative">
+        <div className="px-4 sm:px-6 py-12 sm:py-20 max-w-6xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
+              What you get
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-500">Tap any tile to see it in action.</p>
+          </div>
+          <FeatureTiles />
         </div>
-        <FeatureTiles />
       </section>
       {/* Pain → Solution */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto section-blush bg-pattern-mandala relative">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
-            Problems we solve
-          </h2>
-          <p className="text-sm text-gray-500">The stuff that actually made our own wedding stressful.</p>
+      <section className="section-blush bg-pattern-mandala relative">
+        <div className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
+              Problems we solve
+            </h2>
+            <p className="text-sm text-gray-500">The stuff that actually made our own wedding stressful.</p>
+          </div>
+          <RevealGrid className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
+            <ScenarioCard
+              number="01"
+              title="Parents who want to help (and hover)"
+              problem="Your parents keep asking to see the seating chart, the guest list, the RSVPs. Every question is another text and another screenshot."
+              solution="Give them a view-only login. They see the seating, RSVPs, and invite list anytime, and still can't change a thing."
+            />
+            <ScenarioCard
+              number="02"
+              title="Seating you can actually import"
+              problem="You build the whole arrangement in a spreadsheet, then move one table and the entire thing falls apart."
+              solution="Build your guest list, drag people to tables, or import a full arrangement in one go. Everything stays put when you move a table."
+            />
+            <ScenarioCard
+              number="03"
+              title="The photo line nobody wants to stand in"
+              problem="Family and friends stand around waiting for group photos while their food goes cold and no one knows when they're up."
+              solution="A live photo queue on one link. Everyone sees when their group is coming, so they can go eat and show up right on time."
+            />
+            <ScenarioCard
+              number="04"
+              title="RSVPs scattered across the family"
+              problem="One cousin replies, three go quiet, and you're chasing a whole family just to pin down a single head count."
+              solution="Guests are grouped by family with RSVPs tracked together. See who's in, who's out, and exactly who to nudge."
+            />
+          </RevealGrid>
         </div>
-        <RevealGrid className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
-          <ScenarioCard
-            number="01"
-            title="Parents who want to help (and hover)"
-            problem="Your parents keep asking to see the seating chart, the guest list, the RSVPs. Every question is another text and another screenshot."
-            solution="Give them a view-only login. They see the seating, RSVPs, and invite list anytime, and still can't change a thing."
-          />
-          <ScenarioCard
-            number="02"
-            title="Seating you can actually import"
-            problem="You build the whole arrangement in a spreadsheet, then move one table and the entire thing falls apart."
-            solution="Build your guest list, drag people to tables, or import a full arrangement in one go. Everything stays put when you move a table."
-          />
-          <ScenarioCard
-            number="03"
-            title="The photo line nobody wants to stand in"
-            problem="Family and friends stand around waiting for group photos while their food goes cold and no one knows when they're up."
-            solution="A live photo queue on one link. Everyone sees when their group is coming, so they can go eat and show up right on time."
-          />
-          <ScenarioCard
-            number="04"
-            title="RSVPs scattered across the family"
-            problem="One cousin replies, three go quiet, and you're chasing a whole family just to pin down a single head count."
-            solution="Guests are grouped by family with RSVPs tracked together. See who's in, who's out, and exactly who to nudge."
-          />
-        </RevealGrid>
       </section>
 
       {/* How it works */}
@@ -241,27 +245,29 @@ export default function Landing() {
       </section>
 
       {/* FAQ */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-3xl mx-auto section-warm">
-        <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-8 sm:mb-12 text-balance">
-          Questions
-        </h2>
-        <div className="space-y-3">
-          <FAQItem
-            question="How is this different from Zola or WithJoy?"
-            answer="They support one event with about 150 guests and fixed table sizes. Phera handles 6+ events with different invite lists, 500 to 1000 guests, family-group RSVPs, and custom table sizes."
-          />
-          <FAQItem
-            question="Can I import my existing guest list?"
-            answer="Yes. Any Excel or CSV file. Drag it in, columns get detected, duplicates get caught, families get grouped. Takes about 60 seconds for 500 guests."
-          />
-          <FAQItem
-            question="Do guests need to create an account?"
-            answer="No. They get a link via WhatsApp, search their name, and respond. No login, no app, no download."
-          />
-          <FAQItem
-            question="Is this actually free?"
-            answer="Yes. Unlimited guests, events, tables, seating charts, and RSVPs. Free forever. No hidden upgrades or paywalls."
-          />
+      <section className="section-warm">
+        <div className="px-4 sm:px-6 py-12 sm:py-20 max-w-3xl mx-auto">
+          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-8 sm:mb-12 text-balance">
+            Questions
+          </h2>
+          <div className="space-y-3">
+            <FAQItem
+              question="How is this different from Zola or WithJoy?"
+              answer="They support one event with about 150 guests and fixed table sizes. Phera handles 6+ events with different invite lists, 500 to 1000 guests, family-group RSVPs, and custom table sizes."
+            />
+            <FAQItem
+              question="Can I import my existing guest list?"
+              answer="Yes. Any Excel or CSV file. Drag it in, columns get detected, duplicates get caught within each family, families get grouped. Takes about 60 seconds for 500 guests."
+            />
+            <FAQItem
+              question="Do guests need to create an account?"
+              answer="No. They get a link via WhatsApp, search their name, and respond. No login, no app, no download."
+            />
+            <FAQItem
+              question="Is this actually free?"
+              answer="Yes. Unlimited guests, events, tables, seating charts, and RSVPs. Free forever. No hidden upgrades or paywalls."
+            />
+          </div>
         </div>
       </section>
 

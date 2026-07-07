@@ -42,7 +42,7 @@ export default function Sidebar({ onNavigate }) {
   };
 
   return (
-    <aside className={`flex flex-col border-r border-gray-200/80 bg-white transition-all duration-200 ${collapsed ? 'w-16' : 'w-60'}`}>
+    <aside className={`flex h-full flex-col border-r border-gray-200/80 bg-white transition-all duration-200 ${collapsed ? 'w-16' : 'w-60'}`}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-wine-700 to-wine-900 text-white font-display font-bold text-sm shadow-sm">
