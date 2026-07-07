@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { AuthProvider } from './contexts/AuthContext';
 import { WeddingProvider } from './contexts/WeddingContext';
@@ -12,6 +12,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import NotFound from './pages/NotFound';
 
 // Lazy-loaded pages (code-split for faster initial load)
 const PublicRSVP = lazy(() => import('./pages/PublicRSVP'));
@@ -86,7 +87,7 @@ export default function App() {
           </Route>
 
           {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
         </ToastProvider>
