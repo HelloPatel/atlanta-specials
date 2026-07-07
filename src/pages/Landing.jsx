@@ -92,40 +92,73 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* Visual mockup — breaks up text */}
+      {/* Visual mockup */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-6 sm:pb-8">
         <div className="rounded-2xl border border-gray-200/80 bg-white shadow-lifted overflow-hidden">
           <div className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
             <div className="size-2.5 rounded-full bg-red-300"></div>
             <div className="size-2.5 rounded-full bg-amber-300"></div>
             <div className="size-2.5 rounded-full bg-green-300"></div>
-            <span className="ml-3 text-[10px] text-gray-400 font-mono">phera.app/dashboard</span>
+            <span className="ml-3 text-[10px] text-gray-400 font-mono">phera.app/seating</span>
           </div>
-          <div className="p-4 sm:p-6 grid grid-cols-3 gap-3 sm:gap-4">
-            {/* Mini seating chart mockup */}
-            <div className="col-span-2 rounded-xl bg-gray-50 border border-gray-100 p-4 sm:p-5 relative overflow-hidden min-h-[120px] sm:min-h-[180px]">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Seating Chart</p>
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                {[1,2,3,4,5,6].map(i => (
-                  <div key={i} className="size-8 sm:size-12 rounded-full border-2 border-wine-200 bg-wine-50 flex items-center justify-center">
-                    <span className="text-[8px] sm:text-[10px] font-bold text-wine-600">T{i}</span>
+          <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            {/* Seating canvas mockup */}
+            <div className="sm:col-span-2 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-100 p-4 sm:p-5 relative overflow-hidden min-h-[140px] sm:min-h-[200px]">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Reception Seating</p>
+                <span className="text-[9px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">487/500 seated</span>
+              </div>
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 sm:gap-3">
+                {[
+                  { n: 1, seats: 10, fill: 10 },
+                  { n: 2, seats: 12, fill: 11 },
+                  { n: 3, seats: 10, fill: 10 },
+                  { n: 4, seats: 8, fill: 8 },
+                  { n: 5, seats: 12, fill: 12 },
+                  { n: 6, seats: 10, fill: 9 },
+                  { n: 7, seats: 10, fill: 10 },
+                  { n: 8, seats: 8, fill: 7 },
+                  { n: 9, seats: 12, fill: 12 },
+                  { n: 10, seats: 10, fill: 10 },
+                  { n: 11, seats: 10, fill: 10 },
+                  { n: 12, seats: 8, fill: 8 },
+                ].map(t => (
+                  <div key={t.n} className="relative group">
+                    <div className={`aspect-square rounded-full border-2 flex items-center justify-center transition-colors ${t.fill === t.seats ? 'border-wine-300 bg-wine-50' : 'border-amber-300 bg-amber-50'}`}>
+                      <span className="text-[8px] sm:text-[10px] font-bold text-gray-600">{t.n}</span>
+                    </div>
+                    <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 text-[7px] text-gray-400">{t.fill}/{t.seats}</div>
                   </div>
                 ))}
               </div>
-              <div className="absolute bottom-3 right-3 text-[9px] text-gray-400">50 tables • 487 seated</div>
+              <div className="absolute bottom-3 right-3 flex items-center gap-3 text-[8px] text-gray-400">
+                <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-wine-200"></span> Full</span>
+                <span className="flex items-center gap-1"><span className="size-2 rounded-full bg-amber-200"></span> Open</span>
+              </div>
             </div>
-            {/* Mini guest list mockup */}
-            <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 sm:p-4">
-              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Guests</p>
-              <div className="space-y-1.5">
-                {['Patel Family','Shah Family','Mehta Family','Desai Family'].map(f => (
-                  <div key={f} className="flex items-center gap-1.5">
-                    <div className="size-4 sm:size-5 rounded-full bg-wine-100"></div>
-                    <span className="text-[9px] sm:text-[10px] text-gray-600 truncate">{f}</span>
+            {/* Sidebar mockup */}
+            <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 sm:p-4 flex flex-col">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Unassigned (13)</p>
+              <div className="space-y-1.5 flex-1">
+                {[
+                  { name: 'Kavita Sharma', fam: 'Sharma Family' },
+                  { name: 'Raj Patel', fam: 'Patel Family' },
+                  { name: 'Anita Desai', fam: 'Desai Family' },
+                  { name: 'Vikram Singh', fam: 'Singh Family' },
+                  { name: 'Priya Mehta', fam: 'Mehta Family' },
+                ].map(g => (
+                  <div key={g.name} className="flex items-center gap-1.5 bg-white rounded-md px-2 py-1 border border-gray-100">
+                    <div className="size-4 rounded-full bg-wine-100 flex items-center justify-center">
+                      <span className="text-[7px] font-bold text-wine-600">{g.name[0]}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] text-gray-700 font-medium block truncate">{g.name}</span>
+                      <span className="text-[7px] text-gray-400 block truncate">{g.fam}</span>
+                    </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-3 text-[9px] text-green-600 font-medium">✓ 312 RSVPs received</div>
+              <div className="mt-2 pt-2 border-t border-gray-100 text-[9px] text-green-600 font-medium">✓ 312 RSVPs confirmed</div>
             </div>
           </div>
         </div>
@@ -340,11 +373,11 @@ function ScenarioCard({ number, title, problem, solution }) {
       <span className="inline-flex size-7 sm:size-8 items-center justify-center rounded-full bg-wine-50 text-[10px] sm:text-xs font-bold text-wine-600">{number}</span>
       <h3 className="text-sm sm:text-base font-semibold text-gray-900 mt-2 sm:mt-3 mb-3 sm:mb-4">{title}</h3>
       <div className="mb-3 sm:mb-4">
-        <p className="text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">The mess</p>
+        <p className="text-[10px] sm:text-[11px] font-semibold text-red-400 uppercase tracking-wider mb-1">Before</p>
         <p className="text-xs sm:text-sm text-gray-500">{problem}</p>
       </div>
       <div className="pt-2 sm:pt-3 border-t border-gray-100">
-        <p className="text-[10px] sm:text-[11px] font-semibold text-wine-600 uppercase tracking-wider mb-1">With Phera</p>
+        <p className="text-[10px] sm:text-[11px] font-semibold text-green-600 uppercase tracking-wider mb-1">After</p>
         <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">{solution}</p>
       </div>
     </div>
