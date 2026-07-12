@@ -28,9 +28,9 @@ import {
 
 const websiteThemes = Object.values(WEBSITE_THEMES);
 const heroPatternLabels = {
-  none: 'None',
-  mandala: 'Mandala Pattern',
-  floral: 'Floral Overlay',
+  none: 'Theme Gradient',
+  mandala: 'Mandala',
+  floral: 'Floral',
   geometric: 'Geometric',
   paisley: 'Paisley',
 };
@@ -417,7 +417,7 @@ export default function WebsiteBuilder() {
                       <option key={pattern} value={pattern}>{heroPatternLabels[pattern] || pattern}</option>
                     ))}
                   </select>
-                  <p className="mt-2 text-xs text-gray-500">Choose a decorative overlay to add more personality to your hero banner.</p>
+                  <p className="mt-2 text-xs text-gray-500">Choose the pattern layered over your theme's hero background.</p>
                 </div>
                 <div className="md:col-span-2">
                   <label className="mb-2 block text-sm font-medium text-gray-700">Hero Background Image</label>
@@ -753,7 +753,7 @@ export default function WebsiteBuilder() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Live Preview</h2>
-              <p className="text-sm text-gray-500">Exactly what guests see at your public link.</p>
+              <p className="text-sm text-gray-500">Preview your website before sharing it with guests.</p>
             </div>
             <Badge variant="rose">/w/{activeWedding.slug || activeWedding.id}</Badge>
           </div>

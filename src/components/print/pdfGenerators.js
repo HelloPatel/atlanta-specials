@@ -1,4 +1,4 @@
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 
 // ─── Place Cards PDF ────────────────────────────────────────────────────────
 // Generates printable place cards (tent-fold style) on letter/A4 paper
@@ -118,13 +118,140 @@ export function generatePlaceCardsPDF(guests, options = {}) {
 // One page per table listing all guests
 
 export function generateTableAssignmentPDF(tables, guests, options = {}) {
-  const { eventName = '', showDietary = true } = options;
-
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  appendTableAssignments(doc, tables, guests, options);
+  return doc;
+}
+
+export function generateSeatingChartPDF(tables, zones, guests, options = {}) {
+  const { eventName = '', weddingName = '' } = options;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 12;
+  const chartTop = 28;
+  const chartW = pageW - margin * 2;
+  const chartH = pageH - chartTop - margin;
+  const items = [...tables, ...zones];
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(40, 40, 40);
+  doc.text('Seating Chart', margin, 13);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(110, 110, 110);
+  const subtitle = [weddingName, eventName].filter(Boolean).join(' - ');
+  if (subtitle) doc.text(subtitle, margin, 19);
+  doc.text(`${tables.length} tables - ${guests.length} guests`, pageW - margin, 13, { align: 'right' });
+
+  doc.setDrawColor(220, 220, 220);
+  doc.setFillColor(252, 251, 249);
+  doc.roundedRect(margin, chartTop, chartW, chartH, 2, 2, 'FD');
+
+  if (items.length > 0) {
+    const minX = Math.min(...items.map((item) => item.x || 0));
+    const minY = Math.min(...items.map((item) => item.y || 0));
+    const maxX = Math.max(...items.map((item) => (item.x || 0) + (item.width || 120)));
+    const maxY = Math.max(...items.map((item) => (item.y || 0) + (item.height || 120)));
+    const contentW = Math.max(maxX - minX, 1);
+    const contentH = Math.max(maxY - minY, 1);
+    const innerPadding = 8;
+    const scale = Math.min(
+      (chartW - innerPadding * 2) / contentW,
+      (chartH - innerPadding * 2) / contentH,
+    );
+    const offsetX = margin + (chartW - contentW * scale) / 2;
+    const offsetY = chartTop + (chartH - contentH * scale) / 2;
+    const mapX = (value) => offsetX + ((value || 0) - minX) * scale;
+    const mapY = (value) => offsetY + ((value || 0) - minY) * scale;
+
+    zones.forEach((zone) => {
+      const x = mapX(zone.x);
+      const y = mapY(zone.y);
+      const width = Math.max((zone.width || 120) * scale, 8);
+      const height = Math.max((zone.height || 80) * scale, 6);
+
+      doc.setLineDashPattern([1.5, 1.5], 0);
+      doc.setDrawColor(170, 155, 160);
+      doc.setFillColor(246, 240, 242);
+      doc.roundedRect(x, y, width, height, 1.5, 1.5, 'FD');
+      doc.setLineDashPattern([], 0);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(Math.max(6, Math.min(9, height * 0.18)));
+      doc.setTextColor(105, 90, 95);
+      doc.text(zone.label || 'Zone', x + width / 2, y + height / 2 + 1, {
+        align: 'center',
+        maxWidth: Math.max(width - 3, 4),
+      });
+    });
+
+    tables.forEach((table) => {
+      const x = mapX(table.x);
+      const y = mapY(table.y);
+      const width = Math.max((table.width || 120) * scale, 9);
+      const height = Math.max((table.height || 120) * scale, 7);
+      const assigned = (table.assignedGuests || []).length;
+      const isOver = assigned > table.capacity;
+
+      doc.setDrawColor(...(isOver ? [190, 75, 75] : [122, 28, 62]));
+      doc.setFillColor(...(isOver ? [255, 240, 240] : [255, 249, 251]));
+      if (['round', 'oval', 'cocktail'].includes(table.shape)) {
+        doc.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 'FD');
+      } else {
+        doc.roundedRect(x, y, width, height, 1.5, 1.5, 'FD');
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(Math.max(5.5, Math.min(8, height * 0.18)));
+      doc.setTextColor(55, 45, 48);
+      const labelY = y + height / 2 - 0.5;
+      doc.text(table.name || 'Table', x + width / 2, labelY, {
+        align: 'center',
+        maxWidth: Math.max(width - 3, 4),
+      });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(Math.max(5, Math.min(7, height * 0.15)));
+      doc.setTextColor(isOver ? 170 : 110, isOver ? 50 : 95, isOver ? 50 : 100);
+      doc.text(`${assigned}/${table.capacity}`, x + width / 2, labelY + 3.5, { align: 'center' });
+    });
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(150, 150, 150);
+    doc.text('No seating layout has been created yet.', pageW / 2, pageH / 2, { align: 'center' });
+  }
+
+  appendTableAssignments(doc, tables, guests, options, true);
+  return doc;
+}
+
+function appendTableAssignments(doc, tables, guests, options = {}, addFirstPage = false) {
+  const { eventName = '', showDietary = true } = options;
+  if (addFirstPage) doc.addPage('letter', 'portrait');
+
+  const firstAssignmentPage = doc.internal.getNumberOfPages();
+  const assignedIds = new Set(tables.flatMap((table) => table.assignedGuests || []));
+  const unassignedGuests = guests.filter((guest) => !assignedIds.has(guest.id));
+  const groups = [
+    ...tables.map((table) => ({
+      ...table,
+      resolvedGuests: (table.assignedGuests || [])
+        .map((id) => guests.find((guest) => guest.id === id))
+        .filter(Boolean),
+    })),
+    ...(unassignedGuests.length > 0 ? [{
+      id: '__unassigned',
+      name: 'Unassigned guests',
+      capacity: null,
+      resolvedGuests: unassignedGuests,
+    }] : []),
+  ];
+
+  let pageW = doc.internal.pageSize.getWidth();
   const margin = 15;
   let y = margin;
-  let pageNum = 1;
 
   // Title
   doc.setFont('helvetica', 'bold');
@@ -146,18 +273,16 @@ export function generateTableAssignmentPDF(tables, guests, options = {}) {
   doc.text(`Generated ${new Date().toLocaleDateString()}`, margin, y);
   y += 8;
 
-  tables.forEach((table) => {
-    const tableGuests = (table.assignedGuests || [])
-      .map((id) => guests.find((g) => g.id === id))
-      .filter(Boolean);
+  groups.forEach((table) => {
+    const tableGuests = table.resolvedGuests;
 
     const blockHeight = 12 + tableGuests.length * 6 + 5;
 
     // New page if needed
     if (y + blockHeight > 260) {
-      doc.addPage();
+      doc.addPage('letter', 'portrait');
+      pageW = doc.internal.pageSize.getWidth();
       y = margin;
-      pageNum++;
     }
 
     // Table header
@@ -171,7 +296,10 @@ export function generateTableAssignmentPDF(tables, guests, options = {}) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(120, 120, 120);
-    doc.text(`${tableGuests.length}/${table.capacity} seats`, pageW - margin - 3, y + 5.5, { align: 'right' });
+    const countLabel = table.capacity
+      ? `${tableGuests.length}/${table.capacity} seats`
+      : `${tableGuests.length} guests`;
+    doc.text(countLabel, pageW - margin - 3, y + 5.5, { align: 'right' });
     y += 10;
 
     // Guest rows
@@ -187,10 +315,11 @@ export function generateTableAssignmentPDF(tables, guests, options = {}) {
         doc.text(g.familyName, margin + 80, rowY + 3.5);
       }
 
-      if (showDietary && g.dietary && g.dietary !== 'non-veg') {
+      const dietary = g.dietaryPreference || g.dietary;
+      if (showDietary && dietary && dietary !== 'non-veg') {
         const labels = { vegetarian: 'V', vegan: 'VG', jain: 'J' };
         doc.setTextColor(180, 130, 80);
-        doc.text(labels[g.dietary] || '', pageW - margin - 5, rowY + 3.5, { align: 'right' });
+        doc.text(labels[dietary] || '', pageW - margin - 5, rowY + 3.5, { align: 'right' });
       }
     });
 
@@ -198,15 +327,21 @@ export function generateTableAssignmentPDF(tables, guests, options = {}) {
   });
 
   // Page numbers
-  const totalPages = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= totalPages; i++) {
+  const lastAssignmentPage = doc.internal.getNumberOfPages();
+  const assignmentPageCount = lastAssignmentPage - firstAssignmentPage + 1;
+  for (let i = firstAssignmentPage; i <= lastAssignmentPage; i++) {
     doc.setPage(i);
+    const currentPageW = doc.internal.pageSize.getWidth();
+    const currentPageH = doc.internal.pageSize.getHeight();
     doc.setFontSize(8);
     doc.setTextColor(180, 180, 180);
-    doc.text(`Page ${i} of ${totalPages}`, pageW / 2, 275, { align: 'center' });
+    doc.text(
+      `Assignments page ${i - firstAssignmentPage + 1} of ${assignmentPageCount}`,
+      currentPageW / 2,
+      currentPageH - 7,
+      { align: 'center' },
+    );
   }
-
-  return doc;
 }
 
 // ─── Guest List PDF ─────────────────────────────────────────────────────────

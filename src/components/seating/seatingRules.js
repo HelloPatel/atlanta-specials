@@ -16,6 +16,12 @@ export function getGuestDisplayName(guest) {
   return `${guest.firstName || ''} ${guest.lastName || ''}`.trim() || guest.familyName || 'Unknown guest';
 }
 
+export function formatFamilyLabel(familyName) {
+  const value = String(familyName || '').trim();
+  if (!value) return '';
+  return /\bfamily$/i.test(value) ? value : `${value} family`;
+}
+
 export function buildRuleDescription(rule, guests = []) {
   const guestsById = new Map(guests.map((guest) => [guest.id, guest]));
   const namedGuests = (rule.guestIds || [])
@@ -26,7 +32,7 @@ export function buildRuleDescription(rule, guests = []) {
     return rule.description || 'Flag tables with both vegetarian and non-vegetarian guests.';
   }
 
-  const leftSide = rule.familyName ? `${rule.familyName} family` : namedGuests[0] || 'Selected guest';
+  const leftSide = rule.familyName ? formatFamilyLabel(rule.familyName) : namedGuests[0] || 'Selected guest';
   const rightSide = rule.familyName ? namedGuests.join(', ') : namedGuests.slice(1).join(', ');
 
   if (rule.type === 'keep-together') {

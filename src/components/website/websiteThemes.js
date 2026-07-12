@@ -13,6 +13,7 @@ export const WEBSITE_THEMES = {
     fontFamily: '"Playfair Display", Georgia, serif',
     fontUrl: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap',
     heroOverlay: 'linear-gradient(135deg, rgba(76, 5, 25, 0.72), rgba(190, 24, 93, 0.45))',
+    heroBackground: 'radial-gradient(circle at 78% 18%, rgba(253, 164, 175, 0.65), transparent 34%), linear-gradient(135deg, #881337, #4c0519)',
   },
   'royal-gold': {
     key: 'royal-gold',
@@ -28,6 +29,7 @@ export const WEBSITE_THEMES = {
     fontFamily: '"Cormorant Garamond", Georgia, serif',
     fontUrl: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap',
     heroOverlay: 'linear-gradient(135deg, rgba(69, 26, 3, 0.76), rgba(146, 64, 14, 0.42))',
+    heroBackground: 'radial-gradient(circle at 76% 16%, rgba(251, 191, 36, 0.72), transparent 32%), linear-gradient(135deg, #92400e, #451a03)',
   },
   'garden-green': {
     key: 'garden-green',
@@ -43,6 +45,7 @@ export const WEBSITE_THEMES = {
     fontFamily: '"Lora", Georgia, serif',
     fontUrl: 'https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&display=swap',
     heroOverlay: 'linear-gradient(135deg, rgba(5, 46, 22, 0.74), rgba(22, 101, 52, 0.44))',
+    heroBackground: 'radial-gradient(circle at 76% 16%, rgba(134, 239, 172, 0.5), transparent 34%), linear-gradient(135deg, #166534, #052e16)',
   },
   'modern-minimal': {
     key: 'modern-minimal',
@@ -58,6 +61,7 @@ export const WEBSITE_THEMES = {
     fontFamily: '"Inter", system-ui, sans-serif',
     fontUrl: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
     heroOverlay: 'linear-gradient(135deg, rgba(15, 23, 42, 0.84), rgba(51, 65, 85, 0.45))',
+    heroBackground: 'radial-gradient(circle at 78% 16%, rgba(148, 163, 184, 0.34), transparent 34%), linear-gradient(135deg, #334155, #0f172a)',
   },
   'marigold-mandap': {
     key: 'marigold-mandap',
@@ -73,6 +77,7 @@ export const WEBSITE_THEMES = {
     fontFamily: '"Yeseva One", Georgia, serif',
     fontUrl: 'https://fonts.googleapis.com/css2?family=Yeseva+One&display=swap',
     heroOverlay: 'linear-gradient(135deg, rgba(67, 20, 7, 0.76), rgba(194, 65, 12, 0.42))',
+    heroBackground: 'radial-gradient(circle at 78% 16%, rgba(251, 146, 60, 0.7), transparent 34%), linear-gradient(135deg, #c2410c, #431407)',
   },
   'midnight-sangeet': {
     key: 'midnight-sangeet',
@@ -88,6 +93,7 @@ export const WEBSITE_THEMES = {
     fontFamily: '"DM Serif Display", Georgia, serif',
     fontUrl: 'https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap',
     heroOverlay: 'linear-gradient(135deg, rgba(30, 27, 75, 0.82), rgba(49, 46, 129, 0.48))',
+    heroBackground: 'radial-gradient(circle at 78% 16%, rgba(167, 139, 250, 0.55), transparent 34%), linear-gradient(135deg, #312e81, #1e1b4b)',
   },
 };
 

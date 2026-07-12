@@ -1,15 +1,22 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useWedding } from '../../contexts/WeddingContext';
-import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatch, importGuestsBatch, updateGuestsBatch } from '../../services/guestService';
+import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatch, importGuestsBatch, updateGuestsBatch, syncPublicGuestDirectory } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating } from '../../services/seatingService';
 import { Button, Input, Badge, Modal, useToast } from '../ui';
-import { Search, Plus, Upload, Download, Trash2, Edit3 } from 'lucide-react';
-import { parseFile, autoMapColumns, mapRowsToGuests, findDuplicates, exportGuestsToExcel, downloadGuestTemplate } from '../../utils/excelImport';
+import { AlertTriangle, CheckCircle2, Download, Edit3, FileSpreadsheet, Plus, Search, Trash2, Upload, XCircle } from 'lucide-react';
+import {
+  analyzeGuestImport,
+  autoMapColumns,
+  downloadGuestTemplate,
+  exportGuestsToExcel,
+  parseFile,
+  validateColumnMapping,
+} from '../../utils/excelImport';
 import { DIETARY_OPTIONS, SIDES, GUEST_TAGS, RSVP_STATUS } from '../../config/constants';
 
 export default function GuestList() {
-  const { activeWedding } = useWedding();
+  const { activeWedding, canEdit } = useWedding();
   const toast = useToast();
   const [guests, setGuests] = useState([]);
   const [events, setEvents] = useState([]);
@@ -28,13 +35,23 @@ export default function GuestList() {
   const [editingGuest, setEditingGuest] = useState(null);
   const [inlineEdit, setInlineEdit] = useState(null); // {id, firstName, lastName}
   const [viewMode, setViewMode] = useState('family'); // family | list
+  const syncedPublicDirectoryRef = useRef(null);
 
   useEffect(() => {
     if (!activeWedding) return;
-    const unsub1 = subscribeToGuests(activeWedding.id, setGuests);
+    const unsub1 = subscribeToGuests(activeWedding.id, (nextGuests) => {
+      setGuests(nextGuests);
+      if (canEdit && syncedPublicDirectoryRef.current !== activeWedding.id) {
+        syncedPublicDirectoryRef.current = activeWedding.id;
+        syncPublicGuestDirectory(activeWedding.id, nextGuests).catch((error) => {
+          syncedPublicDirectoryRef.current = null;
+          console.error('Failed to sync public guest directory:', error);
+        });
+      }
+    });
     const unsub2 = subscribeToEvents(activeWedding.id, setEvents);
     return () => { unsub1(); unsub2(); };
-  }, [activeWedding]);
+  }, [activeWedding, canEdit]);
 
   // Build guest-to-table mapping from all event seatings
   const [tableMap, setTableMap] = useState({});
@@ -333,7 +350,13 @@ export default function GuestList() {
             onChange={async (e) => {
               const side = e.target.value;
               if (!side) return;
-              const updates = [...selected].map((id) => ({ id, side }));
+              const updates = guests
+                .filter((guest) => selected.has(guest.id))
+                .map((guest) => ({
+                  guestId: guest.id,
+                  currentGuest: guest,
+                  data: { side },
+                }));
               await updateGuestsBatch(activeWedding.id, updates);
               toast.success(`Moved ${selected.size} guests to ${side}'s side`);
               e.target.value = '';
@@ -349,7 +372,13 @@ export default function GuestList() {
             onChange={async (e) => {
               const dietary = e.target.value;
               if (!dietary) return;
-              const updates = [...selected].map((id) => ({ id, dietary }));
+              const updates = guests
+                .filter((guest) => selected.has(guest.id))
+                .map((guest) => ({
+                  guestId: guest.id,
+                  currentGuest: guest,
+                  data: { dietary },
+                }));
               await updateGuestsBatch(activeWedding.id, updates);
               toast.success(`Updated dietary for ${selected.size} guests`);
               e.target.value = '';
@@ -366,8 +395,9 @@ export default function GuestList() {
               if (!tag) return;
               const selectedGuests = guests.filter((g) => selected.has(g.id));
               const updates = selectedGuests.map((g) => ({
-                id: g.id,
-                tags: [...new Set([...(g.tags || []), tag])],
+                guestId: g.id,
+                currentGuest: g,
+                data: { tags: [...new Set([...(g.tags || []), tag])] },
               }));
               await updateGuestsBatch(activeWedding.id, updates);
               toast.success(`Added "${tag}" tag to ${selected.size} guests`);
@@ -1028,15 +1058,18 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
 // ─── Import Modal ──────────────────────────────────────────────────────────
 
 function ImportModal({ open, onClose, weddingId, existingGuests }) {
-  const toast = useToast();
   const [step, setStep] = useState('upload'); // upload → map → preview → done
   const [file, setFile] = useState(null);
   const [parsed, setParsed] = useState(null);
   const [columnMapping, setColumnMapping] = useState({});
   const [mappedGuests, setMappedGuests] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
+  const [invalidRows, setInvalidRows] = useState([]);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState(null);
+  const [mappingErrors, setMappingErrors] = useState([]);
+  const [fileError, setFileError] = useState('');
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   const guestFields = [
     { value: '', label: '— Skip —' },
@@ -1055,37 +1088,54 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
     { value: '_tags', label: 'Tags (comma-sep)' },
   ];
 
-  const handleFile = async (e) => {
-    const f = e.target.files[0];
+  const processFile = async (f) => {
     if (!f) return;
     setFile(f);
+    setFileError('');
     try {
-      const result = await parseFile(f);
-      setParsed(result);
-      const autoMap = autoMapColumns(result.headers);
+      const parsedFile = await parseFile(f);
+      setParsed(parsedFile);
+      const autoMap = autoMapColumns(parsedFile.headers);
       setColumnMapping(autoMap);
+      setMappingErrors([]);
       setStep('map');
     } catch (err) {
-      toast.error(err.message);
+      setFile(null);
+      setFileError(err.message);
     }
   };
 
+  const handleFile = (event) => {
+    processFile(event.target.files?.[0]);
+    event.target.value = '';
+  };
+
   const handleMapDone = () => {
-    const guests = mapRowsToGuests(parsed.rows, columnMapping);
-    setMappedGuests(guests);
-    const dupes = findDuplicates(existingGuests, guests);
-    setDuplicates(dupes);
+    const errors = validateColumnMapping(columnMapping);
+    setMappingErrors(errors);
+    if (errors.length > 0) return;
+
+    const analysis = analyzeGuestImport(parsed.rows, columnMapping, existingGuests);
+    setMappedGuests(analysis.mappedGuests);
+    setDuplicates(analysis.duplicates);
+    setInvalidRows(analysis.invalidRows);
     setStep('preview');
   };
 
   const handleImport = async () => {
     setImporting(true);
     try {
-      // Filter out duplicates
       const dupeIndices = new Set(duplicates.map((d) => d.index));
-      const toImport = mappedGuests.filter((_, i) => !dupeIndices.has(i));
+      const invalidIndices = new Set(invalidRows.map((row) => row.index));
+      const toImport = mappedGuests.filter((_, index) =>
+        !dupeIndices.has(index) && !invalidIndices.has(index),
+      );
       const count = await importGuestsBatch(weddingId, toImport);
-      setResult({ success: true, count });
+      setResult({
+        success: true,
+        count,
+        skipped: duplicates.length + invalidRows.length,
+      });
       setStep('done');
     } catch (err) {
       setResult({ success: false, error: err.message });
@@ -1102,7 +1152,11 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
     setColumnMapping({});
     setMappedGuests([]);
     setDuplicates([]);
+    setInvalidRows([]);
     setResult(null);
+    setMappingErrors([]);
+    setFileError('');
+    setIsDraggingFile(false);
   };
 
   const handleClose = () => {
@@ -1110,38 +1164,72 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
     onClose();
   };
 
+  const duplicateIndices = new Set(duplicates.map((duplicate) => duplicate.index));
+  const invalidByIndex = new Map(invalidRows.map((row) => [row.index, row]));
+  const importCount = mappedGuests.length - duplicates.length - invalidRows.length;
+
   return (
     <Modal open={open} onClose={handleClose} title="Import Guests" size="xl">
       {step === 'upload' && (
-        <div className="text-center py-8">
+        <div className="py-4 sm:py-6">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-wine-50">
             <Upload size={28} className="text-wine-700" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload Excel or CSV</h3>
-          <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+          <h3 className="text-center text-lg font-semibold text-gray-900 mb-2">Upload Excel or CSV</h3>
+          <p className="mx-auto mb-5 max-w-md text-center text-sm text-gray-500">
             Upload your guest list from Excel (.xlsx) or CSV. We'll auto-detect columns like Name, Email, Family, Side, and Table #.
           </p>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-wine-700 px-6 py-3 text-sm font-medium text-white hover:bg-wine-800">
-            <Upload size={16} /> Choose File
+          <label
+            onDragEnter={(event) => { event.preventDefault(); setIsDraggingFile(true); }}
+            onDragOver={(event) => event.preventDefault()}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) setIsDraggingFile(false);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              setIsDraggingFile(false);
+              processFile(event.dataTransfer.files?.[0]);
+            }}
+            className={`mx-auto flex max-w-xl cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-8 text-center transition-colors ${
+              isDraggingFile ? 'border-wine-500 bg-wine-50' : 'border-gray-300 bg-gray-50/70 hover:border-wine-300 hover:bg-wine-50/50'
+            }`}
+          >
+            <FileSpreadsheet size={28} className="mb-3 text-wine-600" />
+            <span className="text-sm font-semibold text-gray-800">Drop your guest file here</span>
+            <span className="mt-1 text-xs text-gray-500">or tap to choose a file, up to 10 MB</span>
             <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} className="hidden" />
           </label>
+          {fileError && (
+            <p role="alert" className="mx-auto mt-3 flex max-w-xl items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-left text-xs text-red-700">
+              <AlertTriangle size={15} className="mt-0.5 shrink-0" /> {fileError}
+            </p>
+          )}
+          <button onClick={downloadGuestTemplate} className="mx-auto mt-4 flex items-center gap-2 text-sm font-semibold text-wine-700 hover:text-wine-800">
+            <Download size={15} /> Download a sample template
+          </button>
         </div>
       )}
 
       {step === 'map' && parsed && (
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Found <strong>{parsed.rows.length}</strong> guests with <strong>{parsed.headers.length}</strong> columns.
-            Map each column to a guest field:
+            Found <strong>{parsed.rows.length}</strong> guests with <strong>{parsed.headers.length}</strong> columns in <strong>{file?.name}</strong>.
+            {' '}We matched <strong>{Object.values(columnMapping).filter(Boolean).length}</strong> automatically. Review the mapping before continuing.
           </p>
           <div className="max-h-[50vh] overflow-y-auto space-y-2">
             {parsed.headers.map((header) => (
-              <div key={header} className="flex items-center gap-4">
-                <span className="w-40 text-sm font-medium text-gray-700 truncate">{header}</span>
+              <div key={header} className="grid gap-2 rounded-xl border border-gray-100 p-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-gray-700">{header}</p>
+                  <p className="truncate text-xs text-gray-400">{parsed.rows[0]?.[header] || 'No sample value'}</p>
+                </div>
                 <span className="text-gray-400">→</span>
                 <select
                   value={columnMapping[header] || ''}
-                  onChange={(e) => setColumnMapping((m) => ({ ...m, [header]: e.target.value || undefined }))}
+                  onChange={(e) => {
+                    setColumnMapping((mapping) => ({ ...mapping, [header]: e.target.value || undefined }));
+                    setMappingErrors([]);
+                  }}
                   className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 >
                   {guestFields.map((f) => <option key={f.value} value={f.value}>{f.label}</option>)}
@@ -1149,6 +1237,11 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
               </div>
             ))}
           </div>
+          {mappingErrors.length > 0 && (
+            <div role="alert" className="space-y-1 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {mappingErrors.map((error) => <p key={error}>{error}</p>)}
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={reset}>Back</Button>
             <Button onClick={handleMapDone}>Preview Import</Button>
@@ -1159,8 +1252,9 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
       {step === 'preview' && (
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Ready to import <strong>{mappedGuests.length - duplicates.length}</strong> guests.
+            Ready to import <strong>{importCount}</strong> guests.
             {duplicates.length > 0 && <span className="text-amber-600"> {duplicates.length} duplicates will be skipped.</span>}
+            {invalidRows.length > 0 && <span className="text-red-600"> {invalidRows.length} invalid rows will be skipped.</span>}
           </p>
           <div className="max-h-[50vh] overflow-y-auto">
             <table className="w-full text-sm">
@@ -1175,15 +1269,20 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
               </thead>
               <tbody className="divide-y">
                 {mappedGuests.slice(0, 50).map((g, i) => {
-                  const isDupe = duplicates.some((d) => d.index === i);
+                  const isDupe = duplicateIndices.has(i);
+                  const invalid = invalidByIndex.get(i);
                   return (
-                    <tr key={i} className={isDupe ? 'bg-amber-50' : ''}>
+                    <tr key={i} className={invalid ? 'bg-red-50' : isDupe ? 'bg-amber-50' : ''}>
                       <td className="px-3 py-2 text-gray-400">{i + 1}</td>
                       <td className="px-3 py-2">{g.firstName} {g.lastName}</td>
                       <td className="px-3 py-2 text-gray-600">{g.familyName || '—'}</td>
                       <td className="px-3 py-2 text-gray-600">{g.side || '—'}</td>
                       <td className="px-3 py-2">
-                        {isDupe ? <Badge variant="warning">Duplicate</Badge> : <Badge variant="success">New</Badge>}
+                        {invalid
+                          ? <Badge variant="danger">{invalid.reasons[0]}</Badge>
+                          : isDupe
+                            ? <Badge variant="warning">Duplicate</Badge>
+                            : <Badge variant="success">New</Badge>}
                       </td>
                     </tr>
                   );
@@ -1196,8 +1295,8 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => setStep('map')}>Back</Button>
-            <Button onClick={handleImport} disabled={importing}>
-              {importing ? 'Importing...' : `Import ${mappedGuests.length - duplicates.length} Guests`}
+            <Button onClick={handleImport} disabled={importing || importCount === 0}>
+              {importing ? 'Importing...' : `Import ${importCount} Guests`}
             </Button>
           </div>
         </div>
@@ -1208,15 +1307,16 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
           {result.success ? (
             <>
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                <span className="text-2xl">✅</span>
+                <CheckCircle2 size={24} className="text-green-700" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Import Complete</h3>
               <p className="text-sm text-gray-500 mb-6">{result.count} guests imported successfully.</p>
+              {result.skipped > 0 && <p className="-mt-4 mb-6 text-xs text-gray-400">{result.skipped} duplicate or invalid rows were skipped.</p>}
             </>
           ) : (
             <>
               <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                <span className="text-2xl">❌</span>
+                <XCircle size={24} className="text-red-700" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Import Failed</h3>
               <p className="text-sm text-red-600 mb-6">{result.error}</p>

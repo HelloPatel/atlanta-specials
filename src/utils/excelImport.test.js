@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { autoMapColumns, mapRowsToGuests, findDuplicates } from './excelImport';
+import {
+  analyzeGuestImport,
+  autoMapColumns,
+  findDuplicates,
+  mapRowsToGuests,
+  parseRawGuestData,
+  validateColumnMapping,
+} from './excelImport';
 
 describe('excelImport', () => {
   describe('autoMapColumns', () => {
@@ -13,6 +20,33 @@ describe('excelImport', () => {
       expect(mapping['Family']).toBe('familyName');
       expect(mapping['Side']).toBe('side');
       expect(mapping['Dietary']).toBe('dietary');
+    });
+
+    describe('parseRawGuestData', () => {
+      it('skips blank rows before the header and removes a BOM', () => {
+        const result = parseRawGuestData([
+          [],
+          ['', ''],
+          ['\uFEFFFirst Name', 'Last Name'],
+          ['Asha', 'Patel'],
+        ]);
+        expect(result.headers).toEqual(['First Name', 'Last Name']);
+        expect(result.rows).toEqual([{ 'First Name': 'Asha', 'Last Name': 'Patel' }]);
+      });
+
+      it('makes blank and duplicate headers safe and unique', () => {
+        const result = parseRawGuestData([
+          ['Name', 'Name', ''],
+          ['Asha Patel', 'Ignored', 'Bride'],
+        ]);
+        expect(result.headers).toEqual(['Name', 'Name (2)', 'Column 3']);
+        expect(result.rows[0]['Name (2)']).toBe('Ignored');
+      });
+
+      it('rejects empty files and header-only files', () => {
+        expect(() => parseRawGuestData([])).toThrow('empty');
+        expect(() => parseRawGuestData([['Name', 'Email']])).toThrow('at least one guest row');
+      });
     });
 
     it('maps case-insensitively', () => {
@@ -74,7 +108,7 @@ describe('excelImport', () => {
       const guests = mapRowsToGuests(rows, mapping);
       expect(guests[0].side).toBe('groom');
       expect(guests[1].side).toBe('bride');
-      expect(guests[2].side).toBe('bride'); // default to bride
+      expect(guests[2].side).toBe('');
     });
 
     it('normalizes dietary field', () => {
@@ -91,7 +125,7 @@ describe('excelImport', () => {
       expect(guests[1].dietary).toBe('vegan');
       expect(guests[2].dietary).toBe('non-veg');
       expect(guests[3].dietary).toBe('vegetarian');
-      expect(guests[4].dietary).toBe('vegetarian'); // default
+      expect(guests[4].dietary).toBe('');
     });
 
     it('parses tags from comma/semicolon separated string', () => {
@@ -108,12 +142,68 @@ describe('excelImport', () => {
       expect(guests[0].tags).toEqual([]);
     });
 
+    it('does not let full name overwrite explicitly mapped names', () => {
+      const rows = [{ Name: 'Asha Patel', First: 'Ashaben', Last: 'Patel-Shah' }];
+      const guests = mapRowsToGuests(rows, {
+        Name: '_fullName',
+        First: 'firstName',
+        Last: 'lastName',
+      });
+      expect(guests[0]).toMatchObject({ firstName: 'Ashaben', lastName: 'Patel-Shah' });
+    });
+
+    it('normalizes plus-one values and deduplicates tags', () => {
+      const guests = mapRowsToGuests(
+        [{ Plus: 'YES', Tags: 'VIP, VIP; Elderly' }],
+        { Plus: 'plusOne', Tags: '_tags' },
+      );
+      expect(guests[0].plusOne).toBe(true);
+      expect(guests[0].tags).toEqual(['VIP', 'Elderly']);
+    });
+
     it('handles missing row values gracefully', () => {
       const rows = [{}];
       const mapping = { 'First Name': 'firstName', 'Last Name': 'lastName' };
       const guests = mapRowsToGuests(rows, mapping);
       expect(guests[0].firstName).toBe('');
       expect(guests[0].lastName).toBe('');
+    });
+
+    describe('validateColumnMapping', () => {
+      it('requires a usable name column', () => {
+        expect(validateColumnMapping({ Email: 'email' })).toContain(
+          'Map a First Name or Full Name column before continuing.',
+        );
+      });
+
+      it('rejects duplicate target fields', () => {
+        expect(validateColumnMapping({ First: 'firstName', Preferred: 'firstName' })[0])
+          .toContain('only be mapped once');
+      });
+
+      it('accepts a full-name mapping', () => {
+        expect(validateColumnMapping({ Name: '_fullName', Email: 'email' })).toEqual([]);
+      });
+    });
+
+    describe('analyzeGuestImport', () => {
+      it('separates invalid and duplicate rows while preserving source indexes', () => {
+        const analysis = analyzeGuestImport(
+          [
+            { Name: '' },
+            { Name: 'Asha Patel', Email: 'asha@example.com' },
+            { Name: 'Dev Shah', Email: 'dev@example.com' },
+            { Name: 'Asha Duplicate', Email: 'ASHA@example.com' },
+          ],
+          { Name: '_fullName', Email: 'email' },
+          [],
+        );
+        expect(analysis.invalidRows).toEqual([
+          { index: 0, reasons: ['Missing first or full name'] },
+        ]);
+        expect(analysis.duplicates).toHaveLength(1);
+        expect(analysis.duplicates[0].index).toBe(3);
+      });
     });
   });
 
@@ -151,7 +241,7 @@ describe('excelImport', () => {
     });
 
     it('detects duplicate by phone match', () => {
-      const incoming = [{ firstName: 'Someone', lastName: 'Else', phone: '5551234' }];
+      const incoming = [{ firstName: 'Someone', lastName: 'Else', phone: '(555) 1234' }];
       const dupes = findDuplicates(existing, incoming);
       expect(dupes).toHaveLength(1);
     });

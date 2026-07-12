@@ -79,7 +79,7 @@ function FeatureTile({ feature, index, revealed, isOpen, onToggle }) {
   return (
     <div
       style={{ transitionDelay: revealed ? `${index * 70}ms` : '0ms' }}
-      className={`group rounded-2xl sm:rounded-[1.25rem] border bg-white p-5 sm:p-7 shadow-card transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+      className={`group min-h-[9.5rem] rounded-2xl sm:min-h-[11rem] sm:rounded-[1.25rem] border bg-white p-5 sm:p-7 shadow-card transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
         revealed ? 'translate-y-0 opacity-100 blur-0' : 'translate-y-8 opacity-0 blur-[6px]'
       } ${
         isOpen

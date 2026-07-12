@@ -14,9 +14,14 @@ const DEFAULT_COLUMN_MAP = {
   'phone': 'phone',
   'mobile': 'phone',
   'cell': 'phone',
+  'telephone': 'phone',
+  'phone number': 'phone',
   'family': 'familyName',
   'family name': 'familyName',
+  'household': 'familyName',
   'side': 'side',
+  'bride or groom': 'side',
+  'bride/groom': 'side',
   'relation': 'relation',
   'relationship': 'relation',
   'dietary': 'dietary',
@@ -24,8 +29,54 @@ const DEFAULT_COLUMN_MAP = {
   'food': 'dietary',
   'veg/non-veg': 'dietary',
   'notes': 'notes',
+  'comments': 'notes',
   'tags': '_tags',
+  'plus one': 'plusOne',
+  'plus one?': 'plusOne',
+  'plusone': 'plusOne',
 };
+
+const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_FILE_PATTERN = /\.(xlsx|xls|csv)$/i;
+
+function hasValue(value) {
+  return value !== null && value !== undefined && String(value).trim() !== '';
+}
+
+function uniqueHeaders(headerRow) {
+  const seen = new Map();
+  return headerRow.map((header, index) => {
+    const base = String(header ?? '').replace(/^\uFEFF/, '').trim() || `Column ${index + 1}`;
+    const count = (seen.get(base.toLowerCase()) || 0) + 1;
+    seen.set(base.toLowerCase(), count);
+    return count === 1 ? base : `${base} (${count})`;
+  });
+}
+
+export function parseRawGuestData(rawData) {
+  const rows = (rawData || []).filter((row) => Array.isArray(row));
+  const headerIndex = rows.findIndex((row) => row.some(hasValue));
+  if (headerIndex < 0) {
+    throw new Error('The file is empty');
+  }
+
+  const headers = uniqueHeaders(rows[headerIndex]);
+  const dataRows = rows
+    .slice(headerIndex + 1)
+    .filter((row) => row.some(hasValue))
+    .map((row) => Object.fromEntries(
+      headers.map((header, index) => [
+        header,
+        row[index] !== undefined && row[index] !== null ? String(row[index]).trim() : '',
+      ]),
+    ));
+
+  if (dataRows.length === 0) {
+    throw new Error('File must include at least one guest row below the headers');
+  }
+
+  return { headers, rows: dataRows, rawData: rows };
+}
 
 /**
  * Parse an Excel or CSV file into an array of row objects.
@@ -33,30 +84,23 @@ const DEFAULT_COLUMN_MAP = {
  */
 export function parseFile(file) {
   return new Promise((resolve, reject) => {
+    if (!file?.name || !ALLOWED_FILE_PATTERN.test(file.name)) {
+      reject(new Error('Choose an Excel or CSV file (.xlsx, .xls, or .csv)'));
+      return;
+    }
+    if (file.size > MAX_IMPORT_FILE_SIZE) {
+      reject(new Error('This file is larger than 10 MB. Split it into smaller files and try again.'));
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const workbook = XLSX.read(e.target.result, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-
-        if (rawData.length < 2) {
-          return reject(new Error('File must have a header row and at least one data row'));
-        }
-
-        const headers = rawData[0].map((h) => String(h || '').trim());
-        const rows = rawData.slice(1)
-          .filter((row) => row.some((cell) => cell !== null && cell !== undefined && cell !== ''))
-          .map((row) => {
-            const obj = {};
-            headers.forEach((h, i) => {
-              obj[h] = row[i] !== undefined ? String(row[i]).trim() : '';
-            });
-            return obj;
-          });
-
-        resolve({ headers, rows, rawData });
+        const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        resolve(parseRawGuestData(rawData));
       } catch (err) {
         reject(new Error('Failed to parse file: ' + err.message));
       }
@@ -73,7 +117,7 @@ export function parseFile(file) {
 export function autoMapColumns(headers) {
   const mapping = {};
   headers.forEach((header) => {
-    const key = header.toLowerCase().trim();
+    const key = header.replace(/^\uFEFF/, '').toLowerCase().trim();
     if (DEFAULT_COLUMN_MAP[key]) {
       mapping[header] = DEFAULT_COLUMN_MAP[key];
     }
@@ -87,32 +131,91 @@ export function autoMapColumns(headers) {
 export function mapRowsToGuests(rows, columnMapping) {
   return rows.map((row) => {
     const guest = {};
+    let fullName = '';
+    let rawTags = '';
 
     Object.entries(columnMapping).forEach(([header, field]) => {
-      const value = row[header] || '';
+      const value = String(row[header] ?? '').trim();
 
       if (field === '_fullName') {
-        // Split "First Last" into firstName + lastName
-        const parts = value.split(/\s+/);
-        guest.firstName = parts[0] || '';
-        guest.lastName = parts.slice(1).join(' ') || '';
+        fullName = value;
       } else if (field === '_tags') {
-        guest.tags = value.split(/[,;]/).map((t) => t.trim()).filter(Boolean);
+        rawTags = value;
       } else if (field === 'side') {
-        guest.side = value.toLowerCase().includes('groom') ? 'groom' : 'bride';
+        const lower = value.toLowerCase();
+        if (/(groom|ladka|var)/.test(lower)) guest.side = 'groom';
+        else if (/(bride|ladki|vadhu)/.test(lower)) guest.side = 'bride';
+        else guest.side = '';
       } else if (field === 'dietary') {
         const lower = value.toLowerCase();
         if (lower.includes('jain')) guest.dietary = 'jain';
         else if (lower.includes('vegan')) guest.dietary = 'vegan';
-        else if (lower.includes('non')) guest.dietary = 'non-veg';
-        else guest.dietary = 'vegetarian';
+        else if (/(non|meat|chicken)/.test(lower)) guest.dietary = 'non-veg';
+        else if (/(veg|vegetarian)/.test(lower)) guest.dietary = 'vegetarian';
+        else guest.dietary = '';
+      } else if (field === 'plusOne') {
+        guest.plusOne = /^(yes|y|true|1)$/i.test(value);
       } else {
         guest[field] = value;
       }
     });
 
+    if (fullName) {
+      const parts = fullName.split(/\s+/).filter(Boolean);
+      if (!guest.firstName) guest.firstName = parts[0] || '';
+      if (!guest.lastName) guest.lastName = parts.slice(1).join(' ');
+    }
+    guest.firstName = String(guest.firstName || '').trim();
+    guest.lastName = String(guest.lastName || '').trim();
+    if (rawTags || Object.values(columnMapping).includes('_tags')) {
+      guest.tags = [...new Set(rawTags.split(/[,;]/).map((tag) => tag.trim()).filter(Boolean))];
+    }
+
     return guest;
   });
+}
+
+export function validateColumnMapping(columnMapping) {
+  const fields = Object.values(columnMapping).filter(Boolean);
+  const errors = [];
+  if (!fields.includes('firstName') && !fields.includes('_fullName')) {
+    errors.push('Map a First Name or Full Name column before continuing.');
+  }
+
+  const duplicates = fields.filter((field, index) => fields.indexOf(field) !== index);
+  if (duplicates.length > 0) {
+    const labels = [...new Set(duplicates)].map((field) => field.replace(/^_/, '')).join(', ');
+    errors.push(`Each guest field can only be mapped once. Check: ${labels}.`);
+  }
+  return errors;
+}
+
+export function analyzeGuestImport(rows, columnMapping, existingGuests = []) {
+  const mappedGuests = mapRowsToGuests(rows, columnMapping);
+  const invalidRows = mappedGuests
+    .map((guest, index) => ({
+      index,
+      reasons: guest.firstName ? [] : ['Missing first or full name'],
+    }))
+    .filter((entry) => entry.reasons.length > 0);
+  const invalidIndices = new Set(invalidRows.map((entry) => entry.index));
+  const validEntries = mappedGuests
+    .map((guest, index) => ({ guest, index }))
+    .filter(({ index }) => !invalidIndices.has(index));
+  const duplicateMatches = findDuplicates(
+    existingGuests,
+    validEntries.map(({ guest }) => guest),
+  );
+  const duplicates = duplicateMatches.map((duplicate) => ({
+    ...duplicate,
+    index: validEntries[duplicate.index].index,
+  }));
+
+  return {
+    mappedGuests,
+    invalidRows,
+    duplicates,
+  };
 }
 
 /**
@@ -135,7 +238,7 @@ export function findDuplicates(existingGuests, newGuests) {
       norm(a.familyName) !== '' &&
       norm(a.familyName) === norm(b.familyName);
     const emailMatch = b.email && norm(a.email) === norm(b.email);
-    const phoneMatch = b.phone && a.phone === b.phone;
+    const phoneMatch = b.phone && norm(a.phone).replace(/\D/g, '') === norm(b.phone).replace(/\D/g, '');
     return nameMatch || emailMatch || phoneMatch;
   };
 

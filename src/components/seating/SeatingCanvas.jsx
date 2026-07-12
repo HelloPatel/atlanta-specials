@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor, pointerWithin } from '@dnd-kit/core';
+import { DndContext, DragOverlay, KeyboardSensor, useSensor, useSensors, PointerSensor, pointerWithin } from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { QRCodeSVG } from 'qrcode.react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToGuests, addGuest } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
-import { subscribeToSeating, saveSeating } from '../../services/seatingService';
+import { publishSeating, subscribeToSeating, saveSeating } from '../../services/seatingService';
 import { Button, Modal } from '../ui';
 import { useToast } from '../ui/Toast';
-import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2, Printer, Music, Mic, Wine, Gift, Cake, Camera, DoorOpen, CircleDot } from 'lucide-react';
+import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2, Download, Music, Mic, Wine, Gift, Cake, Camera, DoorOpen, CircleDot } from 'lucide-react';
 import { TABLE_DEFAULTS, TABLE_PRESETS } from '../../config/constants';
 import TableComponent from './Table';
 import GuestSidebar from './GuestSidebar';
@@ -19,6 +20,11 @@ import { loadFloorPlan, FLOOR_PLAN_ACCEPT } from './floorPlanImport';
 import { itemBox, resolveNoOverlap } from './seatingCollision';
 import { isIndividualSeat } from './seatingSeat';
 import TableDetailModal from './TableDetailModal';
+import {
+  createQuickTableConfigs,
+  parseSeatingText,
+  parseSpreadsheetRows,
+} from './seatingLayoutImport';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -42,7 +48,7 @@ const ZONE_PRESETS = [
 
 
 export default function SeatingCanvas() {
-  const { activeWedding } = useWedding();
+  const { activeWedding, canEdit } = useWedding();
   const toast = useToast();
   const [guests, setGuests] = useState([]);
   const [events, setEvents] = useState([]);
@@ -66,6 +72,7 @@ export default function SeatingCanvas() {
   const [filterFamily, setFilterFamily] = useState('all');
   const [hasChanges, setHasChanges] = useState(false);
   const [saveState, setSaveState] = useState('idle'); // idle | saving | saved
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [copiedFinderLink, setCopiedFinderLink] = useState(false);
   const [undoStack, setUndoStack] = useState([]);
   const [detailTableId, setDetailTableId] = useState(null);
@@ -74,10 +81,12 @@ export default function SeatingCanvas() {
   const shouldFitRef = useRef(false);
   const fittedEventRef = useRef(null);
   const pendingScrollRef = useRef(null);
+  const publishedEventRef = useRef(null);
 
   // Only initialize DnD sensors on desktop — avoids @dnd-kit issues on iOS Safari
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   // Subscribe to data
@@ -100,8 +109,15 @@ export default function SeatingCanvas() {
       setZones(data.zones || []);
       setVenueImage(data.venueImage || null);
       setVenueOpacity(data.venueOpacity !== undefined ? data.venueOpacity : 0.3);
+      if (canEdit && publishedEventRef.current !== selectedEventId) {
+        publishedEventRef.current = selectedEventId;
+        publishSeating(activeWedding.id, selectedEventId, data).catch((error) => {
+          publishedEventRef.current = null;
+          console.error('Failed to publish minimized seating data:', error);
+        });
+      }
     });
-  }, [activeWedding, selectedEventId]);
+  }, [activeWedding, canEdit, selectedEventId]);
 
   // Compute assigned/unassigned guests
   const assignedGuestIds = useMemo(() => {
@@ -242,24 +258,29 @@ export default function SeatingCanvas() {
     toast.success('Seating chart exported');
   }, [tables, guests, unassignedGuests, selectedEventId, selectedEvent, toast]);
 
-  const handleScreenshot = useCallback(async () => {
-    if (!canvasScrollRef.current) return;
+  const handleDownloadPdf = useCallback(async () => {
+    if (tables.length === 0) return;
+    setIsDownloadingPdf(true);
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(canvasScrollRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2,
-        logging: false,
+      const { generateSeatingChartPDF } = await import('../print/pdfGenerators');
+      const doc = generateSeatingChartPDF(tables, zones, guests, {
+        eventName: selectedEvent?.name || '',
+        weddingName: activeWedding?.name || activeWedding?.coupleNames || '',
+        showDietary: true,
       });
-      const link = document.createElement('a');
-      link.download = `seating-chart-${selectedEvent?.name || 'layout'}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      toast.success('Screenshot downloaded');
-    } catch (err) {
-      toast.error('Screenshot failed: ' + err.message);
+      const safeEventName = (selectedEvent?.name || 'seating-chart')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+      doc.save(`${safeEventName || 'seating-chart'}-seating.pdf`);
+      toast.success('Seating PDF downloaded');
+    } catch (error) {
+      console.error('Seating PDF generation failed:', error);
+      toast.error(`Could not create the seating PDF: ${error.message}`);
+    } finally {
+      setIsDownloadingPdf(false);
     }
-  }, [selectedEvent, toast]);
+  }, [activeWedding, guests, selectedEvent, tables, toast, zones]);
 
   const handleFocusTable = useCallback((tableId) => {
     const table = tables.find((item) => item.id === tableId);
@@ -684,7 +705,7 @@ export default function SeatingCanvas() {
         {/* Main canvas */}
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {/* Toolbar */}
-          <div className="no-print flex items-center gap-2 mb-3 flex-wrap toolbar-glass rounded-xl px-3 py-2">
+          <div className="no-print relative z-30 flex items-center gap-2 mb-3 flex-wrap overflow-visible toolbar-glass rounded-xl px-3 py-2">
             {/* Event selector */}
             <select
               value={selectedEventId || ''}
@@ -721,7 +742,7 @@ export default function SeatingCanvas() {
               <Button variant="outline" size="sm">
                 <Plus size={14} /> Zone ▾
               </Button>
-              <div className="hidden group-hover:block absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 w-44">
+              <div className="absolute left-0 top-full z-50 hidden w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg group-hover:block group-focus-within:block">
                 {ZONE_PRESETS.map((z) => {
                   const ZIcon = z.icon;
                   return (
@@ -772,11 +793,8 @@ export default function SeatingCanvas() {
               <FileSpreadsheet size={14} /> Export
             </Button>
 
-            <Button variant="outline" size="sm" onClick={handleScreenshot} disabled={tables.length === 0}>
-              <Image size={14} /> Screenshot
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => window.print()} disabled={tables.length === 0}>
-              <Printer size={14} /> Print
+            <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={tables.length === 0 || isDownloadingPdf}>
+              <Download size={14} /> {isDownloadingPdf ? 'Creating PDF' : 'Download PDF'}
             </Button>
 
             {/* Venue floor plan (image or PDF, auto-compressed) */}
@@ -863,7 +881,7 @@ export default function SeatingCanvas() {
             </div>
           )}
 
-          <div ref={canvasScrollRef} className="seating-print-area flex-1 rounded-2xl border border-gray-200/60 overflow-auto relative venue-canvas seating-scroll shadow-venue">
+          <div ref={canvasScrollRef} className="seating-print-area relative z-0 flex-1 rounded-2xl border border-gray-200/60 overflow-auto venue-canvas seating-scroll shadow-venue">
             {events.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
                 <p>Add events first to start seating</p>
@@ -1131,50 +1149,6 @@ export default function SeatingCanvas() {
   );
 }
 
-// Canonical zone types + aliases used when importing floor-plan rows.
-const ZONE_ALIASES = {
-  'dance floor': 'dance-floor', 'dancefloor': 'dance-floor', 'dance-floor': 'dance-floor', 'dance': 'dance-floor', 'floor': 'dance-floor',
-  'dj': 'dj', 'dj booth': 'dj', 'booth': 'dj',
-  'stage': 'stage', 'mandap': 'stage', 'riser': 'stage',
-  'bar': 'bar', 'cocktail bar': 'bar',
-  'gift': 'gifts', 'gifts': 'gifts', 'gift table': 'gifts', 'cards': 'gifts',
-  'cake': 'cake', 'cake table': 'cake',
-  'dessert': 'desserts', 'desserts': 'desserts', 'sweets': 'desserts',
-  'photo': 'photo', 'photo booth': 'photo', 'photobooth': 'photo',
-  'entrance': 'entrance', 'entry': 'entrance', 'door': 'entrance', 'doors': 'entrance',
-};
-
-// Convert an imported row into either a table config or a zone item.
-function rowToItem(name, typeRaw, cap, x, y, w, h) {
-  const label = String(name || '').trim();
-  if (!label) return null;
-  const num = (v) => {
-    const n = parseFloat(v);
-    return Number.isFinite(n) ? n : undefined;
-  };
-  const key = String(typeRaw || '').toLowerCase().trim();
-  const zoneType = ZONE_ALIASES[key];
-
-  if (zoneType) {
-    return {
-      __zone: true,
-      type: zoneType,
-      name: label,
-      x: num(x), y: num(y),
-      width: num(w), height: num(h),
-    };
-  }
-
-  const shape = TABLE_DEFAULTS[key] ? key : 'round';
-  return {
-    name: label,
-    shape,
-    capacity: parseInt(cap, 10) || 10,
-    x: num(x), y: num(y),
-    width: num(w), height: num(h),
-  };
-}
-
 function ImportLayoutPanel({ onImport, onClose, existingCount }) {
   const [mode, setMode] = useState('quick'); // 'quick' | 'excel' | 'text'
   const [quickCount, setQuickCount] = useState(10);
@@ -1183,14 +1157,16 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
   const [textInput, setTextInput] = useState('');
   const [fileData, setFileData] = useState(null);
   const [preview, setPreview] = useState([]);
+  const [parseError, setParseError] = useState('');
 
   // Quick-add: generate N tables of same shape
   const handleQuickAdd = () => {
-    const configs = Array.from({ length: quickCount }, (_, i) => ({
-      name: `Table ${existingCount + i + 1}`,
+    const configs = createQuickTableConfigs({
+      count: quickCount,
       shape: quickShape,
       capacity: quickCapacity,
-    }));
+      existingCount,
+    });
     onImport(configs);
   };
 
@@ -1199,15 +1175,9 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
   //   "Name, Type, Seats, X, Y[, W, H]"               (with coordinates)
   // Zone rows (dance floor, stage, dj, bar, gifts…) are auto-detected by type.
   const handleTextParse = () => {
-    const lines = textInput.trim().split('\n').filter(Boolean);
-    const configs = lines
-      .filter((line) => !/^\s*(name|table)\s*,/i.test(line)) // drop header row
-      .map((line) => {
-        const parts = line.split(/[,\t]/).map((s) => s.trim());
-        return rowToItem(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6]);
-      })
-      .filter(Boolean);
+    const configs = parseSeatingText(textInput);
     setPreview(configs);
+    setParseError(configs.length === 0 ? 'No valid tables or zones were found. Check the example format and try again.' : '');
   };
 
   // Handle Excel/CSV file. Detects columns by header when present:
@@ -1222,42 +1192,15 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
       const wb = XLSX.read(data);
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      if (!rows.length) { setPreview([]); return; }
-
-      // Detect a header row and map columns by name.
-      const header = rows[0].map((c) => String(c || '').toLowerCase().trim());
-      const hasHeader = header.some((c) => /name|table|shape|type|seat|capacity|^x$|^y$/.test(c));
-      const col = (names) => header.findIndex((h) => names.some((n) => h === n || h.includes(n)));
-      const idx = hasHeader
-        ? {
-            name: col(['name', 'table', 'label']),
-            shape: col(['shape', 'type']),
-            cap: col(['seat', 'capacity', 'guests']),
-            x: header.indexOf('x'),
-            y: header.indexOf('y'),
-            w: col(['width', 'w']),
-            h: col(['height', 'h']),
-          }
-        : { name: 0, shape: 1, cap: 2, x: 3, y: 4, w: 5, h: 6 };
-
-      const body = hasHeader ? rows.slice(1) : rows;
-      const configs = body
-        .filter((r) => r && r[idx.name] != null && String(r[idx.name]).trim())
-        .map((r) =>
-          rowToItem(
-            r[idx.name], r[idx.shape], r[idx.cap],
-            idx.x >= 0 ? r[idx.x] : undefined,
-            idx.y >= 0 ? r[idx.y] : undefined,
-            idx.w >= 0 ? r[idx.w] : undefined,
-            idx.h >= 0 ? r[idx.h] : undefined,
-          )
-        )
-        .filter(Boolean);
+      const configs = parseSpreadsheetRows(rows);
 
       setFileData(file.name);
       setPreview(configs);
+      setParseError(configs.length === 0 ? 'This file does not contain any valid tables or zones.' : '');
     } catch (err) {
       console.error('File parse error:', err);
+      setPreview([]);
+      setParseError('We could not read this file. Use a valid Excel or CSV file and try again.');
     }
   };
 
@@ -1272,7 +1215,7 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
         ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => { setMode(id); setPreview([]); }}
+            onClick={() => { setMode(id); setPreview([]); setParseError(''); }}
             className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium transition-colors ${
               mode === id ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -1326,7 +1269,7 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
           <p className="text-xs text-gray-400">Format: <code className="bg-gray-100 px-1 rounded">Name, Type, Seats, X, Y</code> — X/Y optional. Zones (dance floor, stage, DJ, bar, gifts…) are detected automatically.</p>
           <textarea
             value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
+            onChange={(e) => { setTextInput(e.target.value); setParseError(''); }}
             placeholder={`Head Table, head-table, 12, 700, 60\nTable 1, round, 10, 100, 250\nTable 2, round, 10, 320, 250\nDance Floor, dance-floor, , 620, 500\nDJ Booth, dj, , 900, 780`}
             rows={6}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono"
@@ -1363,6 +1306,12 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
             </Button>
           )}
         </div>
+      )}
+
+      {parseError && (
+        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          {parseError}
+        </p>
       )}
 
       {/* Preview */}

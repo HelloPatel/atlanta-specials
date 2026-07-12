@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../ui';
 import { ArrowRight, ArrowLeft, Users, X, ArrowLeftRight } from 'lucide-react';
 import { isIndividualSeat } from './seatingSeat';
+import { formatFamilyLabel } from './seatingRules';
 
 const DIETARY_ICONS = {
   vegetarian: '🥬',
@@ -124,7 +125,7 @@ function TableColumn({ table, list, direction, onMove, onUnseat }) {
           <div key={family}>
             {family !== '__individual' && (
               <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-                {family} family
+                {formatFamilyLabel(family)}
               </div>
             )}
             <div className="space-y-1">

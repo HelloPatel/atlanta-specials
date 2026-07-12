@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { CalendarDays, Clock3, ExternalLink, Gift, Heart, MapPin, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -53,46 +53,74 @@ function hexToRgba(hex, alpha) {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-function getHeroPatternStyle(pattern, theme) {
-  switch (pattern) {
-    case 'mandala':
-      return {
-        backgroundImage: `
-          radial-gradient(circle at center, ${hexToRgba(theme.accent, 0.22)} 0, ${hexToRgba(theme.accent, 0.22)} 10%, transparent 10%, transparent 28%),
-          radial-gradient(circle at center, transparent 0, transparent 38%, ${hexToRgba('#ffffff', 0.12)} 38%, ${hexToRgba('#ffffff', 0.12)} 40%, transparent 40%)
-        `,
-        backgroundSize: '220px 220px',
-        backgroundPosition: 'center',
-      };
-    case 'floral':
-      return {
-        backgroundImage: `
-          radial-gradient(circle at 20% 20%, ${hexToRgba('#ffffff', 0.16)} 0, ${hexToRgba('#ffffff', 0.16)} 10%, transparent 10%),
-          radial-gradient(circle at 80% 30%, ${hexToRgba(theme.accent, 0.18)} 0, ${hexToRgba(theme.accent, 0.18)} 12%, transparent 12%),
-          radial-gradient(circle at 30% 80%, ${hexToRgba(theme.accent, 0.14)} 0, ${hexToRgba(theme.accent, 0.14)} 9%, transparent 9%)
-        `,
-        backgroundSize: '180px 180px',
-        backgroundPosition: 'center',
-      };
-    case 'geometric':
-      return {
-        backgroundImage: `linear-gradient(135deg, ${hexToRgba('#ffffff', 0.1)} 25%, transparent 25%, transparent 50%, ${hexToRgba('#ffffff', 0.1)} 50%, ${hexToRgba('#ffffff', 0.1)} 75%, transparent 75%, transparent)`,
-        backgroundSize: '72px 72px',
-        backgroundPosition: 'center',
-      };
-    case 'paisley':
-      return {
-        backgroundImage: `
-          radial-gradient(circle at 25% 30%, ${hexToRgba(theme.accent, 0.18)} 0, ${hexToRgba(theme.accent, 0.18)} 10%, transparent 11%),
-          radial-gradient(circle at 30% 35%, transparent 0, transparent 12%, ${hexToRgba('#ffffff', 0.12)} 12%, ${hexToRgba('#ffffff', 0.12)} 16%, transparent 16%),
-          radial-gradient(circle at 72% 68%, ${hexToRgba('#ffffff', 0.12)} 0, ${hexToRgba('#ffffff', 0.12)} 8%, transparent 9%)
-        `,
-        backgroundSize: '180px 180px',
-        backgroundPosition: 'center',
-      };
-    default:
-      return null;
+function HeroPatternOverlay({ pattern, theme }) {
+  const patternId = `website-${pattern}-pattern-${useId().replace(/:/g, '')}`;
+
+  if (!pattern || pattern === 'none') return null;
+
+  if (pattern === 'mandala') {
+    return (
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -right-20 -top-24 opacity-70">
+          <MandalaBackground color={theme.accent} size={420} opacity={0.12} />
+        </div>
+        <div className="absolute -bottom-36 -left-28 opacity-50">
+          <MandalaBackground color="#ffffff" size={360} opacity={0.09} />
+        </div>
+      </div>
+    );
   }
+
+  if (pattern === 'geometric') {
+    return (
+      <div
+        className="pointer-events-none absolute inset-0 opacity-50"
+        style={{
+          backgroundImage: `
+            linear-gradient(30deg, transparent 24%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.12) 26%, transparent 27%, transparent 74%, rgba(255,255,255,0.12) 75%, rgba(255,255,255,0.12) 76%, transparent 77%),
+            linear-gradient(150deg, transparent 24%, ${hexToRgba(theme.accent, 0.16)} 25%, ${hexToRgba(theme.accent, 0.16)} 26%, transparent 27%, transparent 74%, ${hexToRgba(theme.accent, 0.16)} 75%, ${hexToRgba(theme.accent, 0.16)} 76%, transparent 77%)
+          `,
+          backgroundSize: '88px 152px',
+        }}
+      />
+    );
+  }
+
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 h-full w-full opacity-60"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <defs>
+        {pattern === 'floral' ? (
+          <pattern id={patternId} width="180" height="180" patternUnits="userSpaceOnUse">
+            <g transform="translate(45 45)" fill="none" stroke={theme.accent} strokeWidth="1.4" opacity="0.45">
+              {[0, 45, 90, 135].map((rotation) => (
+                <ellipse key={rotation} cx="0" cy="-13" rx="6" ry="14" transform={`rotate(${rotation})`} />
+              ))}
+              <circle r="4" fill={theme.accent} fillOpacity="0.35" />
+              <path d="M10 14 C28 22, 30 39, 18 52 M18 35 C28 31, 35 32, 42 38" />
+            </g>
+            <g transform="translate(137 132) scale(.7)" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.32">
+              {[0, 60, 120].map((rotation) => (
+                <ellipse key={rotation} cx="0" cy="-12" rx="5" ry="12" transform={`rotate(${rotation})`} />
+              ))}
+            </g>
+          </pattern>
+        ) : (
+          <pattern id={patternId} width="170" height="170" patternUnits="userSpaceOnUse">
+            <g transform="translate(28 22) rotate(-12)" fill="none" stroke={theme.accent} strokeWidth="1.4" opacity="0.42">
+              <path d="M52 8 C24 18, 8 44, 14 73 C20 101, 55 113, 76 94 C93 79, 87 51, 67 46 C50 42, 39 57, 44 70 C48 80, 62 83, 69 74" />
+              <path d="M52 20 C34 29, 24 47, 28 66 C32 82, 49 91, 61 82" opacity="0.7" />
+              <circle cx="54" cy="64" r="4" fill={theme.accent} fillOpacity="0.35" />
+            </g>
+          </pattern>
+        )}
+      </defs>
+      <rect width="100%" height="100%" fill={`url(#${patternId})`} />
+    </svg>
+  );
 }
 
 function useThemeFont(theme) {
@@ -196,7 +224,12 @@ export default function WeddingWebsitePreview({
     primary: config.websiteCustomColors?.primary || baseTheme.primary,
     accent: config.websiteCustomColors?.accent || baseTheme.accent,
     background: config.websiteCustomColors?.background || baseTheme.background,
-    heroOverlay: `linear-gradient(135deg, ${hexToRgba(baseTheme.text, 0.78)}, ${hexToRgba(config.websiteCustomColors?.primary || baseTheme.primary, 0.45)})`,
+    heroOverlay: config.websiteCustomColors?.primary
+      ? `linear-gradient(135deg, ${hexToRgba(baseTheme.text, 0.74)}, ${hexToRgba(config.websiteCustomColors.primary, 0.5)})`
+      : baseTheme.heroOverlay,
+    heroBackground: config.websiteCustomColors?.primary
+      ? `radial-gradient(circle at 78% 16%, ${hexToRgba(config.websiteCustomColors?.accent || baseTheme.accent, 0.5)}, transparent 34%), linear-gradient(135deg, ${config.websiteCustomColors.primary}, ${baseTheme.text})`
+      : baseTheme.heroBackground,
   }), [baseTheme, config.websiteCustomColors]);
   const coupleName = getCoupleDisplayName(wedding);
   const heroDate = formatDisplayDate(config.websiteHero?.date || wedding?.weddingDate);
@@ -204,11 +237,6 @@ export default function WeddingWebsitePreview({
     const selectedIds = new Set(config.websiteEventIds || []);
     return events.filter((event) => selectedIds.has(event.id));
   }, [config.websiteEventIds, events]);
-  const heroPatternStyle = useMemo(
-    () => getHeroPatternStyle(config.websiteHero?.pattern, theme),
-    [config.websiteHero?.pattern, theme]
-  );
-
   useThemeFont(theme);
 
   return (
@@ -222,30 +250,27 @@ export default function WeddingWebsitePreview({
           style={{ backgroundColor: theme.surface, color: theme.primary }}
         >
           <Heart size={16} />
-          Previewing a draft website. Publish when you're ready to share it with guests.
+          Draft preview. Only you can see this version.
         </div>
       )}
 
       <section
-        className="relative isolate flex min-h-[620px] items-center overflow-hidden px-6 py-16 md:px-10 lg:px-16"
+        className={`relative isolate flex items-center overflow-hidden ${
+          previewMode
+            ? 'min-h-[560px] px-8 py-12'
+            : 'min-h-[620px] px-6 py-16 md:px-10 lg:px-16'
+        }`}
         style={{
           backgroundColor: theme.primary,
-          backgroundImage: `${theme.heroOverlay}, ${
-            config.websiteHero?.backgroundImage
-              ? `url(${config.websiteHero.backgroundImage})`
-              : `radial-gradient(circle at top, ${theme.accent}66, transparent 42%), linear-gradient(135deg, ${theme.primary}, ${theme.text})`
-          }`,
+          backgroundImage: config.websiteHero?.backgroundImage
+            ? `${theme.heroOverlay}, url(${config.websiteHero.backgroundImage})`
+            : theme.heroBackground,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
         <div className="absolute inset-0 bg-black/5" />
-        {heroPatternStyle && (
-          <div
-            className="absolute inset-0 opacity-90"
-            style={heroPatternStyle}
-          />
-        )}
+        <HeroPatternOverlay pattern={config.websiteHero?.pattern} theme={theme} />
         {/* Ornamental decorations for Indian themes */}
         {theme.ornaments && (
           <>
@@ -255,20 +280,22 @@ export default function WeddingWebsitePreview({
             </div>
           </>
         )}
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 lg:flex-row lg:items-end lg:justify-between">
+        <div className={`relative z-10 mx-auto flex w-full max-w-6xl flex-col ${
+          previewMode ? 'gap-8' : 'gap-12 lg:flex-row lg:items-end lg:justify-between'
+        }`}>
           <div className="max-w-3xl text-white">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/90 backdrop-blur">
               <Heart size={14} />
-              Wedding Celebration
+              We're getting married
             </div>
-            <h1 className="text-5xl font-semibold leading-none md:text-7xl" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
+            <h1
+              className={`font-semibold leading-[0.95] tracking-[-0.03em] ${
+                previewMode ? 'text-5xl md:text-6xl' : 'text-5xl md:text-7xl'
+              }`}
+              style={{ fontFamily: theme.fontFamily }}
+            >
               {coupleName}
             </h1>
-            {heroDate && (
-              <p className="mt-6 text-lg text-white/90 md:text-2xl">
-                {heroDate}
-              </p>
-            )}
             <CountdownTimer targetDate={config.websiteHero?.date || wedding?.weddingDate} theme={theme} />
             {config.websiteHero?.tagline && (
               <p className="mt-8 max-w-2xl text-base leading-8 text-white/85 md:text-xl">
@@ -296,16 +323,18 @@ export default function WeddingWebsitePreview({
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
-            <div className="rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur">
+          <div className={`grid w-full gap-4 ${
+            previewMode ? 'grid-cols-1 sm:grid-cols-2' : 'sm:grid-cols-2 lg:max-w-md'
+          }`}>
+            <div className="min-w-0 rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur">
               <CalendarDays size={18} className="mb-3 text-white/80" />
-              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Celebration Date</p>
-              <p className="mt-2 text-lg font-medium">{heroDate || 'Details coming soon'}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">When</p>
+              <p className="mt-2 text-base font-medium leading-6 md:text-lg">{heroDate || 'Date coming soon'}</p>
             </div>
-            <div className="rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur">
+            <div className="min-w-0 rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur">
               <MapPin size={18} className="mb-3 text-white/80" />
-              <p className="text-xs uppercase tracking-[0.3em] text-white/70">Location</p>
-              <p className="mt-2 text-lg font-medium">{wedding?.city || wedding?.venue || 'Venue details to come'}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">Where</p>
+              <p className="mt-2 text-base font-medium leading-6 md:text-lg">{wedding?.city || wedding?.venue || 'Location coming soon'}</p>
             </div>
           </div>
         </div>

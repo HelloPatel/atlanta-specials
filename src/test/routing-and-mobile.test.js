@@ -1,6 +1,9 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { describe, it, expect } from 'vitest';
+import {
+  assignGuestWithoutDragging,
+  getMobileLayoutBounds,
+  getNextLockedTablePosition,
+} from '../components/seating/mobileSeating';
 
 // We'll test the slug resolution logic in isolation since the full components
 // require complex Firebase/context setup
@@ -46,7 +49,7 @@ describe('Slug-based routing', () => {
   });
 });
 
-describe('Mobile seating view-only behavior', () => {
+describe('Mobile seating behavior', () => {
   it('tables should have no drag handler on mobile', () => {
     // The mobile view wraps tables in plain divs with onClick only
     // No onMouseDown, no drag handlers
@@ -104,5 +107,39 @@ describe('Mobile seating view-only behavior', () => {
   it('empty table shows no-guests message', () => {
     const table = { id: 't1', name: 'Empty Table', capacity: 10, assignedGuests: [] };
     expect(table.assignedGuests.length).toBe(0);
+  });
+
+  it('moves guests between tables without changing table positions', () => {
+    const tables = [
+      { id: 't1', x: 100, y: 200, assignedGuests: ['g1'] },
+      { id: 't2', x: 400, y: 500, assignedGuests: [] },
+    ];
+
+    const result = assignGuestWithoutDragging(tables, 'g1', 't2');
+
+    expect(result[0].assignedGuests).toEqual([]);
+    expect(result[1].assignedGuests).toEqual(['g1']);
+    expect(result.map(({ x, y }) => ({ x, y }))).toEqual([
+      { x: 100, y: 200 },
+      { x: 400, y: 500 },
+    ]);
+  });
+
+  it('includes venue zones when fitting the mobile layout', () => {
+    const bounds = getMobileLayoutBounds(
+      [{ x: 20, y: 20, width: 100, height: 100 }],
+      [{ x: 900, y: 600, width: 300, height: 200 }],
+    );
+
+    expect(bounds).toEqual({ width: 1300, height: 880 });
+  });
+
+  it('places new mobile tables below the locked layout', () => {
+    const position = getNextLockedTablePosition(
+      [{ y: 100, height: 120 }],
+      [{ y: 500, height: 200 }],
+    );
+
+    expect(position).toEqual({ x: 80, y: 800 });
   });
 });

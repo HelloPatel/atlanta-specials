@@ -36,6 +36,7 @@ describe('websiteThemes', () => {
         expect(theme.fontFamily).toBeDefined();
         expect(theme.fontUrl).toBeDefined();
         expect(theme.heroOverlay).toBeDefined();
+        expect(theme.heroBackground).toBeDefined();
         expect(theme.name).toBeDefined();
         expect(theme.key).toBeDefined();
       });

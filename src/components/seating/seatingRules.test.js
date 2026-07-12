@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { evaluateSeatingRules, getGuestDisplayName, buildRuleDescription } from './seatingRules';
+import {
+  buildRuleDescription,
+  evaluateSeatingRules,
+  formatFamilyLabel,
+  getGuestDisplayName,
+} from './seatingRules';
 
 describe('seatingRules', () => {
   const makeGuest = (id, opts = {}) => ({
@@ -23,6 +28,17 @@ describe('seatingRules', () => {
     it('returns full name when both first and last exist', () => {
       expect(getGuestDisplayName({ firstName: 'Rushi', lastName: 'Patel' }))
         .toBe('Rushi Patel');
+    });
+
+    describe('formatFamilyLabel', () => {
+      it('adds family when the stored name does not include it', () => {
+        expect(formatFamilyLabel('Shah')).toBe('Shah family');
+      });
+
+      it('does not repeat family when the stored name already includes it', () => {
+        expect(formatFamilyLabel('Shah Family')).toBe('Shah Family');
+        expect(formatFamilyLabel('Shah family')).toBe('Shah family');
+      });
     });
 
     it('returns first name only when last is missing', () => {
@@ -76,6 +92,11 @@ describe('seatingRules', () => {
       const rule = { type: 'keep-together', familyName: 'Shah', guestIds: ['g1'] };
       const desc = buildRuleDescription(rule, guests);
       expect(desc).toContain('Shah family');
+    });
+
+    it('does not repeat family in family-based rules', () => {
+      const rule = { type: 'keep-together', familyName: 'Shah Family', guestIds: ['g1'] };
+      expect(buildRuleDescription(rule, guests)).not.toContain('Family family');
     });
   });
 
