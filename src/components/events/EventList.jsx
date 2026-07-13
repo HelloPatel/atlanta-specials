@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useWedding } from '../../contexts/WeddingContext';
-import { subscribeToEvents, addEvent, updateEvent, deleteEvent } from '../../services/eventService';
+import { subscribeToEvents, addEvent, updateEvent, deleteEvent, syncPublicEvents } from '../../services/eventService';
 import { subscribeToGuests } from '../../services/guestService';
 import { Button, Input, Modal, Badge, useToast } from '../ui';
 import { Plus, Edit3, Trash2, Calendar, Clock, MapPin, Users, Sparkles, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
@@ -24,20 +24,30 @@ function getEventColor(name) {
 }
 
 export default function EventList() {
-  const { activeWedding } = useWedding();
+  const { activeWedding, canEdit } = useWedding();
   const toast = useToast();
   const [events, setEvents] = useState([]);
   const [guests, setGuests] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
   const [prefill, setPrefill] = useState(null);
+  const syncedPublicEventsRef = useRef(null);
 
   useEffect(() => {
     if (!activeWedding) return;
-    const unsub1 = subscribeToEvents(activeWedding.id, setEvents);
+    const unsub1 = subscribeToEvents(activeWedding.id, (nextEvents) => {
+      setEvents(nextEvents);
+      if (canEdit && syncedPublicEventsRef.current !== activeWedding.id) {
+        syncedPublicEventsRef.current = activeWedding.id;
+        syncPublicEvents(activeWedding.id, nextEvents).catch((error) => {
+          syncedPublicEventsRef.current = null;
+          console.error('Failed to sync public events:', error);
+        });
+      }
+    });
     const unsub2 = subscribeToGuests(activeWedding.id, setGuests);
     return () => { unsub1(); unsub2(); };
-  }, [activeWedding]);
+  }, [activeWedding, canEdit]);
 
   const handleDelete = async (eventId) => {
     if (!confirm('Delete this event? Guest assignments will be lost.')) return;
@@ -56,8 +66,13 @@ export default function EventList() {
       { id: events[idx].id, order: newIdx },
       { id: events[newIdx].id, order: idx },
     ];
-    for (const u of updates) {
-      await updateEvent(activeWedding.id, u.id, { order: u.order });
+    try {
+      for (const u of updates) {
+        await updateEvent(activeWedding.id, u.id, { order: u.order });
+      }
+    } catch (err) {
+      console.error('Failed to reorder events:', err);
+      toast.error('Could not reorder events. Please try again.');
     }
   };
 
@@ -74,7 +89,7 @@ export default function EventList() {
           </p>
         </div>
         {events.length > 0 && (
-          <Button onClick={() => { setPrefill(null); setShowAdd(true); }} className="gap-1.5 flex-shrink-0" size="sm">
+          <Button aria-label="Add event" onClick={() => { setPrefill(null); setShowAdd(true); }} className="gap-1.5 flex-shrink-0" size="sm">
             <Plus size={16} /> <span className="hidden md:inline">Add Event</span><span className="md:hidden">Add</span>
           </Button>
         )}
@@ -176,19 +191,19 @@ export default function EventList() {
                       </div>
                       <div className="flex gap-1">
                         {idx > 0 && (
-                          <button onClick={() => handleReorder(idx, -1)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                          <button aria-label={`Move ${event.name} earlier`} onClick={() => handleReorder(idx, -1)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                             <ChevronUp size={15} />
                           </button>
                         )}
                         {idx < events.length - 1 && (
-                          <button onClick={() => handleReorder(idx, 1)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                          <button aria-label={`Move ${event.name} later`} onClick={() => handleReorder(idx, 1)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                             <ChevronDown size={15} />
                           </button>
                         )}
-                        <button onClick={() => setEditing(event)} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                        <button aria-label={`Edit ${event.name}`} onClick={() => setEditing(event)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                           <Edit3 size={15} />
                         </button>
-                        <button onClick={() => handleDelete(event.id)} className="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                        <button aria-label={`Delete ${event.name}`} onClick={() => handleDelete(event.id)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
                           <Trash2 size={15} />
                         </button>
                       </div>
@@ -196,7 +211,7 @@ export default function EventList() {
 
                     {/* Details row */}
                     {(event.date || event.startTime || event.venue) && (
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 md:pl-13">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600 md:pl-14">
                         {event.date && (
                           <span className="inline-flex items-center gap-1.5">
                             <Calendar size={13} className="text-gray-400" />
@@ -274,7 +289,10 @@ function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount }
 
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? 'Edit Event' : 'Add Event'} size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        onSubmit={handleSubmit}
+        className="min-w-0 space-y-4 [&_input]:min-w-0 [&_input]:max-w-full [&_input]:text-base sm:[&_input]:text-sm"
+      >
         {!isEdit && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Quick Pick</label>
@@ -301,11 +319,11 @@ function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount }
         )}
 
         <Input label="Event Name" value={form.name || ''} onChange={(e) => update('name', e.target.value)} required placeholder="e.g. Sangeet Night" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           <Input label="Date" type="date" value={form.date || ''} onChange={(e) => update('date', e.target.value)} />
-          <div className="grid grid-cols-2 gap-2">
-            <Input label="Start" type="time" value={form.startTime || ''} onChange={(e) => update('startTime', e.target.value)} />
-            <Input label="End" type="time" value={form.endTime || ''} onChange={(e) => update('endTime', e.target.value)} />
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input label="Start time" type="time" value={form.startTime || ''} onChange={(e) => update('startTime', e.target.value)} />
+            <Input label="End time" type="time" value={form.endTime || ''} onChange={(e) => update('endTime', e.target.value)} />
           </div>
         </div>
         <Input label="Venue" value={form.venue || ''} onChange={(e) => update('venue', e.target.value)} placeholder="Hotel ballroom, garden, etc." />

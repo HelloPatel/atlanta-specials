@@ -98,17 +98,27 @@ function QuestionFormModal({ open, question, onClose, onSave }) {
   const [section, setSection] = useState(question?.section || 'General');
   const [text, setText] = useState(question?.text || '');
   const [options, setOptions] = useState(question?.options?.join('\n') || '');
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     setSection(question?.section || 'General');
     setText(question?.text || '');
     setOptions(question?.options?.join('\n') || '');
+    setFormError('');
   }, [question]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     const nextOptions = options.split('\n').map((option) => option.trim()).filter(Boolean);
-    if (!text.trim() || nextOptions.length < 2) return;
+    if (!text.trim()) {
+      setFormError('Enter a question.');
+      return;
+    }
+    if (nextOptions.length < 2) {
+      setFormError('Add at least two answer options.');
+      return;
+    }
+    setFormError('');
 
     await onSave({
       ...question,
@@ -122,36 +132,40 @@ function QuestionFormModal({ open, question, onClose, onSave }) {
     <Modal open={open} onClose={onClose} title={question ? 'Edit question' : 'Add question'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Section</label>
+          <label htmlFor="bet-question-section" className="mb-1 block text-sm font-medium text-gray-700">Section</label>
           <input
+            id="bet-question-section"
             autoFocus
             value={section}
             onChange={(event) => setSection(event.target.value)}
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600"
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-base shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 sm:text-sm"
             placeholder="Reception"
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Question</label>
+          <label htmlFor="bet-question-text" className="mb-1 block text-sm font-medium text-gray-700">Question</label>
           <textarea
+            id="bet-question-text"
             value={text}
             onChange={(event) => setText(event.target.value)}
             rows={3}
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600"
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-base shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 sm:text-sm"
             placeholder="Who starts dancing first?"
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Options</label>
+          <label htmlFor="bet-question-options" className="mb-1 block text-sm font-medium text-gray-700">Options</label>
           <textarea
+            id="bet-question-options"
             value={options}
             onChange={(event) => setOptions(event.target.value)}
             rows={5}
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600"
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-base shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 sm:text-sm"
             placeholder={'Bride\nGroom\nBoth at once'}
           />
           <p className="mt-1 text-xs text-gray-500">Enter one option per line.</p>
         </div>
+        {formError && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
           <Button type="submit">{question ? 'Save changes' : 'Add question'}</Button>
@@ -373,6 +387,7 @@ function AdminBetsManager({ wedding }) {
                             </div>
                             <div className="flex gap-1">
                               <Button
+                                aria-label={`Edit ${question.text}`}
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => {
@@ -383,7 +398,7 @@ function AdminBetsManager({ wedding }) {
                               >
                                 <Pencil size={15} />
                               </Button>
-                              <Button size="sm" variant="ghost" onClick={() => handleDeleteQuestion(question.id)} disabled={!canEdit} className="text-red-600 hover:bg-red-50 hover:text-red-700">
+                              <Button aria-label={`Delete ${question.text}`} size="sm" variant="ghost" onClick={() => handleDeleteQuestion(question.id)} disabled={!canEdit} className="text-red-600 hover:bg-red-50 hover:text-red-700">
                                 <Trash2 size={15} />
                               </Button>
                             </div>

@@ -4,7 +4,8 @@ import { useWedding } from '../contexts/WeddingContext';
 import { collection, doc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
-import { Button } from '../components/ui';
+import { Button, Input, Modal } from '../components/ui';
+import { toPublicGuest } from '../services/guestService';
 
 // ─── 300 Realistic Indian Wedding Guest Dataset ─────────────────────────────
 // Covers: varying family sizes (2-8), all ages, both sides, multiple cities,
@@ -523,6 +524,8 @@ export default function SeedData() {
   const { activeWedding } = useWedding();
   const [status, setStatus] = useState('idle');
   const [count, setCount] = useState(0);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
 
   const handleSeed = async () => {
     if (!activeWedding) {
@@ -536,24 +539,27 @@ export default function SeedData() {
 
     try {
       const ref = collection(db, COLLECTIONS.WEDDINGS, activeWedding.id, COLLECTIONS.GUESTS);
+      const publicRef = collection(db, COLLECTIONS.WEDDINGS, activeWedding.id, COLLECTIONS.PUBLIC_GUESTS);
 
-      // Firestore batch max is 500, so we can do it in one batch
-      const batchSize = 499;
+      // Each guest writes a private record and a minimized public RSVP record.
+      const batchSize = 249;
       for (let i = 0; i < guests.length; i += batchSize) {
         const chunk = guests.slice(i, i + batchSize);
         const batch = writeBatch(db);
         chunk.forEach((guest) => {
           const docRef = doc(ref);
-          batch.set(docRef, { ...guest, createdAt: serverTimestamp() });
+          const privateGuest = { ...guest, createdAt: serverTimestamp() };
+          batch.set(docRef, privateGuest);
+          batch.set(doc(publicRef, docRef.id), toPublicGuest(privateGuest));
         });
         await batch.commit();
         setStatus(`Written ${Math.min(i + batchSize, guests.length)} / ${guests.length}...`);
       }
 
-      setStatus(`✅ Done! Seeded ${guests.length} guests into "${activeWedding.coupleName1 || 'wedding'}".`);
+      setStatus(`Done. Seeded ${guests.length} guests into "${activeWedding.coupleName1 || 'wedding'}".`);
     } catch (err) {
       console.error('Seed error:', err);
-      setStatus(`❌ Error: ${err.message}`);
+      setStatus(`Error: ${err.message}`);
     }
   };
 
@@ -612,18 +618,65 @@ export default function SeedData() {
           <p className="text-sm text-gray-500">
             Active wedding: <strong>{activeWedding.coupleName1} & {activeWedding.coupleName2}</strong> ({activeWedding.id})
           </p>
-          <Button onClick={handleSeed} disabled={status.startsWith('Seeding') || status.startsWith('Written')}>
-            {status === 'idle' ? `Seed ${guestPreview.length} Guests` : status.startsWith('✅') ? 'Done!' : 'Seeding...'}
+          <Button onClick={() => setConfirmOpen(true)} disabled={status.startsWith('Seeding') || status.startsWith('Written')}>
+            {status === 'idle' ? `Seed ${guestPreview.length} Guests` : status.startsWith('Done.') ? 'Done' : 'Seeding...'}
           </Button>
           {status !== 'idle' && (
-            <p className={`text-sm ${status.startsWith('❌') ? 'text-red-600' : status.startsWith('✅') ? 'text-green-600' : 'text-gray-600'}`}>
+            <p role="status" className={`text-sm ${status.startsWith('Error:') ? 'text-red-600' : status.startsWith('Done.') ? 'text-green-600' : 'text-gray-600'}`}>
               {status}
             </p>
           )}
         </div>
       ) : (
-        <p className="text-red-600">⚠️ No active wedding. Go to Dashboard and select/create a wedding first.</p>
+        <p className="text-red-600">No active wedding. Go to Dashboard and select or create a wedding first.</p>
       )}
+
+      <Modal
+        open={confirmOpen}
+        onClose={() => {
+          setConfirmOpen(false);
+          setConfirmText('');
+        }}
+        title="Confirm test data import"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-6 text-gray-600">
+            This adds {guestPreview.length} guests to <strong>{activeWedding?.coupleName1 || 'the active wedding'}</strong>.
+            Existing guests are not removed. Type <strong>SEED</strong> to continue.
+          </p>
+          <Input
+            label="Confirmation"
+            value={confirmText}
+            onChange={(event) => setConfirmText(event.target.value)}
+            placeholder="SEED"
+            autoComplete="off"
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setConfirmOpen(false);
+                setConfirmText('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              disabled={confirmText !== 'SEED'}
+              onClick={() => {
+                setConfirmOpen(false);
+                setConfirmText('');
+                handleSeed();
+              }}
+            >
+              Add test guests
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

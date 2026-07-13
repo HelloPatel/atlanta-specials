@@ -711,6 +711,7 @@ export default function SeatingCanvas() {
               value={selectedEventId || ''}
               onChange={(e) => setSelectedEventId(e.target.value)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              aria-label="Select event"
             >
               {events.map((evt) => <option key={evt.id} value={evt.id}>{evt.name}</option>)}
             </select>
@@ -1015,8 +1016,9 @@ export default function SeatingCanvas() {
       <Modal open={showCustom} onClose={() => setShowCustom(false)} title="Custom Table" size="sm">
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Table Name</label>
+            <label htmlFor="custom-table-name" className="block text-sm font-medium text-gray-700 mb-1">Table Name</label>
             <input
+              id="custom-table-name"
               value={customTable.name}
               onChange={(e) => setCustomTable({ ...customTable, name: e.target.value })}
               placeholder={`Table ${tables.length + 1}`}
@@ -1024,8 +1026,9 @@ export default function SeatingCanvas() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Shape</label>
+            <label htmlFor="custom-table-shape" className="block text-sm font-medium text-gray-700 mb-1">Shape</label>
             <select
+              id="custom-table-shape"
               value={customTable.shape}
               onChange={(e) => {
                 const shape = e.target.value;
@@ -1046,20 +1049,23 @@ export default function SeatingCanvas() {
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Seats</label>
+              <label htmlFor="custom-table-seats" className="block text-xs font-medium text-gray-500 mb-1">Seats</label>
               <input type="number" min="1" max="50" value={customTable.capacity}
+                id="custom-table-seats"
                 onChange={(e) => setCustomTable({ ...customTable, capacity: parseInt(e.target.value) || 1 })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Width</label>
+              <label htmlFor="custom-table-width" className="block text-xs font-medium text-gray-500 mb-1">Width</label>
               <input type="number" min="40" max="500" value={customTable.width}
+                id="custom-table-width"
                 onChange={(e) => setCustomTable({ ...customTable, width: parseInt(e.target.value) || 100 })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Height</label>
+              <label htmlFor="custom-table-height" className="block text-xs font-medium text-gray-500 mb-1">Height</label>
               <input type="number" min="40" max="500" value={customTable.height}
+                id="custom-table-height"
                 onChange={(e) => setCustomTable({ ...customTable, height: parseInt(e.target.value) || 100 })}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
             </div>

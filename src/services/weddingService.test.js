@@ -5,6 +5,7 @@ vi.mock('firebase/firestore', () => ({
   collection: vi.fn(() => 'mock-collection'),
   doc: vi.fn(),
   addDoc: vi.fn(),
+  setDoc: vi.fn(),
   getDoc: vi.fn(),
   getDocs: vi.fn(),
   updateDoc: vi.fn(),
@@ -14,15 +15,16 @@ vi.mock('firebase/firestore', () => ({
   where: vi.fn(),
   onSnapshot: vi.fn(),
   limit: vi.fn(),
+  writeBatch: vi.fn(),
 }));
 
 vi.mock('../../firebase', () => ({ db: {} }));
 vi.mock('../../config/constants', () => ({
-  COLLECTIONS: { WEDDINGS: 'weddings' },
+  COLLECTIONS: { WEDDINGS: 'weddings', PUBLIC_WEDDINGS: 'publicWeddings' },
 }));
 
 import { getDocs } from 'firebase/firestore';
-import { resolveWeddingId, getWeddingBySlug } from './weddingService';
+import { resolveWeddingId, getWeddingBySlug, toPublicWedding } from './weddingService';
 
 describe('weddingService', () => {
   beforeEach(() => {
@@ -69,6 +71,28 @@ describe('weddingService', () => {
 
       const result = await getWeddingBySlug('does-not-exist');
       expect(result).toBeNull();
+    });
+
+    describe('toPublicWedding', () => {
+      it('removes owner and collaborator data from public records', () => {
+        const result = toPublicWedding({
+          ownerId: 'owner-1',
+          collaboratorEmails: ['planner@example.com'],
+          coupleName1: 'Asha',
+          coupleName2: 'Dev',
+          slug: 'asha-and-dev',
+          websitePublished: true,
+        });
+
+        expect(result).toEqual({
+          coupleName1: 'Asha',
+          coupleName2: 'Dev',
+          slug: 'asha-and-dev',
+          websitePublished: true,
+        });
+        expect(result).not.toHaveProperty('ownerId');
+        expect(result).not.toHaveProperty('collaboratorEmails');
+      });
     });
   });
 });

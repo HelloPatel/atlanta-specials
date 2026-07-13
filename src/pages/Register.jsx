@@ -8,6 +8,7 @@ export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register, loginWithGoogle } = useAuth();
@@ -16,6 +17,10 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (!acceptedLegal) {
+      return setError('Please accept the Terms of Service and acknowledge the Privacy Policy.');
+    }
 
     if (password.length < 6) {
       return setError('Password must be at least 6 characters');
@@ -38,9 +43,13 @@ export default function Register() {
 
   const handleGoogle = async () => {
     setError('');
+    if (!acceptedLegal) {
+      setError('Please accept the Terms of Service and acknowledge the Privacy Policy.');
+      return;
+    }
     setLoading(true);
     try {
-      const user = await loginWithGoogle();
+      const user = await loginWithGoogle({ legalConsent: true });
       if (user) navigate('/dashboard');
     } catch (err) {
       console.error('Google sign-in error:', err.code, err.message);
@@ -84,7 +93,20 @@ export default function Register() {
             </div>
           )}
 
-          <Button variant="outline" className="w-full mb-4" onClick={handleGoogle} disabled={loading}>
+          <label className="mb-4 flex items-start gap-3 rounded-xl bg-gray-50 px-3 py-3 text-xs leading-5 text-gray-600">
+            <input
+              type="checkbox"
+              checked={acceptedLegal}
+              onChange={(event) => setAcceptedLegal(event.target.checked)}
+              className="mt-0.5 size-4 shrink-0 rounded border-gray-300 text-wine-700 focus:ring-wine-600"
+            />
+            <span>
+              I agree to the <Link className="font-semibold text-wine-700 hover:text-wine-900" to="/terms">Terms of Service</Link>
+              {' '}and acknowledge the <Link className="font-semibold text-wine-700 hover:text-wine-900" to="/privacy">Privacy Policy</Link>.
+            </span>
+          </label>
+
+          <Button variant="outline" className="w-full mb-4" onClick={handleGoogle} disabled={loading || !acceptedLegal}>
             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-5 w-5" />
             Continue with Google
           </Button>
@@ -105,6 +127,7 @@ export default function Register() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
+              autoComplete="name"
               required
             />
             <Input
@@ -113,6 +136,7 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
+              autoComplete="email"
               required
             />
             <Input
@@ -121,6 +145,7 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 6 characters"
+              autoComplete="new-password"
               required
             />
             <Button type="submit" className="w-full" disabled={loading}>
@@ -138,6 +163,11 @@ export default function Register() {
 
         <div className="mt-4 text-center text-xs text-gray-400 space-y-1">
           <p>Unlimited guests, events, tables, and RSVPs included</p>
+          <p>
+            <Link className="hover:text-wine-700" to="/copyright">Copyright</Link>
+            {' · '}
+            <Link className="hover:text-wine-700" to="/accessibility">Accessibility</Link>
+          </p>
         </div>
       </div>
     </div>

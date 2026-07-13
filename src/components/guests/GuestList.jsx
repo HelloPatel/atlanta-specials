@@ -176,6 +176,11 @@ export default function GuestList() {
     });
   };
 
+  const handleEditGuest = (guest) => {
+    setSelected(new Set());
+    setEditingGuest(guest);
+  };
+
   const handleBulkDelete = async () => {
     if (!confirm(`Delete ${selected.size} guests?`)) return;
     try {
@@ -341,7 +346,7 @@ export default function GuestList() {
       )}
 
       {/* Bulk actions — floating island, not glued to the top */}
-      {selected.size > 0 && (
+      {selected.size > 0 && !editingGuest && !showAddModal && !showImportModal && (
         <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2 animate-[fadeUp_0.4s_cubic-bezier(0.32,0.72,0,1)]">
           <div className="flex max-w-[calc(100vw-1.5rem)] flex-nowrap items-center gap-2 overflow-x-auto rounded-full border border-white/60 bg-white/85 px-4 py-2.5 shadow-[0_8px_40px_rgba(76,29,49,0.22)] backdrop-blur-xl md:gap-3">
           <span className="whitespace-nowrap text-sm font-semibold text-wine-800">{selected.size} selected</span>
@@ -445,7 +450,7 @@ export default function GuestList() {
           selected={selected}
           toggleSelect={toggleSelect}
           toggleSelectMany={toggleSelectMany}
-          onEdit={setEditingGuest}
+          onEdit={handleEditGuest}
           tableMap={tableMap}
           totalGuests={guests.length}
         />
@@ -499,7 +504,7 @@ export default function GuestList() {
                         <button type="button" className="text-red-500 text-xs" onClick={() => setInlineEdit(null)}>✗</button>
                       </form>
                     ) : (
-                      <span className="cursor-pointer hover:text-wine-700 hover:underline" onClick={() => setEditingGuest(guest)} onDoubleClick={(e) => { e.stopPropagation(); setInlineEdit({ id: guest.id, firstName: guest.firstName, lastName: guest.lastName }); }} title={guest.notes || 'Click to edit'}>
+                      <span className="cursor-pointer hover:text-wine-700 hover:underline" onClick={() => handleEditGuest(guest)} onDoubleClick={(e) => { e.stopPropagation(); setInlineEdit({ id: guest.id, firstName: guest.firstName, lastName: guest.lastName }); }} title={guest.notes || 'Click to edit'}>
                         {guest.firstName} {guest.lastName}
                         {guest.notes && <span className="ml-1 text-xs text-gray-400">📝</span>}
                       </span>
@@ -545,15 +550,16 @@ export default function GuestList() {
                           await updateGuest(activeWedding.id, guest.id, { checkedIn: !guest.checkedIn });
                           toast.success(guest.checkedIn ? 'Checked out' : 'Checked in ✓');
                         }}
+                        aria-label={`${guest.checkedIn ? 'Check out' : 'Check in'} ${guest.firstName} ${guest.lastName}`}
                         className={`rounded p-1.5 transition-colors ${guest.checkedIn ? 'text-green-600 bg-green-50' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`}
                         title={guest.checkedIn ? 'Checked in. Click to undo' : 'Mark as arrived'}
                       >
                         {guest.checkedIn ? '✓' : '○'}
                       </button>
-                      <button onClick={() => setEditingGuest(guest)} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                      <button aria-label={`Edit ${guest.firstName} ${guest.lastName}`} onClick={() => handleEditGuest(guest)} className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                         <Edit3 size={16} />
                       </button>
-                      <button onClick={() => { if (confirm('Delete this guest?')) deleteGuest(activeWedding.id, guest.id); }} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                      <button aria-label={`Delete ${guest.firstName} ${guest.lastName}`} onClick={() => { if (confirm('Delete this guest?')) deleteGuest(activeWedding.id, guest.id); }} className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600">
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -605,10 +611,10 @@ export default function GuestList() {
                 </p>
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => setEditingGuest(guest)} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                <button aria-label={`Edit ${guest.firstName} ${guest.lastName}`} onClick={() => handleEditGuest(guest)} className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                   <Edit3 size={16} />
                 </button>
-                <button onClick={() => { if (confirm('Delete?')) deleteGuest(activeWedding.id, guest.id); }} className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+                <button aria-label={`Delete ${guest.firstName} ${guest.lastName}`} onClick={() => { if (confirm('Delete?')) deleteGuest(activeWedding.id, guest.id); }} className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
                   <Trash2 size={16} />
                 </button>
               </div>
@@ -945,7 +951,10 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
 
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? 'Edit Guest' : 'Add Guest'} size="lg">
-      <form onSubmit={handleSubmit} className="space-y-4 pr-1">
+      <form
+        onSubmit={handleSubmit}
+        className="min-w-0 space-y-4 pr-1 [&_input]:min-w-0 [&_input]:max-w-full [&_input]:text-base [&_select]:min-w-0 [&_select]:max-w-full [&_select]:text-base sm:[&_input]:text-sm sm:[&_select]:text-sm"
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Input label="First Name" value={form.firstName || ''} onChange={(e) => update('firstName', e.target.value)} required />
           <Input label="Last Name" value={form.lastName || ''} onChange={(e) => update('lastName', e.target.value)} required />
@@ -960,15 +969,15 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Side</label>
-            <select value={form.side || 'bride'} onChange={(e) => update('side', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            <label htmlFor="guest-side" className="block text-sm font-medium text-gray-700 mb-1">Side</label>
+            <select id="guest-side" value={form.side || 'bride'} onChange={(e) => update('side', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
               <option value="bride">Bride's Side</option>
               <option value="groom">Groom's Side</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dietary</label>
-            <select value={form.dietary || 'vegetarian'} onChange={(e) => update('dietary', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            <label htmlFor="guest-dietary" className="block text-sm font-medium text-gray-700 mb-1">Dietary</label>
+            <select id="guest-dietary" value={form.dietary || 'vegetarian'} onChange={(e) => update('dietary', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
               {DIETARY_OPTIONS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
             </select>
           </div>

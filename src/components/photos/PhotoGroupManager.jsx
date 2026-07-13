@@ -107,15 +107,21 @@ function getQueueState(groups) {
 function PhotoGroupFormModal({ group, open, onClose, onSubmit }) {
   const [name, setName] = useState(group?.name || '');
   const [membersText, setMembersText] = useState((group?.members || []).join(', '));
+  const [formError, setFormError] = useState('');
 
   useEffect(() => {
     setName(group?.name || '');
     setMembersText((group?.members || []).join(', '));
+    setFormError('');
   }, [group]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim()) {
+      setFormError('Enter a name for this photo group.');
+      return;
+    }
+    setFormError('');
 
     await onSubmit({
       name: name.trim(),
@@ -127,23 +133,26 @@ function PhotoGroupFormModal({ group, open, onClose, onSubmit }) {
     <Modal open={open} onClose={onClose} title={group ? 'Edit photo group' : 'Add photo group'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Group name</label>
+          <label htmlFor="photo-group-name" className="mb-1 block text-sm font-medium text-gray-700">Group name</label>
           <input
+            id="photo-group-name"
             autoFocus
             value={name}
             onChange={(event) => setName(event.target.value)}
             placeholder="Bride's cousins"
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600"
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-base shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 sm:text-sm"
           />
         </div>
+        {formError && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{formError}</p>}
         <div>
-          <label className="mb-1 block text-sm font-medium text-gray-700">Members</label>
+          <label htmlFor="photo-group-members" className="mb-1 block text-sm font-medium text-gray-700">Members</label>
           <textarea
+            id="photo-group-members"
             value={membersText}
             onChange={(event) => setMembersText(event.target.value)}
             rows={4}
             placeholder="One per line or separated by commas"
-            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600"
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-base shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 sm:text-sm"
           />
         </div>
         <div className="flex justify-end gap-2">
@@ -246,20 +255,20 @@ function PhotoGroupAdminCard({
               <Camera size={14} />
               {group.status === 'current' ? 'Live' : 'Set'}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onEdit} disabled={!canEdit}>
+            <Button aria-label={`Edit ${group.name}`} size="sm" variant="ghost" onClick={onEdit} disabled={!canEdit}>
               <Pencil size={14} />
             </Button>
-            <Button size="sm" variant="ghost" onClick={onDelete} disabled={!canEdit} className="text-red-600 hover:bg-red-50 hover:text-red-700">
+            <Button aria-label={`Delete ${group.name}`} size="sm" variant="ghost" onClick={onDelete} disabled={!canEdit} className="text-red-600 hover:bg-red-50 hover:text-red-700">
               <Trash2 size={14} />
             </Button>
           </div>
         </div>
         <div className="hidden sm:flex shrink-0 flex-col gap-2 sm:flex-row">
           <div className="flex gap-1">
-            <Button size="sm" variant="ghost" onClick={onMoveUp} disabled={!canEdit || index === 0}>
+            <Button aria-label={`Move ${group.name} up`} size="sm" variant="ghost" onClick={onMoveUp} disabled={!canEdit || index === 0}>
               <ChevronUp size={16} />
             </Button>
-            <Button size="sm" variant="ghost" onClick={onMoveDown} disabled={!canEdit}>
+            <Button aria-label={`Move ${group.name} down`} size="sm" variant="ghost" onClick={onMoveDown} disabled={!canEdit}>
               <ChevronDown size={16} />
             </Button>
           </div>
@@ -268,10 +277,10 @@ function PhotoGroupAdminCard({
               <Camera size={15} />
               {group.status === 'current' ? 'Live' : 'Set current'}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onEdit} disabled={!canEdit}>
+            <Button aria-label={`Edit ${group.name}`} size="sm" variant="ghost" onClick={onEdit} disabled={!canEdit}>
               <Pencil size={15} />
             </Button>
-            <Button size="sm" variant="ghost" onClick={onDelete} disabled={!canEdit} className="text-red-600 hover:bg-red-50 hover:text-red-700">
+            <Button aria-label={`Delete ${group.name}`} size="sm" variant="ghost" onClick={onDelete} disabled={!canEdit} className="text-red-600 hover:bg-red-50 hover:text-red-700">
               <Trash2 size={15} />
             </Button>
           </div>

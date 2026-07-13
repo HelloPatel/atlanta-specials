@@ -34,17 +34,20 @@ export function SkeletonStat() {
 }
 
 export function SkeletonTable({ rows = 5 }) {
+  const headerWidths = ['24%', '32%', '20%', '28%'];
+  const rowWidths = ['30%', '22%', '36%', '26%'];
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
       <div className="border-b border-gray-100 px-4 py-3 flex gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <SkeletonLine key={i} width={`${20 + Math.random() * 30}%`} height="0.875rem" />
+        {headerWidths.map((width) => (
+          <SkeletonLine key={width} width={width} height="0.875rem" />
         ))}
       </div>
       {Array.from({ length: rows }).map((_, i) => (
         <div key={i} className="border-b border-gray-50 px-4 py-3 flex gap-4">
-          {[1, 2, 3, 4].map((j) => (
-            <SkeletonLine key={j} width={`${20 + Math.random() * 40}%`} height="0.875rem" />
+          {rowWidths.map((width, j) => (
+            <SkeletonLine key={`${i}-${j}`} width={width} height="0.875rem" />
           ))}
         </div>
       ))}

@@ -48,6 +48,7 @@ function Toggle({ checked, onChange, label, disabled = false, helperText }) {
         className={`relative mt-0.5 h-7 w-12 rounded-full transition ${checked ? 'bg-wine-700' : 'bg-gray-300'}`}
         disabled={disabled}
         aria-pressed={checked}
+        aria-label={label}
       >
         <span
           className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${checked ? 'left-6' : 'left-1'}`}
@@ -395,23 +396,25 @@ export default function WebsiteBuilder() {
                   disabled={!canEdit}
                 />
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Tagline or Quote</label>
+                  <label htmlFor="website-hero-tagline" className="mb-1 block text-sm font-medium text-gray-700">Tagline or Quote</label>
                   <textarea
+                    id="website-hero-tagline"
                     value={config.websiteHero.tagline}
                     onChange={(event) => setHeroValue('tagline', event.target.value)}
                     rows={3}
                     disabled={!canEdit}
                     placeholder="A joyful weekend of love, laughter, and forever."
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-base shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Background Style</label>
+                  <label htmlFor="website-hero-pattern" className="mb-1 block text-sm font-medium text-gray-700">Background Style</label>
                   <select
+                    id="website-hero-pattern"
                     value={config.websiteHero.pattern || 'none'}
                     onChange={(event) => setHeroValue('pattern', event.target.value)}
                     disabled={!canEdit}
-                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-base shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                   >
                     {WEBSITE_HERO_PATTERNS.map((pattern) => (
                       <option key={pattern} value={pattern}>{heroPatternLabels[pattern] || pattern}</option>

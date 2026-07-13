@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { APP_NAME } from '../config/constants';
 
 export default class ErrorBoundary extends Component {
@@ -18,10 +19,10 @@ export default class ErrorBoundary extends Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+        <div className="flex min-h-dvh items-center justify-center bg-ivory-50 px-4">
           <div className="max-w-md text-center">
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50">
-              <span className="text-2xl">⚠️</span>
+              <AlertTriangle className="text-red-600" aria-hidden="true" />
             </div>
             <h1 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h1>
             <p className="text-sm text-gray-500 mb-6">
@@ -29,7 +30,7 @@ export default class ErrorBoundary extends Component {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="rounded-xl bg-wine-700 px-6 py-3 text-sm font-medium text-white hover:bg-wine-800 transition-colors"
+              className="min-h-11 rounded-xl bg-wine-700 px-6 py-3 text-sm font-semibold text-white transition-all hover:bg-wine-800 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600 focus-visible:ring-offset-2"
             >
               Refresh page
             </button>

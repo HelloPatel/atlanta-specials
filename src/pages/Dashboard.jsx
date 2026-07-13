@@ -1,35 +1,69 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useWedding } from '../contexts/WeddingContext';
 import { Button, Card, Modal, Input, SkeletonDashboard } from '../components/ui';
 import { Plus, Users, Calendar, Grid3X3, Mail } from 'lucide-react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase';
-import { COLLECTIONS } from '../config/constants';
-import { subscribeToGuests } from '../services/guestService';
-import { subscribeToEvents } from '../services/eventService';
-import { subscribeToRsvpSettings } from '../services/rsvpService';
+import { subscribeToGuests, syncPublicGuestDirectory } from '../services/guestService';
+import { subscribeToEvents, syncPublicEvents } from '../services/eventService';
+import { publishRsvpSettings, subscribeToRsvpSettings } from '../services/rsvpService';
+import { createWedding } from '../services/weddingService';
+import { getSeating, publishSeating } from '../services/seatingService';
 import OnboardingTour from '../components/onboarding/OnboardingTour';
 import ActivityFeed from '../components/dashboard/ActivityFeed';
 
 export default function Dashboard() {
-  const { activeWedding, weddings, loading } = useWedding();
+  const { activeWedding, weddings, loading, canEdit } = useWedding();
   const [showCreate, setShowCreate] = useState(false);
   const [guests, setGuests] = useState([]);
   const [events, setEvents] = useState([]);
   const [rsvpOpen, setRsvpOpen] = useState(false);
+  const publicSyncRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!activeWedding) return;
-    const unsub1 = subscribeToGuests(activeWedding.id, setGuests);
-    const unsub2 = subscribeToEvents(activeWedding.id, setEvents);
+    const unsub1 = subscribeToGuests(activeWedding.id, (nextGuests) => {
+      setGuests(nextGuests);
+      if (canEdit) {
+        syncPublicGuestDirectory(activeWedding.id, nextGuests).catch((error) => {
+          console.error('Failed to publish minimized guest directory:', error);
+        });
+      }
+    });
+    const unsub2 = subscribeToEvents(activeWedding.id, (nextEvents) => {
+      setEvents(nextEvents);
+      if (canEdit) {
+        syncPublicEvents(activeWedding.id, nextEvents).catch((error) => {
+          console.error('Failed to publish public events:', error);
+        });
+      }
+    });
     const unsub3 = subscribeToRsvpSettings(activeWedding.id, (settings) => {
       setRsvpOpen(settings?.isOpen || false);
+      if (canEdit) {
+        publishRsvpSettings(activeWedding.id, settings).catch((error) => {
+          console.error('Failed to publish RSVP settings:', error);
+        });
+      }
     });
     return () => { unsub1(); unsub2(); unsub3(); };
-  }, [activeWedding]);
+  }, [activeWedding, canEdit]);
+
+  useEffect(() => {
+    if (!activeWedding || !canEdit || events.length === 0) return;
+    const syncKey = `${activeWedding.id}:${events.map((event) => event.id).join(',')}`;
+    if (publicSyncRef.current === syncKey) return;
+    publicSyncRef.current = syncKey;
+
+    Promise.all(events.map(async (event) => {
+      const seating = await getSeating(activeWedding.id, event.id);
+      await publishSeating(activeWedding.id, event.id, seating);
+    })).catch((error) => {
+      publicSyncRef.current = null;
+      console.error('Failed to publish minimized seating assignments:', error);
+    });
+  }, [activeWedding, canEdit, events]);
 
   const guestCount = guests.length;
   const eventCount = events.length;
@@ -315,15 +349,10 @@ function CreateWeddingModal({ open, onClose }) {
     setLoading(true);
     setError('');
     try {
-      const slug = `${name1}-and-${name2}`.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-      await addDoc(collection(db, COLLECTIONS.WEDDINGS), {
-        ownerId: user.uid,
+      await createWedding(user.uid, {
         coupleName1: name1,
         coupleName2: name2,
         weddingDate: date || null,
-        slug,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
       onClose();
     } catch (err) {

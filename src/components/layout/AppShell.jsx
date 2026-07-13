@@ -1,61 +1,98 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import Sidebar from './Sidebar';
+import { Dialog } from '@headlessui/react';
+import Sidebar, { NAV_ITEMS } from './Sidebar';
 import CommandPalette from './CommandPalette';
-import { Menu, LayoutDashboard, Users, Grid3X3, Mail, MoreHorizontal } from 'lucide-react';
+import { Menu, LayoutDashboard, Users, Grid3X3, Mail, MoreHorizontal, X } from 'lucide-react';
+import { useWedding } from '../../contexts/WeddingContext';
+import { APP_NAME } from '../../config/constants';
 
 export default function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const mainRef = useRef(null);
+  const mobileCloseRef = useRef(null);
   const { pathname } = useLocation();
+  const { activeWedding } = useWedding();
+  const currentPage = NAV_ITEMS.find((item) => item.to === pathname)?.label || 'Wedding workspace';
 
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
-  }, [pathname]);
+    mainRef.current?.focus({ preventScroll: true });
+    setMobileOpen(false);
+    document.title = `${currentPage} | ${APP_NAME}`;
+  }, [currentPage, pathname]);
 
   return (
-    <div className="flex h-dvh" style={{ backgroundColor: '#faf9f7' }}>
+    <div className="flex h-dvh bg-[#faf9f7]">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <CommandPalette />
       {/* Mobile header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center gap-3 px-4 py-3 bg-white/95 backdrop-blur-sm border-b border-gray-200/80">
+      <header className="md:hidden fixed top-0 left-0 right-0 z-40 flex min-h-14 items-center gap-3 px-3 bg-white/95 backdrop-blur-md border-b border-gray-200/80">
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Open navigation"
-          className="flex size-9 items-center justify-center rounded-lg hover:bg-gray-100 transition-colors active:scale-90"
+          aria-expanded={mobileOpen}
+          className="flex size-11 items-center justify-center rounded-xl hover:bg-gray-100 transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600"
         >
           <Menu size={20} className="text-gray-700" />
         </button>
-        <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-wine-700 to-wine-900 text-white font-display font-bold text-xs">P</div>
-        <span className="text-sm font-display font-bold text-gray-900">Phera</span>
-      </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-gray-900">{currentPage}</p>
+          <p className="truncate text-[11px] text-gray-500">
+            {activeWedding ? `${activeWedding.coupleName1} & ${activeWedding.coupleName2}` : APP_NAME}
+          </p>
+        </div>
+      </header>
 
       {/* Mobile overlay sidebar */}
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50">
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-[2px] animate-fade-in"
+      <Dialog
+        open={mobileOpen}
+        onClose={setMobileOpen}
+        initialFocus={mobileCloseRef}
+        className="relative z-50 md:hidden"
+      >
+        <div className="fixed inset-0">
+          <button
+            type="button"
+            aria-label="Close navigation"
+            className="absolute inset-0 h-full w-full cursor-default bg-black/40 backdrop-blur-[2px] animate-fade-in"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative w-64 h-full shadow-xl animate-slide-in-left">
-            <Sidebar onNavigate={() => setMobileOpen(false)} />
-          </div>
+          <Dialog.Panel className="relative h-full w-fit shadow-xl animate-slide-in-left">
+            <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
+            <button
+              ref={mobileCloseRef}
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close navigation"
+              className="absolute right-3 top-3 z-10 flex size-10 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600"
+            >
+              <X size={20} />
+            </button>
+            <Sidebar mobile onNavigate={() => setMobileOpen(false)} />
+          </Dialog.Panel>
         </div>
-      )}
+      </Dialog>
 
       {/* Desktop sidebar */}
       <div className="hidden md:block h-full shrink-0">
         <Sidebar />
       </div>
 
-      <main ref={mainRef} className="flex-1 overflow-y-auto pt-14 pb-16 md:pt-0 md:pb-0">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 py-5 md:py-8">
+      <main
+        id="main-content"
+        ref={mainRef}
+        tabIndex={-1}
+        className="flex-1 overflow-x-hidden overflow-y-auto pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] outline-none md:pt-0 md:pb-0"
+      >
+        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 md:px-6 md:py-8">
           <Outlet />
         </div>
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-gray-200/80" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-        <div className="flex items-center justify-around px-2 py-1.5">
+      <nav aria-label="Primary mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/80 pb-[env(safe-area-inset-bottom)]">
+        <div className="grid grid-cols-5 items-stretch px-1 py-1">
           <MobileNavItem to="/dashboard" icon={LayoutDashboard} label="Home" />
           <MobileNavItem to="/guests" icon={Users} label="Guests" />
           <MobileNavItem to="/seating" icon={Grid3X3} label="Seating" />
@@ -63,7 +100,7 @@ export default function AppShell() {
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="More navigation options"
-            className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-gray-400 active:scale-90 transition-all"
+            className="flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 text-gray-500 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-wine-600"
           >
             <MoreHorizontal size={20} strokeWidth={1.75} />
             <span className="text-[10px] font-medium">More</span>
@@ -79,10 +116,10 @@ function MobileNavItem({ to, icon: Icon, label }) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150 active:scale-90 ${
+        `flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1 transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-wine-600 ${
           isActive
-            ? 'text-wine-700 bg-wine-50'
-            : 'text-gray-400 hover:text-gray-600'
+            ? 'text-wine-800 bg-wine-50'
+            : 'text-gray-500 hover:text-gray-700'
         }`
       }
     >

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   getPublicWeddingData,
   submitRsvpResponse,
@@ -147,7 +147,7 @@ export default function PublicRSVP() {
         if (!data) { setError('Wedding not found'); setLoading(false); return; }
         setWeddingData(data);
         const guestsSnap = await getDocs(
-          collection(db, COLLECTIONS.WEDDINGS, resolvedId, COLLECTIONS.GUESTS)
+          collection(db, COLLECTIONS.WEDDINGS, resolvedId, COLLECTIONS.PUBLIC_GUESTS)
         );
         setAllGuests(guestsSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       } catch (err) {
@@ -167,7 +167,7 @@ export default function PublicRSVP() {
 
     const matches = allGuests.filter((g) => {
       const full = `${g.firstName} ${g.lastName}`.toLowerCase();
-      const phone = (g.phone || '').replace(/\D/g, '');
+      const phone = g.phoneLast4 || '';
       // Exact/substring match
       if (full.includes(q) || q.includes(full)) return true;
       if (g.familyName && g.familyName.toLowerCase().includes(q)) return true;
@@ -198,8 +198,8 @@ export default function PublicRSVP() {
 
     // Sort: adults first, then alphabetical
     family.sort((a, b) => {
-      const aKid = (a.tags || []).includes('Kids') ? 1 : 0;
-      const bKid = (b.tags || []).includes('Kids') ? 1 : 0;
+      const aKid = a.isChild ? 1 : 0;
+      const bKid = b.isChild ? 1 : 0;
       return aKid !== bKid ? aKid - bKid : a.firstName.localeCompare(b.firstName);
     });
 
@@ -210,8 +210,8 @@ export default function PublicRSVP() {
     const responses = {};
     const dietary = {};
     family.forEach((g) => {
-      responses[g.id] = { ...(g.rsvpStatus || {}) };
-      dietary[g.id] = g.dietary || 'vegetarian';
+      responses[g.id] = {};
+      dietary[g.id] = 'vegetarian';
     });
     setEventResponses(responses);
     setDietaryChoices(dietary);
@@ -257,6 +257,17 @@ export default function PublicRSVP() {
 
   // Submit
   const handleSubmit = async () => {
+    const unansweredEvents = selectedFamily.flatMap((guest) =>
+      getEventsForGuest(guest.id)
+        .filter((event) => !eventResponses[guest.id]?.[event.id])
+        .map((event) => `${guest.firstName}: ${event.name}`)
+    );
+    if (unansweredEvents.length > 0) {
+      setError('Please answer Yes or No for every event before submitting.');
+      return;
+    }
+
+    setError('');
     setSubmitting(true);
     try {
       for (const guest of selectedFamily) {
@@ -264,8 +275,8 @@ export default function PublicRSVP() {
           guestId: guest.id,
           familyName: guest.familyName || '',
           respondentName,
-          phone: guest.phone || '',
-          email: guest.email || '',
+          phone: '',
+          email: '',
           eventResponses: eventResponses[guest.id] || {},
           dietary: dietaryChoices[guest.id] || 'vegetarian',
           message,
@@ -277,7 +288,7 @@ export default function PublicRSVP() {
           doc(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.GUESTS, guest.id),
           {
             rsvpStatus: eventResponses[guest.id] || {},
-            dietary: dietaryChoices[guest.id] || guest.dietary,
+            dietary: dietaryChoices[guest.id] || 'vegetarian',
             rsvpMethod: 'web',
           }
         );
@@ -303,7 +314,7 @@ export default function PublicRSVP() {
             <Heart size={20} className="text-wine-600 animate-pulse" />
           </div>
           <p className="text-wine-700 font-medium">Loading your invitation...</p>
-          <div className="flex gap-1">
+          <div className="flex flex-wrap justify-end gap-2">
             <div className="w-2 h-2 rounded-full bg-wine-300 animate-bounce" style={{ animationDelay: '0s' }}></div>
             <div className="w-2 h-2 rounded-full bg-wine-300 animate-bounce" style={{ animationDelay: '0.15s' }}></div>
             <div className="w-2 h-2 rounded-full bg-wine-300 animate-bounce" style={{ animationDelay: '0.3s' }}></div>
@@ -380,7 +391,7 @@ export default function PublicRSVP() {
             <button
               key={code}
               onClick={() => setLang(code)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              className={`min-h-10 rounded-xl px-3 py-2 text-xs font-semibold transition-colors active:scale-[0.98] ${
                 lang === code ? 'bg-wine-700 text-white' : 'bg-white/70 text-gray-600 hover:bg-wine-50'
               }`}
             >
@@ -390,7 +401,7 @@ export default function PublicRSVP() {
           <span className="w-px bg-gray-300 mx-1" />
           <button
             onClick={() => setSeniorMode(!seniorMode)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+            className={`min-h-10 rounded-xl px-3 py-2 text-xs font-semibold transition-colors active:scale-[0.98] ${
               seniorMode ? 'bg-wine-700 text-white' : 'bg-white/70 text-gray-600 hover:bg-wine-50'
             }`}
             title="Large text mode for easier reading"
@@ -540,12 +551,12 @@ export default function PublicRSVP() {
                       <h3 className="text-base font-semibold text-gray-900">
                         {guest.firstName} {guest.lastName}
                       </h3>
-                      {(guest.tags || []).includes('Kids') && (
+                      {guest.isChild && (
                         <span className="text-[10px] bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">Child</span>
                       )}
                     </div>
                     {/* Quick accept/decline all */}
-                    <div className="flex gap-1">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => setAllEvents(guest.id, 'accepted')}
                         className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -580,7 +591,8 @@ export default function PublicRSVP() {
                           <div className="flex gap-1">
                             <button
                               onClick={() => toggleRsvp(guest.id, evt.id, 'accepted')}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
+                              aria-pressed={s === 'accepted'}
+                              className={`flex min-h-11 min-w-16 items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm font-semibold transition-all active:scale-95 ${
                                 s === 'accepted'
                                   ? 'bg-green-500 text-white shadow-sm scale-105'
                                   : 'bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-700'
@@ -590,7 +602,8 @@ export default function PublicRSVP() {
                             </button>
                             <button
                               onClick={() => toggleRsvp(guest.id, evt.id, 'declined')}
-                              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${
+                              aria-pressed={s === 'declined'}
+                              className={`flex min-h-11 min-w-16 items-center justify-center gap-1 rounded-xl px-3 py-2 text-sm font-semibold transition-all active:scale-95 ${
                                 s === 'declined'
                                   ? 'bg-red-500 text-white shadow-sm scale-105'
                                   : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-700'
@@ -639,7 +652,7 @@ export default function PublicRSVP() {
               </RsvpCard>
             )}
 
-            {error && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{error}</p>}
+            {error && <p role="alert" aria-live="assertive" className="text-sm text-red-700 bg-red-50 rounded-xl px-4 py-3">{error}</p>}
 
             <button
               onClick={handleSubmit}
@@ -719,7 +732,12 @@ export default function PublicRSVP() {
       </main>
 
       <footer className="text-center pb-6 text-xs text-gray-400">
-        Powered by <span className="font-medium text-gray-500">{APP_NAME}</span>
+        <p>Powered by <span className="font-medium text-gray-500">{APP_NAME}</span></p>
+        <p className="mt-2">
+          <Link className="hover:text-wine-700" to="/privacy">Privacy</Link>
+          {' · '}
+          <Link className="hover:text-wine-700" to="/terms">Terms</Link>
+        </p>
       </footer>
     </div>
   );

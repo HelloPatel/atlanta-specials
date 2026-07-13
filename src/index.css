@@ -4,9 +4,14 @@
 /* Global warmth */
 html {
   scroll-behavior: smooth;
+  background: #faf9f7;
 }
 
 body {
+  min-width: 320px;
+  overflow-x: hidden;
+  background: #faf9f7;
+  color: #1f2937;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* iPhone safe areas — respect notch and home indicator */
@@ -19,6 +24,102 @@ body {
 /* iOS tap highlight removal for cleaner touch interactions */
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  scroll-margin: 6rem;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 0.75rem;
+  background: #7a1c3e;
+  color: white;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(122, 28, 62, 0.24);
+  transition: transform 150ms ease;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.legal-copy {
+  display: grid;
+  gap: 2.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: #4b5563;
+}
+
+.legal-copy section {
+  scroll-margin-top: 2rem;
+}
+
+.legal-copy h2 {
+  margin-bottom: 0.75rem;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.legal-copy p + p,
+.legal-copy ul + p,
+.legal-copy ol + p {
+  margin-top: 0.875rem;
+}
+
+.legal-copy ul,
+.legal-copy ol {
+  display: grid;
+  gap: 0.5rem;
+  margin-left: 1.25rem;
+}
+
+.legal-copy ul {
+  list-style: disc;
+}
+
+.legal-copy ol {
+  list-style: decimal;
+}
+
+.legal-copy a {
+  color: #8f1d44;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.legal-copy .legal-caps {
+  font-size: 0.8125rem;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
 }
 
 /* Branded text selection */

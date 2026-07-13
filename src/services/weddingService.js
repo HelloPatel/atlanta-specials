@@ -1,7 +1,7 @@
 import {
   collection,
   doc,
-  addDoc,
+  setDoc,
   getDoc,
   getDocs,
   updateDoc,
@@ -11,11 +11,45 @@ import {
   where,
   onSnapshot,
   limit,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
 
 const weddingsRef = collection(db, COLLECTIONS.WEDDINGS);
+const publicWeddingsRef = collection(db, COLLECTIONS.PUBLIC_WEDDINGS);
+
+const PUBLIC_WEDDING_FIELDS = [
+  'coupleName',
+  'coupleName1',
+  'coupleName2',
+  'weddingDate',
+  'city',
+  'venue',
+  'slug',
+  'settings',
+  'websiteTheme',
+  'websiteHero',
+  'websiteStory',
+  'websiteGallery',
+  'websiteHotels',
+  'websiteRegistry',
+  'websiteRsvp',
+  'websiteCustomColors',
+  'websiteFooter',
+  'websitePublished',
+  'websiteEventIds',
+  'websitePassword',
+  'rsvpSettings',
+];
+
+export function toPublicWedding(wedding) {
+  return Object.fromEntries(
+    PUBLIC_WEDDING_FIELDS
+      .filter((field) => wedding[field] !== undefined)
+      .map((field) => [field, wedding[field]]),
+  );
+}
 
 export async function createWedding(userId, data) {
   const slug = `${data.coupleName1}-and-${data.coupleName2}`
@@ -23,7 +57,8 @@ export async function createWedding(userId, data) {
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '');
 
-  const docRef = await addDoc(weddingsRef, {
+  const docRef = doc(weddingsRef);
+  const wedding = {
     ownerId: userId,
     coupleName1: data.coupleName1,
     coupleName2: data.coupleName2,
@@ -39,7 +74,11 @@ export async function createWedding(userId, data) {
     },
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  });
+  };
+  const batch = writeBatch(db);
+  batch.set(docRef, wedding);
+  batch.set(doc(publicWeddingsRef, docRef.id), toPublicWedding(wedding));
+  await batch.commit();
 
   return { id: docRef.id, slug };
 }
@@ -49,15 +88,35 @@ export async function getWedding(weddingId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
+export async function getPublicWedding(weddingId) {
+  const snap = await getDoc(doc(publicWeddingsRef, weddingId));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+}
+
+export async function publishWedding(weddingId, wedding) {
+  await setDoc(doc(publicWeddingsRef, weddingId), toPublicWedding(wedding), { merge: true });
+}
+
 export async function updateWedding(weddingId, data) {
-  await updateDoc(doc(db, COLLECTIONS.WEDDINGS, weddingId), {
+  const privateRef = doc(db, COLLECTIONS.WEDDINGS, weddingId);
+  const currentSnapshot = await getDoc(privateRef);
+  if (!currentSnapshot.exists()) throw new Error('Wedding not found');
+
+  const nextWedding = { ...currentSnapshot.data(), ...data };
+  const batch = writeBatch(db);
+  batch.update(privateRef, {
     ...data,
     updatedAt: serverTimestamp(),
   });
+  batch.set(doc(publicWeddingsRef, weddingId), toPublicWedding(nextWedding), { merge: true });
+  await batch.commit();
 }
 
 export async function deleteWedding(weddingId) {
-  await deleteDoc(doc(db, COLLECTIONS.WEDDINGS, weddingId));
+  const batch = writeBatch(db);
+  batch.delete(doc(db, COLLECTIONS.WEDDINGS, weddingId));
+  batch.delete(doc(publicWeddingsRef, weddingId));
+  await batch.commit();
 }
 
 export function subscribeToWeddings(userId, callback) {
@@ -70,7 +129,7 @@ export function subscribeToWeddings(userId, callback) {
 
 // Resolve a slug (e.g. "rushi-and-priya") to a wedding document ID
 export async function getWeddingBySlug(slug) {
-  const q = query(weddingsRef, where('slug', '==', slug), limit(1));
+  const q = query(publicWeddingsRef, where('slug', '==', slug), limit(1));
   const snap = await getDocs(q);
   if (snap.empty) return null;
   const d = snap.docs[0];

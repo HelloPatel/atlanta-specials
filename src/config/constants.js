@@ -2,15 +2,23 @@
 
 export const APP_NAME = 'Phera';
 export const APP_TAGLINE = 'Indian Wedding Planning, Done Right';
+export const LEGAL_VERSION = '2026-07-12';
+export const PRIVACY_EMAIL = 'privacy@phera-wedding.com';
+export const LEGAL_EMAIL = 'legal@phera-wedding.com';
+export const COPYRIGHT_EMAIL = 'copyright@phera-wedding.com';
 
 // Firestore collection paths
 export const COLLECTIONS = {
   USERS: 'users',
   WEDDINGS: 'weddings',
+  PUBLIC_WEDDINGS: 'publicWeddings',
   EVENTS: 'events',
+  PUBLIC_EVENTS: 'events',
   GUESTS: 'guests',
+  PUBLIC_GUESTS: 'publicGuests',
   FAMILIES: 'families',
   SEATING: 'seating',
+  PUBLIC_SEATING: 'publicSeating',
   PHOTO_GROUPS: 'photoGroups',
   BETS: 'bets',
 };

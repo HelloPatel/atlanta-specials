@@ -11,12 +11,15 @@ service cloud.firestore {
     // ─── Helper functions ───────────────────────────────────────────
     function isOwner(weddingId) {
       return request.auth != null
-        && get(/databases/$(database)/documents/weddings/$(weddingId)).data.ownerId == request.auth.uid;
+        && exists(/databases/$(database)/documents/weddings/$(weddingId))
+        && get(/databases/$(database)/documents/weddings/$(weddingId)).data.get('ownerId', '') == request.auth.uid;
     }
 
     function isCollaborator(weddingId) {
       return request.auth != null
-        && request.auth.token.email in get(/databases/$(database)/documents/weddings/$(weddingId)).data.collaboratorEmails;
+        && request.auth.token.email != null
+        && exists(/databases/$(database)/documents/weddings/$(weddingId))
+        && request.auth.token.email in get(/databases/$(database)/documents/weddings/$(weddingId)).data.get('collaboratorEmails', []);
     }
 
     function isEditor(weddingId) {
@@ -29,19 +32,19 @@ service cloud.firestore {
 
     // ─── Phera: Weddings ────────────────────────────────────────────
     match /weddings/{weddingId} {
-      // Owner and collaborators can read; public can read basic wedding info for RSVP
       allow read: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-            || (resource.data.collaboratorEmails != null
-                && request.auth.token.email in resource.data.collaboratorEmails))
-        || true;  // Allow public read for RSVP page
-      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+        && ((resource.data.get('ownerId', '') == request.auth.uid)
+            || (request.auth.token.email is string
+                && request.auth.token.email in resource.data.get('collaboratorEmails', [])));
+      allow create: if request.auth != null
+        && request.resource.data.get('ownerId', '') == request.auth.uid;
       // Owner and editors can update; only owner can delete
       allow update: if request.auth != null
-        && (resource.data.ownerId == request.auth.uid
-            || (resource.data.collaboratorEmails != null
-                && request.auth.token.email in resource.data.collaboratorEmails));
-      allow delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+        && ((resource.data.get('ownerId', '') == request.auth.uid)
+            || (request.auth.token.email is string
+                && request.auth.token.email in resource.data.get('collaboratorEmails', [])));
+      allow delete: if request.auth != null
+        && resource.data.get('ownerId', '') == request.auth.uid;
 
       // Collaborators subcollection — only owner can manage
       match /collaborators/{collabId} {
@@ -73,15 +76,15 @@ service cloud.firestore {
         allow update, delete: if isEditor(weddingId);
       }
 
-      // Events — public read for RSVP page, editors can write
+      // Private event records remain inside the authenticated workspace.
       match /events/{eventId} {
-        allow read: if true;
+        allow read: if hasAccess(weddingId);
         allow write: if isEditor(weddingId);
       }
 
-      // Guests — public read for RSVP lookup, editors can write
+      // Guests contain private contact, dietary, travel, and accessibility data.
       match /guests/{guestId} {
-        allow read: if true;
+        allow read: if hasAccess(weddingId);
         // Public RSVP may only touch RSVP-related fields; anything else
         // (name, email, phone, notes, tags, …) requires an editor. This keeps
         // the unauthenticated RSVP flow working while preventing tampering.
@@ -91,9 +94,57 @@ service cloud.firestore {
         allow create, delete: if isEditor(weddingId);
       }
 
+      // Minimized directory used by public RSVP and table-finder pages.
+      match /publicGuests/{guestId} {
+        allow read: if true;
+        allow write: if isEditor(weddingId);
+      }
+
+      // Public table finder receives only table names and guest IDs.
+      match /publicSeating/{eventId} {
+        allow read: if true;
+        allow write: if isEditor(weddingId);
+      }
+
+      // Shared photo queue is intentionally visible to wedding guests.
+      match /photoGroups/{groupId} {
+        allow read: if true;
+        allow write: if isEditor(weddingId);
+      }
+
+      // Public wedding game configuration and leaderboard entries.
+      match /bets/{configId} {
+        allow read: if true;
+        allow write: if isEditor(weddingId);
+      }
+
+      match /betsVotes/{voteId} {
+        allow read: if true;
+        allow create, update: if request.resource.data.guestName is string
+          && request.resource.data.guestName.size() >= 2
+          && request.resource.data.guestName.size() <= 40
+          && request.resource.data.answers is map;
+        allow delete: if isEditor(weddingId);
+      }
+
       // All other subcollections: families, seating, photoGroups, bets, etc.
       match /{subcollection}/{docId} {
         allow read: if hasAccess(weddingId);
+        allow write: if isEditor(weddingId);
+      }
+    }
+
+    // Public projections contain only information intentionally published for
+    // wedding websites, RSVP pages, and event schedules.
+    match /publicWeddings/{weddingId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && existsAfter(/databases/$(database)/documents/weddings/$(weddingId))
+        && getAfter(/databases/$(database)/documents/weddings/$(weddingId)).data.get('ownerId', '') == request.auth.uid;
+      allow update, delete: if isEditor(weddingId);
+
+      match /events/{eventId} {
+        allow read: if true;
         allow write: if isEditor(weddingId);
       }
     }

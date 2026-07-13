@@ -52,13 +52,18 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={toast}>
       {children}
       {/* Toast container */}
-      <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+      <div
+        className="pointer-events-none fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[110] flex flex-col gap-2 sm:inset-x-auto sm:bottom-4 sm:right-4"
+        aria-live="polite"
+        aria-atomic="false"
+      >
         {toasts.map((t) => {
           const Icon = ICONS[t.type];
           return (
             <div
               key={t.id}
-              className={`pointer-events-auto flex items-center gap-3 rounded-xl border px-4 py-3 shadow-lifted animate-fade-in min-w-[280px] max-w-[420px] ${STYLES[t.type]}`}
+              role={t.type === 'error' ? 'alert' : 'status'}
+              className={`pointer-events-auto flex w-full items-center gap-3 rounded-xl border px-4 py-3 shadow-lifted animate-fade-in sm:min-w-[280px] sm:max-w-[420px] ${STYLES[t.type]}`}
             >
               <div className={`flex h-7 w-7 items-center justify-center rounded-lg flex-shrink-0 ${ICON_STYLES[t.type]}`}>
                 <Icon size={14} />
@@ -66,7 +71,8 @@ export function ToastProvider({ children }) {
               <p className="text-sm font-medium flex-1">{t.message}</p>
               <button
                 onClick={() => removeToast(t.id)}
-                className="text-current opacity-40 hover:opacity-70 transition-opacity flex-shrink-0"
+                aria-label="Dismiss notification"
+                className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg text-current opacity-50 transition-opacity hover:bg-black/5 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current"
               >
                 <X size={14} />
               </button>

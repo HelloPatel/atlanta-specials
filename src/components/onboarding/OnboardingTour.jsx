@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { Dialog } from '@headlessui/react';
 import { ArrowRight, X } from 'lucide-react';
 
 const ONBOARDING_STEPS = [
   {
     id: 'welcome',
-    title: 'Welcome to Phera! 🎉',
+    title: 'Welcome to Phera',
     description: 'The only wedding planner built for Indian weddings. Let\'s get you set up in under 2 minutes.',
   },
   {
@@ -60,11 +61,13 @@ export default function OnboardingTour({ show }) {
   const isLast = step === ONBOARDING_STEPS.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-2xl p-8 animate-fade-in">
+    <Dialog open={visible} onClose={handleComplete} className="relative z-[100]">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" aria-hidden="true" />
+      <div className="fixed inset-0 flex items-end justify-center sm:items-center sm:p-4">
+      <Dialog.Panel className="relative w-full max-w-md rounded-t-2xl bg-white p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl animate-slide-up sm:rounded-2xl sm:p-8 sm:animate-fade-in">
         <button
           onClick={handleComplete}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-xl text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600"
           aria-label="Skip tour"
         >
           <X size={20} />
@@ -80,26 +83,27 @@ export default function OnboardingTour({ show }) {
         </div>
 
         <div className="text-center">
-          <h2 className="text-xl font-display font-bold text-gray-900 mb-3">{current.title}</h2>
+          <Dialog.Title className="text-xl font-display font-bold text-gray-900 mb-3">{current.title}</Dialog.Title>
           <p className="text-sm text-gray-600 leading-relaxed mb-8">{current.description}</p>
         </div>
 
         <div className="flex items-center justify-between">
           <button
             onClick={handleComplete}
-            className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            className="min-h-11 rounded-xl px-3 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600"
           >
             Skip tour
           </button>
           <button
             onClick={handleNext}
-            className="flex items-center gap-2 rounded-xl bg-wine-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-wine-800 transition-colors shadow-sm"
+            className="flex min-h-11 items-center gap-2 rounded-xl bg-wine-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-wine-800 active:scale-[0.98] transition-all shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600 focus-visible:ring-offset-2"
           >
-            {isLast ? "Let's go!" : 'Next'} <ArrowRight size={14} />
+            {isLast ? "Let's go" : 'Next'} <ArrowRight size={14} />
           </button>
         </div>
+        </Dialog.Panel>
       </div>
-    </div>
+      </Dialog>
   );
 }
 

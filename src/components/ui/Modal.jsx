@@ -26,7 +26,7 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
           <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px]" aria-hidden="true" />
         </Transition.Child>
 
-        <div className="fixed inset-0 flex items-center justify-center p-4">
+        <div className="fixed inset-0 flex items-end justify-center sm:items-center sm:p-4">
           <Transition.Child
             as={Fragment}
             enter="duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -36,7 +36,7 @@ export default function Modal({ open, onClose, title, children, size = 'md' }) {
             leaveFrom="opacity-100 translate-y-0 scale-100"
             leaveTo="opacity-0 translate-y-1 scale-[0.98]"
           >
-            <Dialog.Panel className={`w-full ${sizeClasses[size]} rounded-2xl bg-white p-4 md:p-6 shadow-xl max-h-[85dvh] flex flex-col`}>
+            <Dialog.Panel className={`w-full ${sizeClasses[size]} max-h-[92dvh] rounded-t-2xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-xl flex flex-col sm:max-h-[85dvh] sm:rounded-2xl sm:p-6`}>
               <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <Dialog.Title className="text-lg font-semibold text-gray-900 text-balance">
                   {title}

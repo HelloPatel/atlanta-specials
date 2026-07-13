@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Heart } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { subscribeToEvents } from '../services/eventService';
+import { subscribeToPublicEvents } from '../services/eventService';
 import { subscribeToWebsite } from '../services/websiteService';
 import { resolveWeddingId } from '../services/weddingService';
 import WeddingWebsitePreview from '../components/website/WeddingWebsitePreview';
@@ -61,7 +61,7 @@ export default function PublicWeddingWebsite() {
       setLoading(false);
     });
 
-    const unsubscribeEvents = subscribeToEvents(resolvedId, setEvents);
+    const unsubscribeEvents = subscribeToPublicEvents(resolvedId, setEvents);
 
     return () => {
       if (!loadedWedding) setLoading(false);

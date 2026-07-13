@@ -4,11 +4,12 @@ import { subscribeToGuests } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating } from '../../services/seatingService';
 import { generatePlaceCardsPDF, generateTableAssignmentPDF, generateGuestListPDF } from './pdfGenerators';
-import { Button, Card } from '../ui';
+import { Button, Card, useToast } from '../ui';
 import { Printer, Download, CreditCard, List, Grid3X3, Eye } from 'lucide-react';
 
 export default function PrintCenter() {
   const { activeWedding } = useWedding();
+  const toast = useToast();
   const [guests, setGuests] = useState([]);
   const [events, setEvents] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(null);
@@ -60,6 +61,7 @@ export default function PrintCenter() {
       doc.save(`place-cards-${selectedEventId || 'all'}.pdf`);
     } catch (err) {
       console.error('PDF generation error:', err);
+      toast.error('We could not create the place cards PDF. Please try again.');
     }
     setGenerating('');
   };
@@ -74,6 +76,7 @@ export default function PrintCenter() {
       doc.save(`table-assignments-${selectedEventId || 'all'}.pdf`);
     } catch (err) {
       console.error('PDF generation error:', err);
+      toast.error('We could not create the table assignments PDF. Please try again.');
     }
     setGenerating('');
   };
@@ -85,6 +88,7 @@ export default function PrintCenter() {
       doc.save('guest-list.pdf');
     } catch (err) {
       console.error('PDF generation error:', err);
+      toast.error('We could not create the guest list PDF. Please try again.');
     }
     setGenerating('');
   };

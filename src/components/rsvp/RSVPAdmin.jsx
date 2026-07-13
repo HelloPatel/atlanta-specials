@@ -27,6 +27,7 @@ export default function RSVPAdmin() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showSettings, setShowSettings] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [copied, setCopied] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -240,14 +241,28 @@ export default function RSVPAdmin() {
         )}
 
         <div className="relative group">
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label="Export RSVP data"
+            aria-expanded={showExport}
+            aria-haspopup="menu"
+            onClick={() => setShowExport((open) => !open)}
+          >
             <Download size={14} /> <span className="hidden md:inline">Export</span>
           </Button>
-          <div className="absolute right-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20">
-            <button onClick={exportResponsesCSV} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+          <div
+            role="menu"
+            className={`absolute right-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg transition-all z-20 ${
+              showExport
+                ? 'visible opacity-100'
+                : 'invisible opacity-0 md:group-hover:visible md:group-hover:opacity-100'
+            }`}
+          >
+            <button role="menuitem" onClick={() => { exportResponsesCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
               RSVP log (CSV)
             </button>
-            <button onClick={exportDietaryCSV} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
+            <button role="menuitem" onClick={() => { exportDietaryCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
               Dietary by event (CSV)
             </button>
           </div>
@@ -261,11 +276,11 @@ export default function RSVPAdmin() {
           {isOpen ? 'RSVPs Open' : 'RSVPs Closed'}
         </Button>
 
-        <Button variant="outline" size="sm" onClick={() => setShowShare(true)}>
+        <Button aria-label="Share RSVP link" variant="outline" size="sm" onClick={() => setShowShare(true)}>
           <Share2 size={14} /> <span className="hidden md:inline">Share Link</span>
         </Button>
 
-        <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+        <Button aria-label="RSVP settings" variant="outline" size="sm" onClick={() => setShowSettings(true)}>
           <span className="hidden md:inline">Settings</span>
           <span className="md:hidden">Set</span>
         </Button>
@@ -279,24 +294,28 @@ export default function RSVPAdmin() {
             placeholder="Search guests..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm pl-9 focus:border-wine-600 focus:ring-1 focus:ring-wine-600"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-base pl-9 focus:border-wine-600 focus:ring-1 focus:ring-wine-600 sm:text-sm"
           />
           <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
 
+        <label htmlFor="rsvp-event-filter" className="sr-only">Event filter</label>
         <select
+          id="rsvp-event-filter"
           value={selectedEvent}
           onChange={(e) => setSelectedEvent(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
         >
           <option value="all">All Events</option>
           {events.map((evt) => <option key={evt.id} value={evt.id}>{evt.name}</option>)}
         </select>
 
+        <label htmlFor="rsvp-status-filter" className="sr-only">Status filter</label>
         <select
+          id="rsvp-status-filter"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
         >
           <option value="all">All Statuses</option>
           <option value="accepted">Accepted</option>
@@ -464,9 +483,10 @@ export default function RSVPAdmin() {
 
           <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
             <input
+              aria-label="RSVP link"
               readOnly
               value={rsvpLink}
-              className="flex-1 bg-transparent text-sm text-gray-700 outline-none"
+              className="min-w-0 flex-1 bg-transparent text-base text-gray-700 outline-none sm:text-sm"
             />
             <Button size="sm" variant="outline" onClick={handleCopyLink}>
               {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -599,24 +619,26 @@ function RsvpSettingsForm({ settings, onSave }) {
       </label>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">RSVP Deadline</label>
+        <label htmlFor="rsvp-deadline" className="block text-sm font-medium text-gray-700 mb-1">RSVP Deadline</label>
         <input
+          id="rsvp-deadline"
           type="date"
           value={form.deadline}
           onChange={(e) => setForm({ ...form, deadline: e.target.value })}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Planning buffer (%)</label>
+        <label htmlFor="rsvp-planning-buffer" className="block text-sm font-medium text-gray-700 mb-1">Planning buffer (%)</label>
         <input
+          id="rsvp-planning-buffer"
           type="number"
           min={0}
           max={50}
           value={form.headcountBufferPct}
           onChange={(e) => setForm({ ...form, headcountBufferPct: Math.max(0, Math.min(50, Number(e.target.value) || 0)) })}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
         />
         <p className="text-xs text-gray-400 mt-1">Extra headcount added on top of confirmed guests for catering and seating (walk-ins, late yeses). Shown as "Plan for ~N".</p>
       </div>
@@ -677,24 +699,26 @@ function RsvpSettingsForm({ settings, onSave }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Custom Welcome Message</label>
+        <label htmlFor="rsvp-custom-message" className="block text-sm font-medium text-gray-700 mb-1">Custom Welcome Message</label>
         <textarea
+          id="rsvp-custom-message"
           value={form.customMessage}
           onChange={(e) => setForm({ ...form, customMessage: e.target.value })}
           placeholder="We'd love for you to join us..."
           rows={3}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">RSVP Password (optional)</label>
+        <label htmlFor="rsvp-password" className="block text-sm font-medium text-gray-700 mb-1">RSVP Password (optional)</label>
         <input
+          id="rsvp-password"
           type="text"
           value={form.rsvpPassword}
           onChange={(e) => setForm({ ...form, rsvpPassword: e.target.value })}
           placeholder="Leave blank for no password"
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base sm:text-sm"
         />
         <p className="text-xs text-gray-400 mt-1">Guests must enter this password before they can RSVP. Share it in your invite.</p>
       </div>

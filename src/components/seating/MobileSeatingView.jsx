@@ -281,7 +281,7 @@ export default function MobileSeatingView() {
           <select
             value={selectedEventId || ''}
             onChange={(e) => setSelectedEventId(e.target.value)}
-            className="min-w-0 max-w-[55%] rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 focus:border-wine-500 focus:outline-none focus:ring-2 focus:ring-wine-200"
+            className="min-w-0 max-w-[55%] rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-base font-medium text-gray-800 focus:border-wine-500 focus:outline-none focus:ring-2 focus:ring-wine-200 sm:text-sm"
             aria-label="Select event"
           >
             {events.map((evt) => <option key={evt.id} value={evt.id}>{evt.name}</option>)}
@@ -529,7 +529,7 @@ export default function MobileSeatingView() {
                 value={guestSearch}
                 onChange={(event) => setGuestSearch(event.target.value)}
                 placeholder="Search guests or families"
-                className="h-11 w-full rounded-xl border border-gray-300 bg-white pl-9 pr-3 text-sm focus:border-wine-500 focus:outline-none focus:ring-2 focus:ring-wine-200"
+                className="h-11 w-full rounded-xl border border-gray-300 bg-white pl-9 pr-3 text-base focus:border-wine-500 focus:outline-none focus:ring-2 focus:ring-wine-200 sm:text-sm"
               />
             </div>
             {canEdit && unassignedGuests.length > 0 && tables.length > 0 && (
@@ -551,7 +551,7 @@ export default function MobileSeatingView() {
                     value={assignedTable?.id || ''}
                     onChange={(event) => moveGuest(guest.id, event.target.value || null)}
                     disabled={!canEdit}
-                    className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm text-gray-700 disabled:bg-gray-50 disabled:text-gray-500"
+                    className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-base text-gray-700 disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                     aria-label={`Table assignment for ${guest.firstName} ${guest.lastName}`}
                   >
                     <option value="">Unassigned</option>
@@ -609,7 +609,7 @@ export default function MobileSeatingView() {
                         <select
                           value={selectedTable.id}
                           onChange={(event) => moveGuest(g.id, event.target.value || null)}
-                          className="h-10 max-w-[9rem] rounded-xl border border-gray-300 bg-white px-2 text-xs"
+                          className="h-11 max-w-[10rem] rounded-xl border border-gray-300 bg-white px-2 text-base sm:text-sm"
                           aria-label={`Move ${g.firstName} ${g.lastName}`}
                         >
                           <option value="">Unassign</option>
@@ -625,13 +625,14 @@ export default function MobileSeatingView() {
             )}
             {canEdit && (
               <div className="mt-3 border-t border-gray-100 pt-3">
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Add an unassigned guest</label>
+                <label htmlFor="mobile-table-add-guest" className="mb-1 block text-xs font-semibold text-gray-600">Add an unassigned guest</label>
                 <select
+                  id="mobile-table-add-guest"
                   value=""
                   onChange={(event) => {
                     if (event.target.value) moveGuest(event.target.value, selectedTable.id);
                   }}
-                  className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm"
+                  className="h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-base sm:text-sm"
                 >
                   <option value="">Choose guest</option>
                   {unassignedGuests.map((guest) => (
@@ -671,11 +672,11 @@ export default function MobileSeatingView() {
           <div className="space-y-4">
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-gray-700">Table name</span>
-              <input value={editTable.name} onChange={(event) => setEditTable((current) => ({ ...current, name: event.target.value }))} className="h-11 w-full rounded-xl border border-gray-300 px-3 text-sm" />
+              <input value={editTable.name} onChange={(event) => setEditTable((current) => ({ ...current, name: event.target.value }))} className="h-11 w-full rounded-xl border border-gray-300 px-3 text-base sm:text-sm" />
             </label>
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-gray-700">Capacity</span>
-              <input type="number" min="1" max="50" value={editTable.capacity} onChange={(event) => setEditTable((current) => ({ ...current, capacity: event.target.value }))} className="h-11 w-full rounded-xl border border-gray-300 px-3 text-sm" />
+              <input type="number" min="1" max="50" value={editTable.capacity} onChange={(event) => setEditTable((current) => ({ ...current, capacity: event.target.value }))} className="h-11 w-full rounded-xl border border-gray-300 px-3 text-base sm:text-sm" />
             </label>
             <Button className="w-full" onClick={saveTableEdits}>Save table</Button>
           </div>

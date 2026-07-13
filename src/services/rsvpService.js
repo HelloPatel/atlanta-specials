@@ -10,9 +10,11 @@ import {
   query,
   where,
   getDocs,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
+import { getPublicEvents } from './eventService';
 
 // ─── RSVP Settings (per wedding) ────────────────────────────────────────────
 
@@ -26,9 +28,21 @@ export async function getRsvpSettings(weddingId) {
 }
 
 export async function saveRsvpSettings(weddingId, settings) {
-  await setDoc(rsvpSettingsRef(weddingId), {
+  const nextSettings = {
     ...settings,
     updatedAt: serverTimestamp(),
+  };
+  const batch = writeBatch(db);
+  batch.set(rsvpSettingsRef(weddingId), nextSettings, { merge: true });
+  batch.set(doc(db, COLLECTIONS.PUBLIC_WEDDINGS, weddingId), {
+    rsvpSettings: settings,
+  }, { merge: true });
+  await batch.commit();
+}
+
+export async function publishRsvpSettings(weddingId, settings) {
+  await setDoc(doc(db, COLLECTIONS.PUBLIC_WEDDINGS, weddingId), {
+    rsvpSettings: settings || null,
   }, { merge: true });
 }
 
@@ -77,22 +91,14 @@ export function subscribeToResponses(weddingId, callback) {
 // ─── Public RSVP page data (read without auth) ─────────────────────────────
 
 export async function getPublicWeddingData(weddingId) {
-  const weddingSnap = await getDoc(doc(db, COLLECTIONS.WEDDINGS, weddingId));
+  const weddingSnap = await getDoc(doc(db, COLLECTIONS.PUBLIC_WEDDINGS, weddingId));
   if (!weddingSnap.exists()) return null;
 
   const wedding = { id: weddingSnap.id, ...weddingSnap.data() };
 
   // Get events
-  const eventsSnap = await getDocs(
-    collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.EVENTS)
-  );
-  const events = eventsSnap.docs
-    .map((d) => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (a.order || 0) - (b.order || 0));
-
-  // Get RSVP settings
-  const settingsSnap = await getDoc(rsvpSettingsRef(weddingId));
-  const rsvpSettings = settingsSnap.exists() ? settingsSnap.data() : null;
+  const events = await getPublicEvents(weddingId);
+  const rsvpSettings = wedding.rsvpSettings || null;
 
   return { wedding, events, rsvpSettings };
 }
@@ -100,10 +106,11 @@ export async function getPublicWeddingData(weddingId) {
 // ─── Guest lookup for RSVP (by phone or name) ──────────────────────────────
 
 export async function lookupGuestForRsvp(weddingId, { phone, name }) {
-  const guestsRef = collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.GUESTS);
+  const guestsRef = collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.PUBLIC_GUESTS);
   
   if (phone) {
-    const q = query(guestsRef, where('phone', '==', phone));
+    const phoneLast4 = phone.replace(/\D/g, '').slice(-4);
+    const q = query(guestsRef, where('phoneLast4', '==', phoneLast4));
     const snap = await getDocs(q);
     if (!snap.empty) {
       return snap.docs.map((d) => ({ id: d.id, ...d.data() }));

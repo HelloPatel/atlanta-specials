@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui';
 import HeroDemo from '../components/ui/HeroDemo';
 import FeatureTiles from '../components/ui/FeatureTiles';
+import LegalFooter from '../components/legal/LegalFooter';
 import { APP_NAME } from '../config/constants';
 import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles, Play } from 'lucide-react';
 
@@ -291,9 +292,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="text-center px-6 py-10 text-sm text-gray-400 bg-gray-50/80 border-t border-gray-100">
-        <p className="font-medium">&copy; {new Date().getFullYear()} {APP_NAME}</p>
-      </footer>
+      <LegalFooter />
     </div>
   );
 }

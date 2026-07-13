@@ -6,6 +6,7 @@ import {
   getDocs,
   onSnapshot,
   serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
@@ -14,16 +15,39 @@ function seatingDocRef(weddingId, eventId) {
   return doc(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.SEATING, eventId);
 }
 
+function publicSeatingDocRef(weddingId, eventId) {
+  return doc(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.PUBLIC_SEATING, eventId);
+}
+
+function toPublicSeating(data) {
+  return {
+    tables: (data.tables || []).map((table) => ({
+      id: table.id,
+      name: table.name || '',
+      capacity: table.capacity || 0,
+      assignedGuests: table.assignedGuests || [],
+    })),
+    updatedAt: serverTimestamp(),
+  };
+}
+
 export async function getSeating(weddingId, eventId) {
   const snap = await getDoc(seatingDocRef(weddingId, eventId));
   return snap.exists() ? snap.data() : { tables: [], rules: [], zones: [] };
 }
 
 export async function saveSeating(weddingId, eventId, data) {
-  await setDoc(seatingDocRef(weddingId, eventId), {
+  const batch = writeBatch(db);
+  batch.set(seatingDocRef(weddingId, eventId), {
     ...data,
     updatedAt: serverTimestamp(),
   }, { merge: true });
+  batch.set(publicSeatingDocRef(weddingId, eventId), toPublicSeating(data));
+  await batch.commit();
+}
+
+export async function publishSeating(weddingId, eventId, data) {
+  await setDoc(publicSeatingDocRef(weddingId, eventId), toPublicSeating(data));
 }
 
 export function subscribeToSeating(weddingId, eventId, callback) {
@@ -49,8 +73,10 @@ function guestMatchesSearch(guest, searchName) {
 
 export async function getGuestTable(weddingId, eventId, searchName) {
   const [seating, guestsSnapshot] = await Promise.all([
-    getSeating(weddingId, eventId),
-    getDocs(collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.GUESTS)),
+    getDoc(publicSeatingDocRef(weddingId, eventId)).then((snapshot) => (
+      snapshot.exists() ? snapshot.data() : { tables: [] }
+    )),
+    getDocs(collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.PUBLIC_GUESTS)),
   ]);
 
   const guests = guestsSnapshot.docs.map((guestDoc) => ({ id: guestDoc.id, ...guestDoc.data() }));

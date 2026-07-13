@@ -2,6 +2,14 @@ import { Link } from 'react-router-dom';
 import { Home, ArrowLeft } from 'lucide-react';
 
 export default function NotFound() {
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.assign('/');
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-wine-50 via-ivory-100 to-phera-50/30">
       <div className="text-center max-w-md">
@@ -18,7 +26,7 @@ export default function NotFound() {
             <Home size={16} /> Go home
           </Link>
           <button
-            onClick={() => window.history.back()}
+            onClick={handleBack}
             className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
           >
             <ArrowLeft size={16} /> Go back

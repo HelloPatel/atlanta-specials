@@ -60,7 +60,7 @@ function HeroPatternOverlay({ pattern, theme }) {
 
   if (pattern === 'mandala') {
     return (
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div data-hero-pattern="mandala" className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -right-20 -top-24 opacity-70">
           <MandalaBackground color={theme.accent} size={420} opacity={0.12} />
         </div>
@@ -74,6 +74,7 @@ function HeroPatternOverlay({ pattern, theme }) {
   if (pattern === 'geometric') {
     return (
       <div
+        data-hero-pattern="geometric"
         className="pointer-events-none absolute inset-0 opacity-50"
         style={{
           backgroundImage: `
@@ -88,32 +89,37 @@ function HeroPatternOverlay({ pattern, theme }) {
 
   return (
     <svg
+      data-hero-pattern={pattern}
       className="pointer-events-none absolute inset-0 h-full w-full opacity-60"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
     >
       <defs>
         {pattern === 'floral' ? (
-          <pattern id={patternId} width="180" height="180" patternUnits="userSpaceOnUse">
-            <g transform="translate(45 45)" fill="none" stroke={theme.accent} strokeWidth="1.4" opacity="0.45">
-              {[0, 45, 90, 135].map((rotation) => (
-                <ellipse key={rotation} cx="0" cy="-13" rx="6" ry="14" transform={`rotate(${rotation})`} />
+          <pattern id={patternId} width="220" height="180" patternUnits="userSpaceOnUse">
+            <g transform="translate(54 48)" fill="none" stroke={theme.accent} strokeWidth="1.35" opacity="0.5">
+              {[0, 60, 120, 180, 240, 300].map((rotation) => (
+                <path key={rotation} d="M0 0 C-8 -10 -8 -25 0 -35 C8 -25 8 -10 0 0Z" transform={`rotate(${rotation})`} />
               ))}
-              <circle r="4" fill={theme.accent} fillOpacity="0.35" />
-              <path d="M10 14 C28 22, 30 39, 18 52 M18 35 C28 31, 35 32, 42 38" />
+              <circle r="5" fill={theme.accent} fillOpacity="0.3" />
+              <path d="M16 18 C42 30 50 56 32 82 M33 45 C49 37 64 40 76 54 M31 65 C45 61 58 67 67 80" />
+              <path d="M42 30 C50 20 61 17 72 20" />
             </g>
-            <g transform="translate(137 132) scale(.7)" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.32">
-              {[0, 60, 120].map((rotation) => (
-                <ellipse key={rotation} cx="0" cy="-12" rx="5" ry="12" transform={`rotate(${rotation})`} />
+            <g transform="translate(168 132) scale(.72)" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.34">
+              {[0, 72, 144, 216, 288].map((rotation) => (
+                <path key={rotation} d="M0 0 C-7 -9 -7 -22 0 -30 C7 -22 7 -9 0 0Z" transform={`rotate(${rotation})`} />
               ))}
+              <circle r="4" fill="#ffffff" fillOpacity="0.22" />
             </g>
           </pattern>
         ) : (
-          <pattern id={patternId} width="170" height="170" patternUnits="userSpaceOnUse">
-            <g transform="translate(28 22) rotate(-12)" fill="none" stroke={theme.accent} strokeWidth="1.4" opacity="0.42">
-              <path d="M52 8 C24 18, 8 44, 14 73 C20 101, 55 113, 76 94 C93 79, 87 51, 67 46 C50 42, 39 57, 44 70 C48 80, 62 83, 69 74" />
-              <path d="M52 20 C34 29, 24 47, 28 66 C32 82, 49 91, 61 82" opacity="0.7" />
-              <circle cx="54" cy="64" r="4" fill={theme.accent} fillOpacity="0.35" />
+          <pattern id={patternId} width="210" height="190" patternUnits="userSpaceOnUse">
+            <g transform="translate(30 20) rotate(-10)" fill="none" stroke={theme.accent} strokeWidth="1.35" opacity="0.48">
+              <path d="M58 6 C26 16 7 47 15 82 C22 113 61 127 87 104 C108 85 102 51 77 44 C56 38 39 57 45 74 C50 88 69 92 79 79" />
+              <path d="M58 20 C38 30 26 52 31 73 C36 92 56 102 72 91" opacity="0.72" />
+              <path d="M44 92 C31 111 28 130 34 147 M36 125 C49 116 62 115 75 121" />
+              <circle cx="61" cy="69" r="5" fill={theme.accent} fillOpacity="0.3" />
+              <path d="M57 55 C63 48 72 48 78 54" />
             </g>
           </pattern>
         )}
@@ -255,6 +261,8 @@ export default function WeddingWebsitePreview({
       )}
 
       <section
+        data-website-theme={theme.key}
+        data-background-style={config.websiteHero?.pattern || 'none'}
         className={`relative isolate flex items-center overflow-hidden ${
           previewMode
             ? 'min-h-[560px] px-8 py-12'
@@ -269,7 +277,6 @@ export default function WeddingWebsitePreview({
           backgroundPosition: 'center',
         }}
       >
-        <div className="absolute inset-0 bg-black/5" />
         <HeroPatternOverlay pattern={config.websiteHero?.pattern} theme={theme} />
         {/* Ornamental decorations for Indian themes */}
         {theme.ornaments && (

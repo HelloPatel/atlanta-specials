@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
 import { Heart, MapPin, Search, Users } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { Button, Input } from '../components/ui';
-import { COLLECTIONS, APP_NAME } from '../config/constants';
-import { db } from '../firebase';
+import { APP_NAME } from '../config/constants';
+import { getPublicEvents } from '../services/eventService';
 import { getGuestTable } from '../services/seatingService';
-import { getWedding, resolveWeddingId } from '../services/weddingService';
+import { getPublicWedding, resolveWeddingId } from '../services/weddingService';
 
 export default function TableFinder() {
   const { weddingId: rawParam, eventId } = useParams();
@@ -29,17 +28,15 @@ export default function TableFinder() {
         if (!mounted || !resolvedId) { setError('Wedding not found'); setLoading(false); return; }
         setWeddingId(resolvedId);
 
-        const [weddingData, eventsSnapshot] = await Promise.all([
-          getWedding(resolvedId),
-          getDocs(collection(db, COLLECTIONS.WEDDINGS, resolvedId, COLLECTIONS.EVENTS)),
+        const [weddingData, publicEvents] = await Promise.all([
+          getPublicWedding(resolvedId),
+          getPublicEvents(resolvedId),
         ]);
 
         if (!mounted) return;
 
         setWedding(weddingData);
-        const matchingEvent = eventsSnapshot.docs
-          .map((snapshot) => ({ id: snapshot.id, ...snapshot.data() }))
-          .find((event) => event.id === eventId);
+        const matchingEvent = publicEvents.find((event) => event.id === eventId);
         setEventName(matchingEvent?.name || '');
       } catch (err) {
         console.error('Unable to load table finder details', err);
@@ -51,7 +48,7 @@ export default function TableFinder() {
 
     loadPageMeta();
     return () => { mounted = false; };
-  }, [eventId, weddingId]);
+  }, [eventId, rawParam]);
 
   const coupleName = useMemo(() => {
     if (!wedding) return 'Phera';

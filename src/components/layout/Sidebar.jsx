@@ -18,7 +18,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useWedding } from '../../contexts/WeddingContext';
 import { APP_NAME } from '../../config/constants';
 
-const navItems = [
+export const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/guests', icon: Users, label: 'Guest List' },
   { to: '/events', icon: Calendar, label: 'Events' },
@@ -30,7 +30,7 @@ const navItems = [
   { to: '/website', icon: Globe, label: 'Website' },
 ];
 
-export default function Sidebar({ onNavigate }) {
+export default function Sidebar({ onNavigate, mobile = false }) {
   const [collapsed, setCollapsed] = useState(false);
   const { logout } = useAuth();
   const { activeWedding } = useWedding();
@@ -42,7 +42,12 @@ export default function Sidebar({ onNavigate }) {
   };
 
   return (
-    <aside className={`flex h-full flex-col border-r border-gray-200/80 bg-white transition-all duration-200 ${collapsed ? 'w-16' : 'w-60'}`}>
+    <aside
+      aria-label="Wedding planning navigation"
+      className={`flex h-full flex-col border-r border-gray-200/80 bg-white transition-[width] duration-200 ${
+        mobile ? 'w-[min(20rem,88vw)]' : collapsed ? 'w-16' : 'w-60'
+      }`}
+    >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-wine-700 to-wine-900 text-white font-display font-bold text-sm shadow-sm">
@@ -63,16 +68,16 @@ export default function Sidebar({ onNavigate }) {
 
       {/* Nav links */}
       <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-        {navItems.map(({ to, icon: Icon, label }) => (
+        {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
             onClick={onNavigate}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-150 ${
+              `flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600 focus-visible:ring-offset-2 ${
                 isActive
-                  ? 'bg-wine-50 text-wine-800 shadow-sm'
-                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                  ? 'bg-wine-50 text-wine-800 shadow-sm ring-1 ring-wine-100'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`
             }
             title={collapsed ? label : undefined}
@@ -85,19 +90,29 @@ export default function Sidebar({ onNavigate }) {
 
       {/* Bottom */}
       <div className="border-t border-gray-100 p-2 space-y-1">
+        {!collapsed && !mobile && (
+          <div className="flex items-center justify-center gap-3 px-2 pb-1 text-[10px] text-gray-400">
+            <NavLink to="/privacy" className="hover:text-wine-700">Privacy</NavLink>
+            <NavLink to="/terms" className="hover:text-wine-700">Terms</NavLink>
+          </div>
+        )}
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800 transition-colors"
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600"
         >
           <LogOut size={18} />
           {!collapsed && <span>Sign out</span>}
         </button>
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex w-full items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
+        {!mobile && (
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
+            aria-expanded={!collapsed}
+            className="flex min-h-10 w-full items-center justify-center rounded-lg p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600"
+          >
+            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+        )}
       </div>
     </aside>
   );

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, LayoutDashboard, Users, Calendar, Grid3X3, Mail, Camera, Trophy, Globe, Printer, User } from 'lucide-react';
+import { Dialog } from '@headlessui/react';
+import { Search, LayoutDashboard, Users, Calendar, Grid3X3, Mail, Camera, Trophy, Globe, Printer, User, X } from 'lucide-react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToGuests } from '../../services/guestService';
 
@@ -39,7 +40,14 @@ export default function CommandPalette() {
         e.preventDefault();
         setOpen((prev) => !prev);
       }
-      if (e.key === '?' && !e.ctrlKey && !e.metaKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      const target = e.target;
+      const isTyping = target instanceof HTMLElement && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable
+      );
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !isTyping) {
         e.preventDefault();
         setShowShortcuts((prev) => !prev);
       }
@@ -84,7 +92,7 @@ export default function CommandPalette() {
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex((i) => Math.min(i + 1, allItems.length - 1));
+      setSelectedIndex((i) => allItems.length ? Math.min(i + 1, allItems.length - 1) : 0);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex((i) => Math.max(i - 1, 0));
@@ -96,9 +104,11 @@ export default function CommandPalette() {
   if (!open && !showShortcuts) return null;
 
   const commandPalette = open ? (
-    <div className="fixed inset-0 z-[90] flex items-start justify-center pt-[10vh] sm:pt-[15vh]">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
-      <div className="relative w-full max-w-lg mx-4 rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden animate-fade-in">
+    <Dialog open={open} onClose={setOpen} initialFocus={inputRef} className="relative z-[90]">
+      <button type="button" aria-label="Close command palette" className="fixed inset-0 h-full w-full cursor-default bg-black/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
+      <div className="fixed inset-0 flex items-end justify-center sm:items-start sm:pt-[15vh]">
+      <Dialog.Panel className="relative w-full max-w-lg rounded-t-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden animate-slide-up sm:mx-4 sm:rounded-2xl sm:animate-fade-in">
+        <Dialog.Title className="sr-only">Search pages and guests</Dialog.Title>
         <div className="flex items-center gap-3 px-4 border-b border-gray-100">
           <Search size={16} className="text-gray-400" />
           <input
@@ -108,11 +118,23 @@ export default function CommandPalette() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search pages... (@ for guests)"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="command-results"
+            aria-activedescendant={allItems[selectedIndex] ? `command-${allItems[selectedIndex].id}` : undefined}
             className="flex-1 py-3.5 text-sm outline-none bg-transparent text-gray-900 placeholder-gray-400"
           />
           <kbd className="hidden sm:inline-block text-[10px] font-medium text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">ESC</kbd>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            aria-label="Close command palette"
+            className="flex size-10 items-center justify-center rounded-xl text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600 sm:hidden"
+          >
+            <X size={18} />
+          </button>
         </div>
-        <div className="max-h-72 overflow-y-auto py-2">
+        <div id="command-results" role="listbox" className="max-h-[min(60dvh,24rem)] overflow-y-auto py-2">
           {allItems.length === 0 ? (
             <p className="px-4 py-6 text-sm text-gray-400 text-center">{isGuestSearch ? 'No guests found' : 'No results found'}</p>
           ) : (
@@ -121,8 +143,12 @@ export default function CommandPalette() {
               return (
                 <button
                   key={cmd.id}
+                  id={`command-${cmd.id}`}
+                  role="option"
+                  aria-selected={i === selectedIndex}
                   onClick={() => handleSelect(cmd)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${i === selectedIndex ? 'bg-wine-50 text-wine-800' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onMouseEnter={() => setSelectedIndex(i)}
+                  className={`flex min-h-11 w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-wine-600 ${i === selectedIndex ? 'bg-wine-50 text-wine-800' : 'text-gray-700 hover:bg-gray-50'}`}
                 >
                   <Icon size={16} className={i === selectedIndex ? 'text-wine-600' : 'text-gray-400'} />
                   <span className="flex-1">{cmd.label}</span>
@@ -133,22 +159,24 @@ export default function CommandPalette() {
             })
           )}
         </div>
-        <div className="border-t border-gray-100 px-4 py-2 flex items-center gap-4 text-[10px] text-gray-400">
+        <div className="hidden border-t border-gray-100 px-4 py-2 sm:flex items-center gap-4 text-[10px] text-gray-400">
           <span>↑↓ Navigate</span>
           <span>↵ Open</span>
           <span>Esc Close</span>
           <span className="ml-auto">? Shortcuts</span>
         </div>
+      </Dialog.Panel>
       </div>
-    </div>
+    </Dialog>
   ) : null;
 
   const shortcutsModal = showShortcuts ? (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowShortcuts(false)} />
-      <div className="relative w-full max-w-sm mx-4 rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden animate-fade-in">
+    <Dialog open={showShortcuts} onClose={setShowShortcuts} className="relative z-[90]">
+      <button type="button" aria-label="Close keyboard shortcuts" className="fixed inset-0 h-full w-full cursor-default bg-black/30 backdrop-blur-sm" onClick={() => setShowShortcuts(false)} />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+      <Dialog.Panel className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden animate-fade-in">
         <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-900">Keyboard Shortcuts</h2>
+          <Dialog.Title className="text-sm font-semibold text-gray-900">Keyboard shortcuts</Dialog.Title>
         </div>
         <div className="px-5 py-4 space-y-3">
           {[
@@ -165,10 +193,11 @@ export default function CommandPalette() {
           ))}
         </div>
         <div className="border-t border-gray-100 px-5 py-3">
-          <button onClick={() => setShowShortcuts(false)} className="text-xs text-gray-500 hover:text-gray-700">Press ? or Esc to close</button>
+          <button onClick={() => setShowShortcuts(false)} className="min-h-10 rounded-lg px-2 text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600">Press ? or Esc to close</button>
         </div>
+      </Dialog.Panel>
       </div>
-    </div>
+    </Dialog>
   ) : null;
 
   return (

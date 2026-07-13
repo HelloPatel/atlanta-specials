@@ -3,6 +3,7 @@ import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/fire
 import { db } from '../firebase';
 import { useAuth } from './AuthContext';
 import { COLLECTIONS } from '../config/constants';
+import { publishWedding } from '../services/weddingService';
 
 const WeddingContext = createContext(null);
 
@@ -113,6 +114,13 @@ export function WeddingProvider({ children }) {
 
   const isViewer = userRole === 'viewer';
   const canEdit = userRole === 'owner' || userRole === 'editor';
+
+  useEffect(() => {
+    if (!activeWedding || !canEdit) return;
+    publishWedding(activeWedding.id, activeWedding).catch((error) => {
+      console.error('Failed to publish minimized wedding data:', error);
+    });
+  }, [activeWedding, canEdit]);
 
   const selectWedding = async (weddingId) => {
     const found = weddings.find((w) => w.id === weddingId);

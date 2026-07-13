@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   addDoc,
+  setDoc,
   getDoc,
   getDocs,
   updateDoc,
@@ -20,18 +21,23 @@ function guestsRef(weddingId) {
   return collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.GUESTS);
 }
 
+function publicGuestsRef(weddingId) {
+  return collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.PUBLIC_GUESTS);
+}
+
 function familiesRef(weddingId) {
   return collection(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.FAMILIES);
 }
 
 // Firestore allows at most 500 writes per batch. Chunk below that so large
 // imports/deletes/updates don't throw once a wedding grows past ~500 guests.
-const BATCH_LIMIT = 450;
+const BATCH_WRITE_LIMIT = 450;
 
-async function commitInChunks(items, apply) {
-  for (let i = 0; i < items.length; i += BATCH_LIMIT) {
+async function commitInChunks(items, apply, writesPerItem = 1) {
+  const itemLimit = Math.floor(BATCH_WRITE_LIMIT / writesPerItem);
+  for (let i = 0; i < items.length; i += itemLimit) {
     const batch = writeBatch(db);
-    for (const item of items.slice(i, i + BATCH_LIMIT)) apply(batch, item);
+    for (const item of items.slice(i, i + itemLimit)) apply(batch, item);
     await batch.commit();
   }
   return items.length;
@@ -39,8 +45,22 @@ async function commitInChunks(items, apply) {
 
 // ─── Guest CRUD ─────────────────────────────────────────────────────────────
 
+export function toPublicGuest(guest) {
+  const phoneDigits = String(guest.phone || '').replace(/\D/g, '');
+  return {
+    firstName: guest.firstName || '',
+    lastName: guest.lastName || '',
+    familyId: guest.familyId || null,
+    familyName: guest.familyName || '',
+    phoneLast4: phoneDigits.slice(-4),
+    isChild: (guest.tags || []).includes('Kids'),
+    updatedAt: serverTimestamp(),
+  };
+}
+
 export async function addGuest(weddingId, guest) {
-  const docRef = await addDoc(guestsRef(weddingId), {
+  const docRef = doc(guestsRef(weddingId));
+  const privateGuest = {
     firstName: guest.firstName || '',
     lastName: guest.lastName || '',
     email: guest.email || '',
@@ -67,25 +87,41 @@ export async function addGuest(weddingId, guest) {
     tags: guest.tags || [],
     importedFrom: guest.importedFrom || 'manual',
     createdAt: serverTimestamp(),
-  });
+  };
+  const batch = writeBatch(db);
+  batch.set(docRef, privateGuest);
+  batch.set(doc(publicGuestsRef(weddingId), docRef.id), toPublicGuest(privateGuest));
+  await batch.commit();
   return docRef.id;
 }
 
 export async function updateGuest(weddingId, guestId, data) {
-  await updateDoc(doc(guestsRef(weddingId), guestId), {
+  const privateRef = doc(guestsRef(weddingId), guestId);
+  const currentSnapshot = await getDoc(privateRef);
+  if (!currentSnapshot.exists()) throw new Error('Guest not found');
+
+  const nextGuest = { ...currentSnapshot.data(), ...data };
+  const batch = writeBatch(db);
+  batch.update(privateRef, {
     ...data,
     updatedAt: serverTimestamp(),
   });
+  batch.set(doc(publicGuestsRef(weddingId), guestId), toPublicGuest(nextGuest));
+  await batch.commit();
 }
 
 export async function deleteGuest(weddingId, guestId) {
-  await deleteDoc(doc(guestsRef(weddingId), guestId));
+  const batch = writeBatch(db);
+  batch.delete(doc(guestsRef(weddingId), guestId));
+  batch.delete(doc(publicGuestsRef(weddingId), guestId));
+  await batch.commit();
 }
 
 export async function deleteGuestsBatch(weddingId, guestIds) {
-  return commitInChunks(guestIds, (batch, id) =>
-    batch.delete(doc(guestsRef(weddingId), id))
-  );
+  return commitInChunks(guestIds, (batch, id) => {
+    batch.delete(doc(guestsRef(weddingId), id));
+    batch.delete(doc(publicGuestsRef(weddingId), id));
+  }, 2);
 }
 
 export function subscribeToGuests(weddingId, callback) {
@@ -99,8 +135,10 @@ export function subscribeToGuests(weddingId, callback) {
 
 export async function importGuestsBatch(weddingId, guests) {
   const ref = guestsRef(weddingId);
+  const publicRef = publicGuestsRef(weddingId);
   return commitInChunks(guests, (batch, guest) => {
-    batch.set(doc(ref), {
+    const privateRef = doc(ref);
+    const privateGuest = {
       firstName: guest.firstName || '',
       lastName: guest.lastName || '',
       email: guest.email || '',
@@ -127,16 +165,44 @@ export async function importGuestsBatch(weddingId, guests) {
       tags: guest.tags || [],
       importedFrom: 'excel',
       createdAt: serverTimestamp(),
-    });
+    };
+    batch.set(privateRef, privateGuest);
+    batch.set(doc(publicRef, privateRef.id), toPublicGuest(privateGuest));
+  }, 2);
+}
+
+export async function syncPublicGuestDirectory(weddingId, guests) {
+  const publicSnapshot = await getDocs(publicGuestsRef(weddingId));
+  const privateIds = new Set(guests.map((guest) => guest.id));
+  const operations = [
+    ...guests.map((guest) => ({ type: 'set', guest })),
+    ...publicSnapshot.docs
+      .filter((guestDoc) => !privateIds.has(guestDoc.id))
+      .map((guestDoc) => ({ type: 'delete', id: guestDoc.id })),
+  ];
+
+  return commitInChunks(operations, (batch, operation) => {
+    if (operation.type === 'delete') {
+      batch.delete(doc(publicGuestsRef(weddingId), operation.id));
+      return;
+    }
+    batch.set(
+      doc(publicGuestsRef(weddingId), operation.guest.id),
+      toPublicGuest(operation.guest),
+    );
   });
 }
 
 // ─── Bulk update (table assignment, event assignment, etc.) ─────────────────
 
 export async function updateGuestsBatch(weddingId, updates) {
-  return commitInChunks(updates, (batch, { guestId, data }) =>
-    batch.update(doc(guestsRef(weddingId), guestId), data)
-  );
+  return commitInChunks(updates, (batch, { guestId, data, currentGuest }) => {
+    batch.update(doc(guestsRef(weddingId), guestId), data);
+    batch.set(
+      doc(publicGuestsRef(weddingId), guestId),
+      toPublicGuest({ ...currentGuest, ...data }),
+    );
+  }, 2);
 }
 
 // ─── Family CRUD ────────────────────────────────────────────────────────────
