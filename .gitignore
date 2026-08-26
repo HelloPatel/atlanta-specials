@@ -40,3 +40,9 @@ playwright/.cache/
 # Firebase service account keys (never commit)
 serviceAccountKey*.json
 **/serviceAccountKey*.json
+
+# demo-video recording toolchain
+.agents/skills/
+demo-video/out/
+demo-video/fixtures/
+demo-video/.ffpath
