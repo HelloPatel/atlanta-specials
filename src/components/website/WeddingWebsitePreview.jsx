@@ -159,7 +159,7 @@ function SectionTitle({ eyebrow, title, description, theme }) {
       >
         {eyebrow}
       </p>
-      <h2 className="text-3xl font-semibold md:text-4xl" style={{ color: theme.text }}>
+      <h2 className="text-3xl font-semibold md:text-4xl" style={{ color: theme.text, fontFamily: theme.fontFamily }}>
         {title}
       </h2>
       {theme.ornaments && (
@@ -248,7 +248,7 @@ export default function WeddingWebsitePreview({
   return (
     <div
       className="overflow-hidden rounded-[2rem] border border-white/60 shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
-      style={{ backgroundColor: theme.background, color: theme.text, fontFamily: theme.fontFamily }}
+      style={{ backgroundColor: theme.background, color: theme.text, fontFamily: theme.bodyFontFamily }}
     >
       {!config.websitePublished && previewMode && (
         <div
@@ -309,11 +309,11 @@ export default function WeddingWebsitePreview({
                 {config.websiteHero.tagline}
               </p>
             )}
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               {config.websiteRsvp?.enabled && (
                 <Link
                   to={`/rsvp/${wedding?.id}`}
-                  className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5"
+                  className="inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 sm:w-auto"
                   style={{ backgroundColor: theme.surface, color: theme.primary }}
                 >
                   {config.websiteRsvp.buttonText}
@@ -322,7 +322,7 @@ export default function WeddingWebsitePreview({
               {publicEvents.length > 0 && (
                 <a
                   href="#events"
-                  className="inline-flex items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 sm:w-auto"
                 >
                   View Events
                 </a>
@@ -370,7 +370,7 @@ export default function WeddingWebsitePreview({
                         <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: theme.primary }}>
                           Event
                         </p>
-                        <h3 className="mt-3 text-2xl font-semibold" style={{ color: theme.text }}>
+                        <h3 className="mt-3 text-2xl font-semibold" style={{ color: theme.text, fontFamily: theme.fontFamily }}>
                           {event.name}
                         </h3>
                       </div>
@@ -463,7 +463,7 @@ export default function WeddingWebsitePreview({
                       <Plane size={20} />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold" style={{ color: theme.text }}>{hotel.name || 'Hotel block'}</h3>
+                      <h3 className="text-xl font-semibold" style={{ color: theme.text, fontFamily: theme.fontFamily }}>{hotel.name || 'Hotel block'}</h3>
                       {hotel.groupRateCode && (
                         <p className="text-sm" style={{ color: theme.muted }}>
                           Group rate code: <span className="font-semibold" style={{ color: theme.primary }}>{hotel.groupRateCode}</span>
@@ -559,7 +559,7 @@ export default function WeddingWebsitePreview({
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
                 Celebration RSVP
               </p>
-              <h2 className="mt-4 text-3xl font-semibold md:text-4xl">
+              <h2 className="mt-4 text-3xl font-semibold md:text-4xl" style={{ fontFamily: theme.fontFamily }}>
                 We would love to celebrate with you
               </h2>
               <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 md:text-base">
@@ -581,7 +581,7 @@ export default function WeddingWebsitePreview({
         className="border-t px-6 py-10 text-center text-sm md:px-10 lg:px-16"
         style={{ borderColor: `${theme.accent}60`, backgroundColor: theme.surface, color: theme.muted }}
       >
-        <p className="text-lg font-medium" style={{ color: theme.text }}>
+        <p className="text-lg font-medium" style={{ color: theme.text, fontFamily: theme.fontFamily }}>
           {config.websiteFooter}
         </p>
         <p className="mt-3 text-xs uppercase tracking-[0.3em]">
