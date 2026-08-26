@@ -256,6 +256,8 @@ export default function EventList() {
 function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount }) {
   const isEdit = !!event;
   const [form, setForm] = useState({});
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (event) {
@@ -279,12 +281,26 @@ function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isEdit) {
-      await updateEvent(weddingId, event.id, form);
-    } else {
-      await addEvent(weddingId, { ...form, order: eventCount });
+    if (saving) return;
+    if (!weddingId) {
+      toast.error('No active wedding selected. Please refresh and try again.');
+      return;
     }
-    onClose();
+    setSaving(true);
+    try {
+      if (isEdit) {
+        await updateEvent(weddingId, event.id, form);
+      } else {
+        await addEvent(weddingId, { ...form, order: eventCount });
+      }
+      toast.success(isEdit ? 'Event updated' : 'Event added');
+      onClose();
+    } catch (err) {
+      console.error('Failed to save event:', err);
+      toast.error(err?.message || 'Could not save event. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -337,8 +353,10 @@ function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount }
         </label>
 
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
-          <Button type="submit">{isEdit ? 'Save Changes' : 'Add Event'}</Button>
+          <Button variant="outline" type="button" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button type="submit" disabled={saving}>
+            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Event'}
+          </Button>
         </div>
       </form>
     </Modal>
