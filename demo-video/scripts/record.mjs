@@ -47,6 +47,97 @@ const CURSOR_INIT = `
 })();
 `;
 
+// Scripted overlay layer: lower-third captions, a spotlight ring that frames the
+// element being acted on, click ripples, and output callout badges. Re-injected on
+// every navigation so it survives page.goto across the walkthrough routes.
+const OVERLAY_INIT = `
+(() => {
+  const ID = "__demo_overlay";
+  const ensure = () => {
+    let root = document.getElementById(ID);
+    if (root) return root;
+    root = document.createElement("div");
+    root.id = ID;
+    root.style.cssText = "position:fixed;inset:0;z-index:2147483646;pointer-events:none;font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif";
+    const style = document.createElement("style");
+    style.textContent = [
+      "@keyframes __demo_ring{0%{box-shadow:0 0 0 3px rgba(158,42,80,.55),0 0 0 9999px rgba(15,10,20,.14)}70%{box-shadow:0 0 0 6px rgba(158,42,80,.15),0 0 0 9999px rgba(15,10,20,.14)}100%{box-shadow:0 0 0 3px rgba(158,42,80,.55),0 0 0 9999px rgba(15,10,20,.14)}}",
+      "@keyframes __demo_rip{0%{opacity:.55;transform:translate(-50%,-50%) scale(.2)}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}",
+      "@keyframes __demo_pop{0%{opacity:0;transform:translateY(6px) scale(.96)}100%{opacity:1;transform:translateY(0) scale(1)}}",
+    ].join("");
+    root.appendChild(style);
+    document.documentElement.appendChild(root);
+    return root;
+  };
+  const el = (tag, css) => { const n = document.createElement(tag); n.style.cssText = css; return n; };
+
+  const api = {
+    say(text) {
+      const root = ensure();
+      let cap = document.getElementById("__demo_cap");
+      if (!text) { if (cap) cap.style.opacity = "0"; return; }
+      if (!cap) {
+        cap = el("div", "position:absolute;left:50%;bottom:8.5%;transform:translateX(-50%);max-width:74%;display:flex;align-items:center;gap:12px;padding:14px 22px;border-radius:16px;background:rgba(17,12,20,.82);backdrop-filter:blur(10px);color:#fff;font-size:26px;line-height:1.25;font-weight:600;letter-spacing:-.01em;box-shadow:0 12px 40px rgba(0,0,0,.35);opacity:0;transition:opacity .45s ease;white-space:nowrap");
+        cap.id = "__demo_cap";
+        const dot = el("span", "flex:0 0 auto;width:11px;height:11px;border-radius:50%;background:#e0568a;box-shadow:0 0 0 4px rgba(224,86,138,.25)");
+        const txt = el("span", ""); txt.id = "__demo_cap_txt";
+        cap.appendChild(dot); cap.appendChild(txt);
+        root.appendChild(cap);
+      }
+      document.getElementById("__demo_cap_txt").textContent = text;
+      cap.style.opacity = "0";
+      requestAnimationFrame(() => requestAnimationFrame(() => { cap.style.opacity = "1"; }));
+    },
+    ring(r) {
+      const root = ensure();
+      let ring = document.getElementById("__demo_ring");
+      if (!r) { if (ring) ring.style.opacity = "0"; return; }
+      if (!ring) {
+        ring = el("div", "position:absolute;border-radius:14px;transition:all .5s cubic-bezier(.32,.72,0,1);opacity:0;animation:__demo_ring 1.8s ease-in-out infinite");
+        ring.id = "__demo_ring";
+        root.appendChild(ring);
+      }
+      const pad = 8;
+      ring.style.left = (r.x - pad) + "px";
+      ring.style.top = (r.y - pad) + "px";
+      ring.style.width = (r.width + pad * 2) + "px";
+      ring.style.height = (r.height + pad * 2) + "px";
+      ring.style.opacity = "1";
+    },
+    badge(r, text, side) {
+      const root = ensure();
+      let b = document.getElementById("__demo_badge");
+      if (b) b.remove();
+      if (!r || !text) return;
+      b = el("div", "position:absolute;display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:12px;background:#fff;color:#7a1e3c;font-size:20px;font-weight:700;letter-spacing:-.01em;box-shadow:0 10px 30px rgba(122,30,60,.28),0 0 0 1px rgba(122,30,60,.12);animation:__demo_pop .4s cubic-bezier(.32,.72,0,1) both");
+      b.id = "__demo_badge";
+      const check = el("span", "flex:0 0 auto;display:inline-flex;width:20px;height:20px;border-radius:50%;background:#16a34a;color:#fff;align-items:center;justify-content:center;font-size:13px;font-weight:900");
+      check.textContent = "\\u2713";
+      const t = el("span", ""); t.textContent = text;
+      b.appendChild(check); b.appendChild(t);
+      root.appendChild(b);
+      const bw = 260, bh = 40;
+      let bx = r.x + r.width + 14, by = r.y + r.height / 2 - bh / 2;
+      if (side === "left") bx = r.x - bw - 14;
+      if (side === "top") { bx = r.x + r.width / 2 - bw / 2; by = r.y - bh - 14; }
+      if (side === "bottom") { bx = r.x + r.width / 2 - bw / 2; by = r.y + r.height + 14; }
+      b.style.left = Math.max(16, bx) + "px";
+      b.style.top = Math.max(16, by) + "px";
+    },
+    ripple(x, y) {
+      const root = ensure();
+      const rp = el("div", "position:absolute;left:" + x + "px;top:" + y + "px;width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,rgba(224,86,138,.5),rgba(224,86,138,0) 70%);animation:__demo_rip .6s ease-out forwards");
+      root.appendChild(rp);
+      setTimeout(() => rp.remove(), 650);
+    },
+    clear() { this.ring(null); this.badge(null); },
+  };
+  window.__demo = api;
+  if (document.readyState === "loading") addEventListener("DOMContentLoaded", ensure);
+  else ensure();
+})();
+`;
+
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -60,6 +151,44 @@ class Director {
   }
   log(type, extra = {}) {
     this.events.push({ type, t: (Date.now() - this.t0) / 1000, x: Math.round(this.x), y: Math.round(this.y), ...extra });
+  }
+  /** Show / update the scripted lower-third caption. Pass "" to hide. */
+  async say(text, hold = 0) {
+    await this.page.evaluate((t) => window.__demo?.say(t), text).catch(() => {});
+    if (hold) await sleep(hold);
+  }
+  /** Clear ring + badge highlights. */
+  async clear() {
+    await this.page.evaluate(() => window.__demo?.clear()).catch(() => {});
+  }
+  async _box(selector) {
+    const el = this.page.locator(selector).first();
+    await el.waitFor({ state: "visible", timeout: 15000 });
+    await el.scrollIntoViewIfNeeded().catch(() => {});
+    await sleep(120);
+    return { el, box: await el.boundingBox() };
+  }
+  /** Glide to an element and frame it with the spotlight ring. */
+  async focus(selector, { ms = 650, label = null, side = "right", hold = 0 } = {}) {
+    const el = await this.glide(selector, ms);
+    const box = await el.boundingBox();
+    if (box) {
+      await this.page.evaluate((r) => window.__demo?.ring(r), box).catch(() => {});
+      if (label) await this.page.evaluate(([r, t, s]) => window.__demo?.badge(r, t, s), [box, label, side]).catch(() => {});
+    }
+    if (hold) await sleep(hold);
+    return el;
+  }
+  /** Pin an output callout badge on an element (highlights a result). */
+  async callout(selector, text, { side = "right", hold = 0 } = {}) {
+    try {
+      const { box } = await this._box(selector);
+      if (box) await this.page.evaluate(([r, t, s]) => window.__demo?.badge(r, t, s), [box, text, side]);
+    } catch { /* element gone — skip */ }
+    if (hold) await sleep(hold);
+  }
+  async ripple() {
+    await this.page.evaluate(([x, y]) => window.__demo?.ripple(x, y), [this.x, this.y]).catch(() => {});
   }
   async glideTo(x, y, ms = 650) {
     const steps = Math.max(12, Math.round(ms / 16));
@@ -79,9 +208,14 @@ class Director {
     await this.glideTo(box.x + box.width / 2, box.y + box.height / 2, ms);
     return el;
   }
-  async click(selector, { pause = 260, ms = 600, force = false } = {}) {
+  async click(selector, { pause = 260, ms = 600, force = false, ring = true } = {}) {
     const el = await this.glide(selector, ms);
+    if (ring) {
+      const box = await el.boundingBox();
+      if (box) await this.page.evaluate((r) => window.__demo?.ring(r), box).catch(() => {});
+    }
     await sleep(pause);
+    await this.ripple();
     await el.click({ delay: 70, force });
     this.log("click", { selector });
   }
@@ -143,123 +277,168 @@ class Director {
 // events/seating are intentionally left for feature-specific videos. Keep motion
 // calm — glide, pause, act, hold.
 
-const scenes = {
-  /** Dashboard glance: couple name, big countdown, the four stat cards, then the
-   *  live guest analytics (dietary + side split). */
-  async "01-dashboard"(d, page) {
+// ── feature choreographies ──────────────────────────────────────────────
+// Each is a self-contained, captioned walkthrough of one product area, driven
+// on the REAL app UI. The hero scene chains them into a single flow; the tile
+// scenes reuse one apiece. `lead` overrides the opening caption so a tile can
+// frame itself, while the hero uses overarching, benefit-led copy.
+
+const feature = {
+  async dashboard(d, page, { lead = "One home base for the entire wedding" } = {}) {
     await page.goto(`${APP}/dashboard`);
     await page.getByRole("heading", { name: "Priya & Arjun" }).waitFor({ timeout: 20000 });
-    await sleep(1400);
-    // sweep across the four quick-stat cards
-    await d.glide('button:has-text("Guests")', 800);
-    await sleep(500);
-    await d.glide('button:has-text("Events")', 550);
-    await sleep(350);
-    await d.glide('button:has-text("Seated")', 550);
-    await sleep(350);
-    await d.glide('button:has-text("RSVP Rate")', 550);
     await sleep(700);
-    // drift down to the analytics cards
+    await d.say(lead, 1500);
+    await d.focus('button:has-text("Guests")', { label: "Total guests", side: "bottom", hold: 700 });
+    await d.focus('button:has-text("Seated")', { hold: 550 });
+    await d.focus('button:has-text("RSVP Rate")', { label: "RSVPs, live", side: "bottom", hold: 900 });
+    await d.clear();
+    await d.say("Live guest analytics — at a glance", 400);
     await d.wheel(520, 900);
-    await sleep(1600);
-    await d.glide('text=Dietary Breakdown', 700).catch(() => {});
-    await sleep(1800);
+    await sleep(700);
+    await d.focus('text=Dietary Breakdown', { label: "Auto-tallied", side: "right", hold: 1600 }).catch(() => {});
+    await d.clear();
   },
 
-  /** Guest List: 150+ seeded guests, then a live search filter. */
-  async "02-guests"(d, page) {
+  async guests(d, page, { lead = "Every guest, organized in one place" } = {}) {
     await page.goto(`${APP}/guests`);
     await page.getByRole("heading", { name: "Guest List" }).waitFor({ timeout: 20000 });
-    await sleep(1500);
-    await d.glideTo(SIZE.width / 2, SIZE.height * 0.55, 700);
-    await sleep(1000);
-    await d.type('input[placeholder="Search guests..."]', "Sharma", { perChar: 90 });
-    await sleep(2200);
+    await sleep(700);
+    await d.say(lead, 1400);
+    await d.glideTo(SIZE.width / 2, SIZE.height * 0.5, 650);
+    await sleep(500);
+    await d.say("Search hundreds of guests instantly", 300);
+    await d.type('input[placeholder="Search guests..."]', "Sharma", { perChar: 95 });
+    await sleep(600);
+    await d.callout('input[placeholder="Search guests..."]', "Filtered as you type", { side: "bottom", hold: 1900 });
+    await d.clear();
   },
 
-  /** Events timeline: three ceremonies with distinct invite scopes. */
-  async events(d, page) {
+  async events(d, page, { lead = "A timeline for every ceremony" } = {}) {
     await page.goto(`${APP}/events`);
     await page.getByRole("heading", { name: "Events", exact: true }).waitFor({ timeout: 20000 });
-    await sleep(1400);
-    for (const name of ["Mehndi", "Sangeet", "Reception"]) {
-      await d.glide(`h3:has-text("${name}")`, 700).catch(() => {});
-      await sleep(1100);
+    await sleep(700);
+    await d.say(lead, 1300);
+    const scopes = { Haldi: "Close family only", Mehndi: "Its own invite list", Sangeet: "Everyone's invited" };
+    for (const name of ["Haldi", "Mehndi", "Sangeet"]) {
+      await d.focus(`h3:has-text("${name}")`, { label: scopes[name], side: "right", hold: 1150 }).catch(() => {});
     }
-    await sleep(900);
+    await d.clear();
+    await d.say("Each event keeps its own guest list", 1500);
+    await d.clear();
+    await sleep(300);
   },
 
-  /** Seating: pick the Reception, glide across the populated tables around the
-   *  dance floor, then drag an unassigned guest onto a table. */
-  async seating(d, page) {
+  async seating(d, page, { lead = "Drag-and-drop seating charts" } = {}) {
     await page.goto(`${APP}/seating`);
     await page.getByRole("heading", { name: "Seating Chart" }).waitFor({ timeout: 20000 });
-    await sleep(900);
+    await sleep(600);
+    await d.say(lead, 900);
     await d.selectByLabel('select[aria-label="Select event"]', "Reception");
     await page.locator('text=Head Table').first().waitFor({ timeout: 15000 }).catch(() => {});
-    await sleep(1300);
-    // sweep the layout
-    for (const t of ["Head Table", "Table 2", "Table 5", "Table 7"]) {
-      await d.glide(`text=${t}`, 650).catch(() => {});
-      await sleep(700);
+    await sleep(700);
+    await d.say("Visual tables, laid out like the venue", 300);
+    for (const t of ["Head Table", "Table 3", "Table 6"]) {
+      await d.focus(`text=${t}`, { ms: 620, hold: 650 }).catch(() => {});
     }
-    await sleep(400);
-    // drag one unassigned guest onto a table
+    await d.clear();
+    await d.say("Drag any guest to a seat", 300);
     await d.dragGuest('[aria-roledescription="draggable"]', 'text=Table 4').catch(() => {});
-    await sleep(1600);
+    await d.callout('text=Table 4', "Seated instantly", { side: "right", hold: 1700 }).catch(() => {});
+    await d.clear();
   },
 
-  /** Import: drop a spreadsheet, map, preview, and bulk-add guests. */
-  async import(d, page) {
+  async import(d, page, { lead = "Import your whole list in seconds" } = {}) {
     await page.goto(`${APP}/guests`);
     await page.getByRole("heading", { name: "Guest List" }).waitFor({ timeout: 20000 });
-    await sleep(1000);
+    await sleep(700);
+    await d.say(lead, 900);
     await d.click('button:has-text("Import")');
     await page.getByRole("heading", { name: "Import Guests" }).waitFor({ timeout: 10000 }).catch(() => {});
-    await sleep(900);
+    await sleep(700);
+    await d.say("Drop a spreadsheet — CSV or Excel", 400);
     await d.dropFiles('text=/drag|drop|upload/i', 'input[type="file"]', IMPORT_CSV);
-    await page.locator('text=/Found \\d+ guests/i').first().waitFor({ timeout: 15000 }).catch(() => {});
-    await sleep(1600);
+    const found = page.locator('text=/Found \\d+ guests/i').first();
+    await found.waitFor({ timeout: 15000 }).catch(() => {});
+    let foundTxt = "Guests detected";
+    try {
+      const raw = (await found.textContent())?.trim() || "";
+      foundTxt = (raw.match(/Found\s+\d+\s+guests/i) || [raw])[0];
+    } catch {}
+    await d.callout('text=/Found \\d+ guests/i', foundTxt, { side: "bottom", hold: 1500 }).catch(() => {});
+    await d.clear();
     await d.click('button:has-text("Preview Import")').catch(() => {});
-    await sleep(1600);
-    // confirm — target by dynamic count so we don't hit the toolbar's Import button
+    await sleep(500);
+    await d.say("Preview and confirm", 900);
     const confirm = page.getByRole("button", { name: /Import \d+ Guests/ });
     await confirm.waitFor({ timeout: 8000 }).catch(() => {});
     const cb = await confirm.boundingBox().catch(() => null);
     if (cb) {
-      await d.glideTo(cb.x + cb.width / 2, cb.y + cb.height / 2, 550);
-      await sleep(260);
+      await d.glideTo(cb.x + cb.width / 2, cb.y + cb.height / 2, 520);
+      await d.page.evaluate((r) => window.__demo?.ring(r), cb).catch(() => {});
+      await sleep(240);
+      await d.ripple();
       await confirm.click({ delay: 70 }).catch(() => {});
     }
     await page.locator('text=/Import Complete/i').first().waitFor({ timeout: 20000 }).catch(() => {});
-    await sleep(2000);
+    await d.clear();
+    await d.say("Done — 136 guests added", 2100);
+    await d.clear();
   },
 
-  /** Photos: the live shot-list queue — current group banner, then up-next. */
-  async photos(d, page) {
+  async photos(d, page, { lead = "A shot list your photographer will love" } = {}) {
     await page.goto(`${APP}/photos`);
     await page.getByRole("heading", { name: "Photo Groups" }).waitFor({ timeout: 20000 });
-    await sleep(1400);
-    await d.glide('text=Current group', 700).catch(() => {});
-    await sleep(1400);
+    await sleep(700);
+    await d.say(lead, 1300);
+    await d.focus('text=Current group', { label: "On deck now", side: "right", hold: 1400 }).catch(() => {});
+    await d.clear();
+    await d.say("The queue keeps the day moving", 300);
     await d.wheel(360, 800);
-    await sleep(900);
-    await d.glide('text=Queue', 650).catch(() => {});
-    await sleep(1800);
+    await sleep(500);
+    await d.focus('text=Queue', { hold: 1600 }).catch(() => {});
+    await d.clear();
   },
 
-  /** Games: vote stats, per-question tallies, and the live leaderboard. */
-  async games(d, page) {
+  async games(d, page, { lead = "Keep guests engaged with live games" } = {}) {
     await page.goto(`${APP}/bets`);
     await page.getByRole("heading", { name: "Bets & Games" }).waitFor({ timeout: 20000 });
-    await sleep(1400);
-    await d.glideTo(SIZE.width * 0.5, SIZE.height * 0.32, 650);
-    await sleep(1200);
+    await sleep(700);
+    await d.say(lead, 1300);
+    await d.glideTo(SIZE.width * 0.5, SIZE.height * 0.34, 600);
+    await sleep(700);
+    await d.say("Guests vote from their phones", 300);
     await d.wheel(420, 850);
-    await sleep(1200);
-    await d.glide('text=Top players', 700).catch(() => {});
-    await sleep(2000);
+    await sleep(600);
+    await d.focus('text=Top players', { label: "Live leaderboard", side: "right", hold: 1900 }).catch(() => {});
+    await d.clear();
   },
+};
+
+const scenes = {
+  /** HERO — one continuous ~70–85s walkthrough of the whole product, captioned
+   *  and highlighted end to end. Ends back on the dashboard for a clean loop. */
+  async hero(d, page) {
+    await feature.dashboard(d, page, { lead: "Plan the whole wedding in one place" });
+    await feature.guests(d, page, { lead: "Every guest, RSVP, and detail — organized" });
+    await feature.events(d, page, { lead: "A timeline for every ceremony" });
+    await feature.seating(d, page, { lead: "Seat everyone with drag-and-drop" });
+    await feature.photos(d, page, { lead: "Never miss a must-have photo" });
+    await feature.games(d, page, { lead: "Keep every guest engaged" });
+    // full circle — land back on the dashboard countdown
+    await page.goto(`${APP}/dashboard`);
+    await page.getByRole("heading", { name: "Priya & Arjun" }).waitFor({ timeout: 20000 });
+    await d.say("Phera — everything for the big day", 300);
+    await d.glideTo(SIZE.width / 2, SIZE.height * 0.32, 700);
+    await sleep(2200);
+    await d.clear();
+  },
+
+  async events(d, page) { await feature.events(d, page); },
+  async seating(d, page) { await feature.seating(d, page); },
+  async import(d, page) { await feature.import(d, page); },
+  async photos(d, page) { await feature.photos(d, page); },
+  async games(d, page) { await feature.games(d, page); },
 };
 
 // ───────────────────────────── main ─────────────────────────────
@@ -283,6 +462,7 @@ for (const name of names) {
     storageState: AUTH,
   });
   await context.addInitScript(CURSOR_INIT);
+  await context.addInitScript(OVERLAY_INIT);
   await context.addInitScript(() => localStorage.setItem("phera-onboarding-complete", "true"));
   const page = await context.newPage();
   page.on("pageerror", (e) => console.log(`  pageerror: ${e.message}`));

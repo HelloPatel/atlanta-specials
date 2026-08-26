@@ -140,13 +140,6 @@ function FeatureTile({ feature, index, revealed, isOpen, onToggle }) {
                 />
               )}
 
-              {/* Caption overlay only when a real video is showing */}
-              {videoReady && (
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent px-4 py-3">
-                  <p className="text-[11px] sm:text-xs font-medium text-white/95">{caption}</p>
-                </div>
-              )}
-
               {/* Play/pause + maximize controls (only when a real video is present) */}
               {videoReady && (
                 <div className="absolute right-3 top-3 flex items-center gap-1.5">
