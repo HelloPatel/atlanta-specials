@@ -367,7 +367,7 @@ export default function WebsiteBuilder() {
                     </div>
                     <p className="text-lg font-semibold text-gray-900">{theme.name}</p>
                     <p className="mt-1 text-sm text-gray-600">{theme.description}</p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.3em] text-gray-500">{theme.fontName}</p>
+                    <p className="mt-3 text-xs uppercase tracking-[0.3em] text-gray-500">{theme.fontName} · {theme.bodyFontName}</p>
                   </button>
                 );
               })}

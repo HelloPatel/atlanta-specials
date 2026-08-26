@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react';
-import { Heart } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Heart, Users } from 'lucide-react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
+import { COLLECTIONS } from '../config/constants';
 import { subscribeToPublicEvents } from '../services/eventService';
 import { subscribeToWebsite } from '../services/websiteService';
 import { resolveWeddingId } from '../services/weddingService';
 import WeddingWebsitePreview from '../components/website/WeddingWebsitePreview';
+import GuestGate from '../components/website/GuestGate';
 import { getCoupleDisplayName, normalizeWebsiteConfig } from '../components/website/websiteThemes';
+import { filterInvitedEvents, householdLabel } from '../utils/guestDirectory';
 
 function CenteredState({ title, message, error = false }) {
   return (
@@ -23,6 +28,7 @@ function CenteredState({ title, message, error = false }) {
 
 export default function PublicWeddingWebsite() {
   const { weddingId: rawParam } = useParams();
+  const [searchParams] = useSearchParams();
   const [resolvedId, setResolvedId] = useState(null);
   const [wedding, setWedding] = useState(null);
   const [events, setEvents] = useState([]);
@@ -30,6 +36,13 @@ export default function PublicWeddingWebsite() {
   const [notFound, setNotFound] = useState(false);
   const [passwordUnlocked, setPasswordUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+
+  // Guest identification
+  const [allGuests, setAllGuests] = useState([]);
+  const [guestsLoaded, setGuestsLoaded] = useState(false);
+  const [household, setHousehold] = useState(null); // array of guests, or [] for general view
+
+  const storageKey = resolvedId ? `phera:guest:${resolvedId}` : null;
 
   useEffect(() => {
     if (!rawParam) return undefined;
@@ -70,6 +83,90 @@ export default function PublicWeddingWebsite() {
     };
   }, [resolvedId]);
 
+  // Load the public guest directory for name matching.
+  useEffect(() => {
+    if (!resolvedId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const snap = await getDocs(
+          collection(db, COLLECTIONS.WEDDINGS, resolvedId, COLLECTIONS.PUBLIC_GUESTS)
+        );
+        if (cancelled) return;
+        setAllGuests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch (err) {
+        console.error('Failed to load guest directory', err);
+      } finally {
+        if (!cancelled) setGuestsLoaded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [resolvedId]);
+
+  // Restore a previously identified household (persisted per wedding), or
+  // auto-select from a personalized `?g=<guestId>` link.
+  useEffect(() => {
+    if (!guestsLoaded || household !== null) return;
+
+    const gid = searchParams.get('g');
+    if (gid) {
+      const found = allGuests.find((g) => g.id === gid);
+      if (found) {
+        const fam = found.familyName
+          ? allGuests.filter((g) => g.familyName === found.familyName)
+          : [found];
+        setHousehold(fam);
+        return;
+      }
+    }
+
+    if (!storageKey) return;
+    try {
+      const raw = sessionStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed?.general) { setHousehold([]); return; }
+      const ids = parsed?.ids || [];
+      const restored = allGuests.filter((g) => ids.includes(g.id));
+      if (restored.length > 0) setHousehold(restored);
+    } catch {
+      /* ignore malformed cache */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guestsLoaded, allGuests, searchParams, storageKey]);
+
+  const identify = (members) => {
+    setHousehold(members);
+    if (storageKey) {
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify({ ids: members.map((m) => m.id) }));
+      } catch { /* storage may be unavailable */ }
+    }
+  };
+
+  const viewGeneral = () => {
+    setHousehold([]);
+    if (storageKey) {
+      try { sessionStorage.setItem(storageKey, JSON.stringify({ general: true })); }
+      catch { /* ignore */ }
+    }
+  };
+
+  const switchGuest = () => {
+    setHousehold(null);
+    if (storageKey) {
+      try { sessionStorage.removeItem(storageKey); } catch { /* ignore */ }
+    }
+  };
+
+  const invitedEvents = useMemo(() => {
+    if (!household || household.length === 0) {
+      // General view: only events open to everyone.
+      return events.filter((e) => e.inviteAll);
+    }
+    return filterInvitedEvents(events, household);
+  }, [events, household]);
+
   if (loading) {
     return <CenteredState title="Loading wedding website" message="Gathering all the celebration details for you..." />;
   }
@@ -78,10 +175,9 @@ export default function PublicWeddingWebsite() {
     return <CenteredState title="Wedding website not found" message="This link may be incorrect, expired, or not available yet." error />;
   }
 
-  const config = normalizeWebsiteConfig(wedding, events.map((event) => event.id));
   const coupleName = getCoupleDisplayName(wedding);
 
-  if (!config.websitePublished) {
+  if (!normalizeWebsiteConfig(wedding, []).websitePublished) {
     return (
       <CenteredState
         title={`${coupleName} wedding website`}
@@ -122,5 +218,38 @@ export default function PublicWeddingWebsite() {
     );
   }
 
-  return <WeddingWebsitePreview wedding={wedding} config={config} events={events} />;
+  // Guest identification gate — required before showing the site.
+  if (household === null) {
+    if (!guestsLoaded) {
+      return <CenteredState title="Loading wedding website" message="Just a moment while we prepare your invitation..." />;
+    }
+    return (
+      <GuestGate
+        coupleName={coupleName}
+        guests={allGuests}
+        onIdentify={identify}
+        onGeneral={viewGeneral}
+      />
+    );
+  }
+
+  const config = normalizeWebsiteConfig(wedding, invitedEvents.map((event) => event.id));
+  const isGeneral = household.length === 0;
+  const label = householdLabel(household);
+
+  return (
+    <div>
+      <div className="flex items-center justify-center gap-2 bg-wine-900 px-4 py-2 text-center text-xs text-white/90">
+        <Users size={14} className="shrink-0 text-white/70" />
+        <span className="truncate">
+          {isGeneral ? 'Viewing the general schedule' : `Viewing as ${label}`}
+        </span>
+        <span className="text-white/40">·</span>
+        <button onClick={switchGuest} className="font-semibold text-white underline underline-offset-2 hover:text-amber-200">
+          Not you?
+        </button>
+      </div>
+      <WeddingWebsitePreview wedding={wedding} config={config} events={invitedEvents} />
+    </div>
+  );
 }
