@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Users, Grid3X3, Mail, Check, ArrowRight } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 
 /**
  * Animated product showcase that demonstrates Phera's key features.
@@ -11,9 +11,9 @@ export default function ProductShowcase() {
   const ref = useRef(null);
 
   const scenes = [
-    { id: 'guests', label: 'Import Guests', icon: Users },
-    { id: 'seating', label: 'Seating Chart', icon: Grid3X3 },
-    { id: 'rsvp', label: 'RSVP Tracking', icon: Mail },
+    { id: 'guests' },
+    { id: 'seating' },
+    { id: 'rsvp' },
   ];
 
   useEffect(() => {
@@ -42,27 +42,6 @@ export default function ProductShowcase() {
         backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
         backgroundSize: '20px 20px',
       }} />
-
-      {/* Scene indicator pills */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10">
-        {scenes.map((scene, i) => {
-          const Icon = scene.icon;
-          return (
-            <button
-              key={scene.id}
-              onClick={() => setActiveScene(i)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-                activeScene === i
-                  ? 'bg-white text-gray-900 shadow-sm scale-105'
-                  : 'bg-white/10 text-white/60 hover:bg-white/20'
-              }`}
-            >
-              <Icon size={10} />
-              <span className="hidden sm:inline">{scene.label}</span>
-            </button>
-          );
-        })}
-      </div>
 
       {/* Animated scenes */}
       <div className="absolute inset-0 flex items-center justify-center p-6 sm:p-10">

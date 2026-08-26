@@ -89,21 +89,36 @@ async function main() {
 
   // ---- Events -------------------------------------------------------------
   const eventDefs = [
+    { name: "Haldi", date: "2027-10-13", startTime: "10:00", endTime: "13:00",
+      venue: "Family Residence", address: "Johns Creek, Atlanta, GA",
+      dressCode: "Yellow / Casual",
+      description: "Turmeric ceremony at home with close family before the festivities begin.",
+      inviteAll: false, guestIds: pick(brideIds, 40), order: 0 },
     { name: "Mehndi", date: "2027-10-14", startTime: "16:00", endTime: "20:00",
       venue: "Rangoli Lawns", address: "Sandy Springs, Atlanta, GA",
       dressCode: "Colorful / Traditional",
       description: "Intimate mehndi afternoon for the bride's close family and friends.",
-      inviteAll: false, guestIds: brideIds, order: 0 },
+      inviteAll: false, guestIds: brideIds, order: 1 },
     { name: "Sangeet", date: "2027-10-15", startTime: "19:00", endTime: "23:30",
       venue: "The Grand Ballroom", address: "Downtown Atlanta, GA",
       dressCode: "Semi-formal / Festive",
       description: "A night of music, dance performances and dinner for everyone.",
-      inviteAll: true, guestIds: [], order: 1 },
+      inviteAll: true, guestIds: [], order: 2 },
+    { name: "Wedding Ceremony", date: "2027-10-16", startTime: "10:00", endTime: "13:00",
+      venue: "Vedic Mandap, Marriott Marquis", address: "265 Peachtree Center Ave NE, Atlanta, GA",
+      dressCode: "Traditional / Formal",
+      description: "The pheras and vows — the heart of the celebration.",
+      inviteAll: true, guestIds: [], order: 3 },
     { name: "Reception", date: "2027-10-16", startTime: "19:00", endTime: "23:59",
       venue: "Atlanta Marriott Marquis", address: "265 Peachtree Center Ave NE, Atlanta, GA",
       dressCode: "Formal / Cocktail",
       description: "Grand reception dinner celebrating Priya & Arjun.",
-      inviteAll: false, guestIds: pick(allIds, 170), order: 2 },
+      inviteAll: false, guestIds: pick(allIds, 170), order: 4 },
+    { name: "After-Party", date: "2027-10-16", startTime: "23:30", endTime: "02:00",
+      venue: "Skyline Lounge", address: "Downtown Atlanta, GA",
+      dressCode: "Cocktail / Fun",
+      description: "Late-night celebration with the wedding party and friends.",
+      inviteAll: false, guestIds: pick(groomIds, 60), order: 5 },
   ];
   const eventIds = {};
   for (const def of eventDefs) eventIds[def.name] = await addEvent(weddingId, def);
@@ -124,6 +139,68 @@ async function main() {
   });
   await saveSeating(weddingId, eventIds.Reception, { tables: seatedTables, zones, rules: [] });
   console.log(`\u2713 seating: ${seatedTables.length} tables, ${cursor} guests seated`);
+
+  // ---- RSVP responses + seating write-back on guest docs -----------------
+  // The dashboard derives "Seated", "RSVP Rate", Family RSVP Progress and
+  // RSVP-by-Event straight off the guest docs (g.tableNumber / g.rsvpStatus),
+  // so mirror the seating + realistic responses back onto each guest.
+  const invitedMap = new Map(allIds.map((id) => [id, []]));
+  for (const def of eventDefs) {
+    const eid = eventIds[def.name];
+    if (def.inviteAll) { for (const id of allIds) invitedMap.get(id).push(eid); }
+    else { for (const id of def.guestIds) if (invitedMap.has(id)) invitedMap.get(id).push(eid); }
+  }
+
+  const seatOf = new Map();
+  seatedTables.forEach((t, i) => (t.assignedGuests || []).forEach((gid) => seatOf.set(gid, i + 1)));
+
+  const guestUpdates = new Map();
+  for (const g of guests) {
+    const upd = {};
+    if (seatOf.has(g.id)) upd.tableNumber = seatOf.get(g.id);
+    const evs = invitedMap.get(g.id) || [];
+    if (evs.length && Math.random() < 0.7) {           // ~70% have responded
+      const status = {};
+      for (const eid of evs) status[eid] = Math.random() < 0.85 ? "accepted" : "declined";
+      upd.rsvpStatus = status;
+    }
+    if (Object.keys(upd).length) guestUpdates.set(g.id, upd);
+  }
+  const upEntries = [...guestUpdates.entries()];
+  for (let i = 0; i < upEntries.length; i += 400) {
+    const b = writeBatch(db);
+    for (const [gid, upd] of upEntries.slice(i, i + 400))
+      b.set(doc(db, "weddings", weddingId, "guests", gid), upd, { merge: true });
+    await b.commit();
+  }
+  const respondedCount = [...guestUpdates.values()].filter((u) => u.rsvpStatus).length;
+  console.log(`\u2713 rsvp: ${respondedCount}/${guests.length} responded, ${seatOf.size} seated (tableNumber set)`);
+
+  // ---- RSVP settings (open) ----------------------------------------------
+  await setDoc(doc(db, "weddings", weddingId, "settings", "rsvp"), {
+    isOpen: true, deadline: "2027-09-15", allowPlusOne: true, allowDietary: true,
+    allowMessage: true, requirePhone: false, familyRsvp: true, headcountBufferPct: 10,
+    updatedAt: serverTimestamp(),
+  }, { merge: true });
+
+  // ---- Activity feed ------------------------------------------------------
+  const actTypes = [
+    { type: "accepted", msg: (n) => `${n} accepted their invitation` },
+    { type: "modified", msg: (n) => `Seating updated for ${n}` },
+    { type: "declined", msg: (n) => `${n} declined the Sangeet` },
+    { type: "added", msg: (n) => `${n} was added to the guest list` },
+  ];
+  const actNames = pick([...names].sort(() => Math.random() - 0.5), 10);
+  const abatch = writeBatch(db);
+  actNames.forEach((n, i) => {
+    const t = actTypes[i % actTypes.length];
+    abatch.set(doc(collection(db, "weddings", weddingId, "activity")), {
+      type: t.type, message: t.msg(n),
+      timestamp: new Date(Date.now() - (i + 1) * 14 * 60 * 1000),
+    });
+  });
+  await abatch.commit();
+  console.log(`\u2713 activity: ${actNames.length} entries`);
 
   // ---- Games (bets) -------------------------------------------------------
   const questions = [

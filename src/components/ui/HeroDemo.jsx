@@ -17,10 +17,14 @@ export default function HeroDemo() {
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-[calc(1.25rem-0.375rem)] bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)]">
-      {/* Base layer: coded showcase, always present */}
-      <div className="absolute inset-0">
-        <ProductShowcase />
-      </div>
+      {/* Base layer: coded showcase, shown only until the real video is ready
+          (acts as a no-flash fallback, then unmounts so nothing shows behind
+          the recording). */}
+      {!ready && (
+        <div className="absolute inset-0">
+          <ProductShowcase />
+        </div>
+      )}
 
       {/* Real recording fades in on top once it loads */}
       {!failed && (
@@ -39,21 +43,14 @@ export default function HeroDemo() {
       )}
 
       {ready && (
-        <>
-          <button
-            type="button"
-            onClick={() => setMaximized(true)}
-            aria-label="Maximize"
-            className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all duration-300 hover:bg-black/50 active:scale-95"
-          >
-            <Maximize2 size={15} />
-          </button>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent px-4 py-3">
-            <p className="text-[11px] sm:text-xs font-medium text-white/95">
-              From guest list to seating to RSVPs, all in one place.
-            </p>
-          </div>
-        </>
+        <button
+          type="button"
+          onClick={() => setMaximized(true)}
+          aria-label="Maximize"
+          className="absolute right-3 top-3 flex size-9 items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-md transition-all duration-300 hover:bg-black/50 active:scale-95"
+        >
+          <Maximize2 size={15} />
+        </button>
       )}
 
       <VideoModal
