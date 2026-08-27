@@ -52,41 +52,6 @@ function hexToRgba(hex, alpha) {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-function getCoupleMonogram(coupleName) {
-  const parts = String(coupleName || '')
-    .split(/&|\band\b|\+/i)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const initials = parts.slice(0, 2).map((p) => p.charAt(0).toUpperCase());
-  if (initials.length === 2) return `${initials[0]} & ${initials[1]}`;
-  return initials[0] || '';
-}
-
-function HeroMonogram({ coupleName, theme }) {
-  const monogram = getCoupleMonogram(coupleName);
-  if (!monogram) return null;
-  return (
-    <div
-      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
-      aria-hidden="true"
-    >
-      <span
-        className="select-none leading-none"
-        style={{
-          fontFamily: theme.fontFamily,
-          fontSize: 'clamp(200px, 40vw, 540px)',
-          color: '#ffffff',
-          opacity: 0.06,
-          letterSpacing: '-0.03em',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {monogram}
-      </span>
-    </div>
-  );
-}
-
 function HeroPatternOverlay({ pattern, theme }) {
   // Editorial redesign: no vector clip-art. A single, understated fine grid
   // is offered only for the "geometric" option; everything else stays clean
@@ -254,7 +219,6 @@ export default function WeddingWebsitePreview({
           backgroundPosition: 'center',
         }}
       >
-        {!config.websiteHero?.backgroundImage && <HeroMonogram coupleName={coupleName} theme={theme} />}
         <HeroPatternOverlay pattern={config.websiteHero?.pattern} theme={theme} />
         <div className={`relative z-10 mx-auto flex w-full max-w-6xl flex-col ${
           previewMode ? 'gap-8' : 'gap-12 lg:flex-row lg:items-end lg:justify-between'
