@@ -74,16 +74,23 @@ export async function saveBetsConfig(weddingId, config) {
 }
 
 export function subscribeToBets(weddingId, callback) {
-  return onSnapshot(betsDocRef(weddingId), (snap) => {
-    const data = snap.exists() ? snap.data() : DEFAULT_BETS_CONFIG;
-    callback({
-      ...DEFAULT_BETS_CONFIG,
-      ...data,
-      questions: (data.questions || [])
-        .map(normalizeQuestion)
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    });
-  });
+  return onSnapshot(
+    betsDocRef(weddingId),
+    (snap) => {
+      const data = snap.exists() ? snap.data() : DEFAULT_BETS_CONFIG;
+      callback({
+        ...DEFAULT_BETS_CONFIG,
+        ...data,
+        questions: (data.questions || [])
+          .map(normalizeQuestion)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+      });
+    },
+    (error) => {
+      console.error('Failed to load bets config:', error);
+      callback({ ...DEFAULT_BETS_CONFIG });
+    }
+  );
 }
 
 export async function submitVote(weddingId, guestName, answers) {
@@ -108,10 +115,17 @@ export async function submitVote(weddingId, guestName, answers) {
 }
 
 export function subscribeToVotes(weddingId, callback) {
-  return onSnapshot(betsVotesRef(weddingId), (snap) => {
-    const votes = snap.docs.map((voteDoc) => ({ id: voteDoc.id, ...voteDoc.data() }));
-    callback(votes.sort((a, b) => (a.guestName || '').localeCompare(b.guestName || '')));
-  });
+  return onSnapshot(
+    betsVotesRef(weddingId),
+    (snap) => {
+      const votes = snap.docs.map((voteDoc) => ({ id: voteDoc.id, ...voteDoc.data() }));
+      callback(votes.sort((a, b) => (a.guestName || '').localeCompare(b.guestName || '')));
+    },
+    (error) => {
+      console.error('Failed to load bets votes:', error);
+      callback([]);
+    }
+  );
 }
 
 export async function setCorrectAnswers(weddingId, correctAnswers) {
