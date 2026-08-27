@@ -3,7 +3,8 @@ import {
   getDoc,
   onSnapshot,
   serverTimestamp,
-  writeBatch,
+  setDoc,
+  updateDoc,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
@@ -16,14 +17,27 @@ function publicWeddingDocRef(weddingId) {
   return doc(db, COLLECTIONS.PUBLIC_WEDDINGS, weddingId);
 }
 
+// Mirror the website config to the public (guest-facing) collection. This is a
+// secondary write — it must never block or fail the core save, otherwise a
+// stale/undeployed public rule would make Save/Publish appear broken even
+// though the owner's private config saved fine. Failures are logged.
+async function mirrorPublicWebsite(weddingId, config) {
+  try {
+    await setDoc(publicWeddingDocRef(weddingId), config, { merge: true });
+  } catch (error) {
+    console.error('Failed to mirror public website (guest site may be stale):', error);
+  }
+}
+
 export async function saveWebsiteConfig(weddingId, config) {
-  const batch = writeBatch(db);
-  batch.update(weddingDocRef(weddingId), {
+  // Authoritative write: the owner's private wedding doc. If this fails, the
+  // error propagates so the UI can surface it.
+  await updateDoc(weddingDocRef(weddingId), {
     ...config,
     updatedAt: serverTimestamp(),
   });
-  batch.set(publicWeddingDocRef(weddingId), config, { merge: true });
-  await batch.commit();
+  // Non-fatal public mirror so the guest website reflects the change.
+  await mirrorPublicWebsite(weddingId, config);
 }
 
 export function subscribeToWebsite(weddingId, callback) {

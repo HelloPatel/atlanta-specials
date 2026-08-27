@@ -46,9 +46,19 @@ function useWeddingPublicData(weddingId) {
       return undefined;
     }
 
-    return onSnapshot(doc(db, COLLECTIONS.WEDDINGS, weddingId), (snap) => {
-      setWedding(snap.exists() ? { id: snap.id, ...snap.data() } : null);
-    });
+    // Guests are unauthenticated, so read the PUBLIC projection — the private
+    // weddings/{id} doc is owner/collaborator-only and would throw a
+    // permission error on every guest visit.
+    return onSnapshot(
+      doc(db, COLLECTIONS.PUBLIC_WEDDINGS, weddingId),
+      (snap) => {
+        setWedding(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+      },
+      (error) => {
+        console.error('Failed to load public wedding for bets page:', error);
+        setWedding(null);
+      }
+    );
   }, [weddingId]);
 
   return wedding;

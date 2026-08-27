@@ -21,7 +21,7 @@ import {
   Trash2,
   Type,
 } from 'lucide-react';
-import { Badge, Button, Card, Input } from '../ui';
+import { Badge, Button, Card, Input, useToast } from '../ui';
 import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToEvents } from '../../services/eventService';
 import { saveWebsiteConfig } from '../../services/websiteService';
@@ -114,6 +114,7 @@ const textareaClass = 'block w-full rounded-xl border border-gray-300 px-3 py-2 
 
 export default function WebsiteBuilder() {
   const { activeWedding, canEdit, isViewer } = useWedding();
+  const toast = useToast();
   const [events, setEvents] = useState([]);
   const [previewMode, setPreviewMode] = useState(false);
   const [previewDevice, setPreviewDevice] = useState('desktop');
@@ -287,6 +288,15 @@ export default function WebsiteBuilder() {
       const nextConfig = sanitizeWebsiteConfig({ ...config, websitePublished: published });
       await saveWebsiteConfig(activeWedding.id, nextConfig);
       setConfig(nextConfig);
+      const wasPublishToggle = published !== config.websitePublished;
+      if (wasPublishToggle) {
+        toast.success(published ? 'Website published — it\'s live for guests.' : 'Website unpublished.');
+      } else {
+        toast.success('Website saved.');
+      }
+    } catch (error) {
+      console.error('Failed to save website:', error);
+      toast.error('Could not save your website. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -851,7 +861,7 @@ export default function WebsiteBuilder() {
   return (
     <div className="space-y-6">
       <div className="sticky top-0 z-30 -mx-4 border-b border-gray-100 bg-white/85 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/70 sm:mx-0 sm:rounded-2xl sm:border sm:px-5 sm:shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-3">
             <Badge variant={config.websitePublished ? 'success' : 'warning'}>
               {config.websitePublished ? 'Published' : 'Draft'}
@@ -862,8 +872,8 @@ export default function WebsiteBuilder() {
               <span className="max-w-[22rem] truncate font-medium text-gray-700">{websiteUrl}</span>
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <div className="inline-flex items-center rounded-xl border border-gray-200 bg-white p-1 xl:hidden">
+          <div className="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
+            <div className="inline-flex shrink-0 items-center rounded-xl border border-gray-200 bg-white p-1 xl:hidden">
               <button
                 type="button"
                 onClick={() => setPreviewMode(false)}
@@ -883,17 +893,17 @@ export default function WebsiteBuilder() {
                 Preview
               </button>
             </div>
-            <Button size="sm" variant="outline" onClick={handleCopyLink}>
+            <Button size="sm" variant="outline" className="shrink-0" onClick={handleCopyLink}>
               {copied ? <Check size={14} /> : <Copy size={14} />}
               {copied ? 'Copied' : 'Copy Link'}
             </Button>
             {canEdit && (
               <>
-                <Button size="sm" variant="outline" onClick={() => handleSave()} disabled={saving}>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => handleSave()} disabled={saving}>
                   <Save size={14} />
                   {config.websitePublished ? 'Save Changes' : 'Save Draft'}
                 </Button>
-                <Button size="sm" onClick={() => handleSave(!config.websitePublished)} disabled={saving}>
+                <Button size="sm" className="shrink-0" onClick={() => handleSave(!config.websitePublished)} disabled={saving}>
                   <Send size={14} />
                   {config.websitePublished ? 'Unpublish' : 'Publish'}
                 </Button>

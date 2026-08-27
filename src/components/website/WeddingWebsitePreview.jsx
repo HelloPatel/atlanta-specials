@@ -105,12 +105,12 @@ function SectionTitle({ eyebrow, title, description, theme }) {
           {eyebrow}
         </p>
       )}
-      <h2 className="text-3xl font-semibold md:text-4xl" style={{ color: theme.text, fontFamily: theme.fontFamily }}>
+      <h2 className="text-3xl font-semibold @lg:text-4xl" style={{ color: theme.text, fontFamily: theme.fontFamily }}>
         {title}
       </h2>
       <div className="mx-auto mt-5 h-px w-14" style={{ backgroundColor: hexToRgba(theme.accent, 0.55) }} />
       {description && (
-        <p className="mt-5 text-sm leading-7 md:text-base" style={{ color: theme.muted }}>
+        <p className="mt-5 text-sm leading-7 @lg:text-base" style={{ color: theme.muted }}>
           {description}
         </p>
       )}
@@ -189,7 +189,7 @@ export default function WeddingWebsitePreview({
 
   return (
     <div
-      className="overflow-hidden rounded-[2rem] border border-white/60 shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
+      className="@container overflow-hidden rounded-[2rem] border border-white/60 shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
       style={{ backgroundColor: theme.background, color: theme.text, fontFamily: theme.bodyFontFamily }}
     >
       {!config.websitePublished && previewMode && (
@@ -205,11 +205,7 @@ export default function WeddingWebsitePreview({
       <section
         data-website-theme={theme.key}
         data-background-style={config.websiteHero?.pattern || 'none'}
-        className={`relative isolate flex items-center overflow-hidden ${
-          previewMode
-            ? 'min-h-[560px] px-8 py-12'
-            : 'min-h-[620px] px-6 py-16 md:px-10 lg:px-16'
-        }`}
+        className="relative isolate flex items-center overflow-hidden min-h-[520px] px-6 py-12 @md:px-10 @lg:py-16 @2xl:min-h-[600px] @2xl:px-16"
         style={{
           backgroundColor: theme.primary,
           backgroundImage: config.websiteHero?.backgroundImage
@@ -220,33 +216,29 @@ export default function WeddingWebsitePreview({
         }}
       >
         <HeroPatternOverlay pattern={config.websiteHero?.pattern} theme={theme} />
-        <div className={`relative z-10 mx-auto flex w-full max-w-6xl flex-col ${
-          previewMode ? 'gap-8' : 'gap-12 lg:flex-row lg:items-end lg:justify-between'
-        }`}>
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-10 @3xl:flex-row @3xl:items-end @3xl:justify-between">
           <div className="max-w-3xl text-white">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs uppercase tracking-[0.3em] text-white/90 backdrop-blur">
               <Heart size={14} />
               We're getting married
             </div>
             <h1
-              className={`font-semibold leading-[0.95] tracking-[-0.03em] ${
-                previewMode ? 'text-5xl md:text-6xl' : 'text-5xl md:text-7xl'
-              }`}
+              className="font-semibold leading-[0.95] tracking-[-0.03em] text-4xl @sm:text-5xl @xl:text-6xl @3xl:text-7xl"
               style={{ fontFamily: theme.fontFamily }}
             >
               {coupleName}
             </h1>
             <CountdownTimer targetDate={config.websiteHero?.date || wedding?.weddingDate} theme={theme} />
             {config.websiteHero?.tagline && (
-              <p className="mt-8 max-w-2xl text-base leading-8 text-white/85 md:text-xl">
+              <p className="mt-8 max-w-2xl text-base leading-8 text-white/85 @lg:text-xl">
                 {config.websiteHero.tagline}
               </p>
             )}
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+            <div className="mt-10 flex flex-col gap-3 @sm:flex-row @sm:flex-wrap @sm:gap-4">
               {config.websiteRsvp?.enabled && (
                 <Link
                   to={`/rsvp/${wedding?.id}`}
-                  className="inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 @sm:w-auto"
                   style={{ backgroundColor: theme.surface, color: theme.primary }}
                 >
                   {config.websiteRsvp.buttonText}
@@ -255,7 +247,7 @@ export default function WeddingWebsitePreview({
               {publicEvents.length > 0 && (
                 <a
                   href="#events"
-                  className="inline-flex w-full items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/20 @sm:w-auto"
                 >
                   View Events
                 </a>
@@ -263,24 +255,22 @@ export default function WeddingWebsitePreview({
             </div>
           </div>
 
-          <div className={`grid w-full gap-4 ${
-            previewMode ? 'grid-cols-1 sm:grid-cols-2' : 'sm:grid-cols-2 lg:max-w-md'
-          }`}>
+          <div className="grid w-full gap-4 grid-cols-1 @lg:grid-cols-2 @3xl:max-w-md">
             <div className="min-w-0 rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur">
               <CalendarDays size={18} className="mb-3 text-white/80" />
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">When</p>
-              <p className="mt-2 text-base font-medium leading-6 md:text-lg">{heroDate || 'Date coming soon'}</p>
+              <p className="mt-2 text-base font-medium leading-6 @lg:text-lg">{heroDate || 'Date coming soon'}</p>
             </div>
             <div className="min-w-0 rounded-3xl border border-white/20 bg-white/10 p-5 text-white shadow-lg backdrop-blur">
               <MapPin size={18} className="mb-3 text-white/80" />
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/70">Where</p>
-              <p className="mt-2 text-base font-medium leading-6 md:text-lg">{wedding?.city || wedding?.venue || 'Location coming soon'}</p>
+              <p className="mt-2 text-base font-medium leading-6 @lg:text-lg">{wedding?.city || wedding?.venue || 'Location coming soon'}</p>
             </div>
           </div>
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-6 py-16 md:px-10 lg:px-16">
+      <div className="mx-auto max-w-6xl px-6 py-16 @md:px-10 @2xl:px-16">
         {publicEvents.length > 0 && (
           <section id="events" className="py-6">
             <SectionTitle
@@ -289,7 +279,7 @@ export default function WeddingWebsitePreview({
               description="A celebration thoughtfully planned for our favorite people."
               theme={theme}
             />
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-6 @2xl:grid-cols-2">
               {publicEvents.map((event) => {
                 const mapsLink = getMapsLink(event);
                 return (
@@ -365,7 +355,7 @@ export default function WeddingWebsitePreview({
               theme={theme}
             />
             <div
-              className="mx-auto max-w-4xl rounded-[2rem] border border-white/60 px-8 py-10 text-center text-base leading-8 shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:text-lg"
+              className="mx-auto max-w-4xl rounded-[2rem] border border-white/60 px-8 py-10 text-center text-base leading-8 shadow-[0_18px_50px_rgba(15,23,42,0.08)] @lg:text-lg"
               style={{ backgroundColor: theme.surface, color: theme.muted }}
             >
               <p className="whitespace-pre-line">{config.websiteStory.text}</p>
@@ -381,7 +371,7 @@ export default function WeddingWebsitePreview({
               description="Everything you need to plan a smooth and joyful stay."
               theme={theme}
             />
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 @2xl:grid-cols-2">
               {config.websiteHotels.items.map((hotel, index) => (
                 <article
                   key={`${hotel.name}-${index}`}
@@ -470,7 +460,7 @@ export default function WeddingWebsitePreview({
               description="A few of our favorite memories together."
               theme={theme}
             />
-            <div className="mx-auto max-w-5xl grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="mx-auto max-w-5xl grid grid-cols-2 @2xl:grid-cols-3 gap-3">
               {config.websiteGallery.images.map((url, i) => (
                 <div key={i} className="aspect-square rounded-2xl overflow-hidden shadow-md">
                   <img src={url} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
@@ -492,10 +482,10 @@ export default function WeddingWebsitePreview({
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
                 Celebration RSVP
               </p>
-              <h2 className="mt-4 text-3xl font-semibold md:text-4xl" style={{ fontFamily: theme.fontFamily }}>
+              <h2 className="mt-4 text-3xl font-semibold @lg:text-4xl" style={{ fontFamily: theme.fontFamily }}>
                 We would love to celebrate with you
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 md:text-base">
+              <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 @lg:text-base">
                 Please let us know if you'll be joining us so we can plan each moment with care.
               </p>
               <Link
@@ -511,7 +501,7 @@ export default function WeddingWebsitePreview({
       </div>
 
       <footer
-        className="border-t px-6 py-10 text-center text-sm md:px-10 lg:px-16"
+        className="border-t px-6 py-10 text-center text-sm @md:px-10 @2xl:px-16"
         style={{ borderColor: `${theme.accent}60`, backgroundColor: theme.surface, color: theme.muted }}
       >
         <p className="text-lg font-medium" style={{ color: theme.text, fontFamily: theme.fontFamily }}>
