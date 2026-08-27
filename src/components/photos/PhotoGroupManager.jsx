@@ -24,8 +24,12 @@ import {
   GripVertical,
   MonitorPlay,
   Pencil,
+  Play,
   Plus,
+  RotateCcw,
+  Square,
   Trash2,
+  Undo2,
   Users,
 } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -41,7 +45,10 @@ import {
   markCompleted,
   parseMembers,
   reorderGroups,
+  resetQueue,
   setCurrentGroup,
+  startQueue,
+  stopQueue,
   subscribeToGroups,
   updateGroup,
 } from '../../services/photoGroupService';
@@ -212,6 +219,7 @@ function PhotoGroupAdminCard({
   onMoveUp,
   onMoveDown,
   onSetCurrent,
+  onReopen,
 }) {
   const {
     attributes,
@@ -260,10 +268,17 @@ function PhotoGroupAdminCard({
             <p className="mt-2 text-sm leading-relaxed text-gray-500 break-words">{group.members.join(' · ')}</p>
           )}
           <div className="mt-2 flex flex-wrap gap-1 sm:hidden">
-            <Button size="sm" variant="outline" onClick={onSetCurrent} disabled={!canEdit || group.status === 'completed'}>
-              <Camera size={14} />
-              {group.status === 'current' ? 'Live' : 'Set'}
-            </Button>
+            {group.status === 'completed' ? (
+              <Button size="sm" variant="outline" onClick={onReopen} disabled={!canEdit}>
+                <Undo2 size={14} />
+                Put back
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={onSetCurrent} disabled={!canEdit}>
+                <Camera size={14} />
+                {group.status === 'current' ? 'Live' : 'Set'}
+              </Button>
+            )}
             <Button aria-label={`Edit ${group.name}`} size="sm" variant="ghost" onClick={onEdit} disabled={!canEdit}>
               <Pencil size={14} />
             </Button>
@@ -282,10 +297,17 @@ function PhotoGroupAdminCard({
             </Button>
           </div>
           <div className="flex gap-1">
-            <Button size="sm" variant="outline" onClick={onSetCurrent} disabled={!canEdit || group.status === 'completed'}>
-              <Camera size={15} />
-              {group.status === 'current' ? 'Live' : 'Set current'}
-            </Button>
+            {group.status === 'completed' ? (
+              <Button size="sm" variant="outline" onClick={onReopen} disabled={!canEdit}>
+                <Undo2 size={15} />
+                Put back
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={onSetCurrent} disabled={!canEdit}>
+                <Camera size={15} />
+                {group.status === 'current' ? 'Live' : 'Set current'}
+              </Button>
+            )}
             <Button aria-label={`Edit ${group.name}`} size="sm" variant="ghost" onClick={onEdit} disabled={!canEdit}>
               <Pencil size={15} />
             </Button>
@@ -357,6 +379,31 @@ function AdminPhotoGroupManager({ wedding }) {
     await markCompleted(wedding.id, currentGroup.id, nextGroup?.id || null);
   };
 
+  const pendingCount = pendingGroups.filter((group) => group.status === 'pending').length;
+  const hasGroups = sortedGroups.length > 0;
+
+  const handleStartQueue = async () => {
+    if (!wedding?.id) return;
+    await startQueue(wedding.id);
+  };
+
+  const handleStopQueue = async () => {
+    if (!wedding?.id) return;
+    await stopQueue(wedding.id);
+  };
+
+  const handleResetQueue = async () => {
+    if (!wedding?.id) return;
+    const confirmed = window.confirm('Reset the entire queue? Every group goes back to pending and nothing will be live.');
+    if (!confirmed) return;
+    await resetQueue(wedding.id);
+  };
+
+  const handleReopenGroup = async (groupId) => {
+    if (!wedding?.id) return;
+    await updateGroup(wedding.id, groupId, { status: 'pending' });
+  };
+
   if (!wedding) {
     return (
       <Card title="Photo Groups">
@@ -411,6 +458,33 @@ function AdminPhotoGroupManager({ wedding }) {
             </Card>
           </div>
 
+          {canEdit && (
+            <Card className="border-wine-100">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">Queue controls</p>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    {currentGroup ? `Live: ${currentGroup.name}` : pendingCount > 0 ? `${pendingCount} group${pendingCount === 1 ? '' : 's'} waiting` : 'Nothing queued'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={handleStartQueue} disabled={!hasGroups || !!currentGroup || pendingCount === 0}>
+                    <Play size={16} />
+                    Start
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleStopQueue} disabled={!currentGroup}>
+                    <Square size={16} />
+                    Stop
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleResetQueue} disabled={!hasGroups} className="text-red-600 hover:bg-red-50 hover:text-red-700">
+                    <RotateCcw size={16} />
+                    Reset
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card
             title="Now on stage"
             actions={currentGroup && canEdit ? <Button size="sm" onClick={handleMarkCompleted}>Mark complete</Button> : null}
@@ -458,6 +532,7 @@ function AdminPhotoGroupManager({ wedding }) {
                         onMoveUp={() => handleMove(group.id, 'up')}
                         onMoveDown={() => handleMove(group.id, 'down')}
                         onSetCurrent={() => setCurrentGroup(wedding.id, group.id)}
+                        onReopen={() => handleReopenGroup(group.id)}
                       />
                     ))}
                   </div>
