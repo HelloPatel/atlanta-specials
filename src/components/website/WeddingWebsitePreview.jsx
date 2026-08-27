@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Clock3, ExternalLink, Gift, Heart, MapPin, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
@@ -6,7 +6,6 @@ import {
   getThemeConfig,
   normalizeWebsiteConfig,
 } from './websiteThemes';
-import { FourCorners, MandalaBackground, HennaDivider } from './InvitationOrnaments';
 
 function formatDisplayDate(dateValue) {
   if (!dateValue) return '';
@@ -53,79 +52,59 @@ function hexToRgba(hex, alpha) {
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
 }
 
-function HeroPatternOverlay({ pattern, theme }) {
-  const patternId = `website-${pattern}-pattern-${useId().replace(/:/g, '')}`;
+function getCoupleMonogram(coupleName) {
+  const parts = String(coupleName || '')
+    .split(/&|\band\b|\+/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const initials = parts.slice(0, 2).map((p) => p.charAt(0).toUpperCase());
+  if (initials.length === 2) return `${initials[0]} & ${initials[1]}`;
+  return initials[0] || '';
+}
 
-  if (!pattern || pattern === 'none') return null;
-
-  if (pattern === 'mandala') {
-    return (
-      <div data-hero-pattern="mandala" className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -right-20 -top-24 opacity-70">
-          <MandalaBackground color={theme.accent} size={420} opacity={0.12} />
-        </div>
-        <div className="absolute -bottom-36 -left-28 opacity-50">
-          <MandalaBackground color="#ffffff" size={360} opacity={0.09} />
-        </div>
-      </div>
-    );
-  }
-
-  if (pattern === 'geometric') {
-    return (
-      <div
-        data-hero-pattern="geometric"
-        className="pointer-events-none absolute inset-0 opacity-50"
-        style={{
-          backgroundImage: `
-            linear-gradient(30deg, transparent 24%, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.12) 26%, transparent 27%, transparent 74%, rgba(255,255,255,0.12) 75%, rgba(255,255,255,0.12) 76%, transparent 77%),
-            linear-gradient(150deg, transparent 24%, ${hexToRgba(theme.accent, 0.16)} 25%, ${hexToRgba(theme.accent, 0.16)} 26%, transparent 27%, transparent 74%, ${hexToRgba(theme.accent, 0.16)} 75%, ${hexToRgba(theme.accent, 0.16)} 76%, transparent 77%)
-          `,
-          backgroundSize: '88px 152px',
-        }}
-      />
-    );
-  }
-
+function HeroMonogram({ coupleName, theme }) {
+  const monogram = getCoupleMonogram(coupleName);
+  if (!monogram) return null;
   return (
-    <svg
-      data-hero-pattern={pattern}
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-60"
-      xmlns="http://www.w3.org/2000/svg"
+    <div
+      className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
       aria-hidden="true"
     >
-      <defs>
-        {pattern === 'floral' ? (
-          <pattern id={patternId} width="220" height="180" patternUnits="userSpaceOnUse">
-            <g transform="translate(54 48)" fill="none" stroke={theme.accent} strokeWidth="1.35" opacity="0.5">
-              {[0, 60, 120, 180, 240, 300].map((rotation) => (
-                <path key={rotation} d="M0 0 C-8 -10 -8 -25 0 -35 C8 -25 8 -10 0 0Z" transform={`rotate(${rotation})`} />
-              ))}
-              <circle r="5" fill={theme.accent} fillOpacity="0.3" />
-              <path d="M16 18 C42 30 50 56 32 82 M33 45 C49 37 64 40 76 54 M31 65 C45 61 58 67 67 80" />
-              <path d="M42 30 C50 20 61 17 72 20" />
-            </g>
-            <g transform="translate(168 132) scale(.72)" fill="none" stroke="#ffffff" strokeWidth="1.2" opacity="0.34">
-              {[0, 72, 144, 216, 288].map((rotation) => (
-                <path key={rotation} d="M0 0 C-7 -9 -7 -22 0 -30 C7 -22 7 -9 0 0Z" transform={`rotate(${rotation})`} />
-              ))}
-              <circle r="4" fill="#ffffff" fillOpacity="0.22" />
-            </g>
-          </pattern>
-        ) : (
-          <pattern id={patternId} width="210" height="190" patternUnits="userSpaceOnUse">
-            <g transform="translate(30 20) rotate(-10)" fill="none" stroke={theme.accent} strokeWidth="1.35" opacity="0.48">
-              <path d="M58 6 C26 16 7 47 15 82 C22 113 61 127 87 104 C108 85 102 51 77 44 C56 38 39 57 45 74 C50 88 69 92 79 79" />
-              <path d="M58 20 C38 30 26 52 31 73 C36 92 56 102 72 91" opacity="0.72" />
-              <path d="M44 92 C31 111 28 130 34 147 M36 125 C49 116 62 115 75 121" />
-              <circle cx="61" cy="69" r="5" fill={theme.accent} fillOpacity="0.3" />
-              <path d="M57 55 C63 48 72 48 78 54" />
-            </g>
-          </pattern>
-        )}
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#${patternId})`} />
-    </svg>
+      <span
+        className="select-none leading-none"
+        style={{
+          fontFamily: theme.fontFamily,
+          fontSize: 'clamp(200px, 40vw, 540px)',
+          color: '#ffffff',
+          opacity: 0.06,
+          letterSpacing: '-0.03em',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {monogram}
+      </span>
+    </div>
+  );
+}
+
+function HeroPatternOverlay({ pattern, theme }) {
+  // Editorial redesign: no vector clip-art. A single, understated fine grid
+  // is offered only for the "geometric" option; everything else stays clean
+  // so photography and typography carry the hero.
+  if (pattern !== 'geometric') return null;
+
+  return (
+    <div
+      data-hero-pattern="geometric"
+      className="pointer-events-none absolute inset-0"
+      style={{
+        opacity: 0.18,
+        backgroundImage: `linear-gradient(${hexToRgba('#ffffff', 0.16)} 1px, transparent 1px), linear-gradient(90deg, ${hexToRgba('#ffffff', 0.16)} 1px, transparent 1px)`,
+        backgroundSize: '64px 64px',
+        maskImage: 'radial-gradient(circle at 72% 22%, black, transparent 68%)',
+        WebkitMaskImage: 'radial-gradient(circle at 72% 22%, black, transparent 68%)',
+      }}
+    />
   );
 }
 
@@ -152,23 +131,21 @@ function useThemeFont(theme) {
 
 function SectionTitle({ eyebrow, title, description, theme }) {
   return (
-    <div className="mx-auto mb-10 max-w-2xl text-center">
-      <p
-        className="mb-3 text-xs font-semibold uppercase tracking-[0.35em]"
-        style={{ color: theme.muted }}
-      >
-        {eyebrow}
-      </p>
+    <div className="mx-auto mb-12 max-w-2xl text-center">
+      {eyebrow && (
+        <p
+          className="mb-4 text-[11px] font-semibold uppercase tracking-[0.42em]"
+          style={{ color: theme.accent }}
+        >
+          {eyebrow}
+        </p>
+      )}
       <h2 className="text-3xl font-semibold md:text-4xl" style={{ color: theme.text, fontFamily: theme.fontFamily }}>
         {title}
       </h2>
-      {theme.ornaments && (
-        <div className="mt-4">
-          <HennaDivider color={theme.accent} width="60%" className="mx-auto" />
-        </div>
-      )}
+      <div className="mx-auto mt-5 h-px w-14" style={{ backgroundColor: hexToRgba(theme.accent, 0.55) }} />
       {description && (
-        <p className="mt-4 text-sm leading-7 md:text-base" style={{ color: theme.muted }}>
+        <p className="mt-5 text-sm leading-7 md:text-base" style={{ color: theme.muted }}>
           {description}
         </p>
       )}
@@ -277,16 +254,8 @@ export default function WeddingWebsitePreview({
           backgroundPosition: 'center',
         }}
       >
+        {!config.websiteHero?.backgroundImage && <HeroMonogram coupleName={coupleName} theme={theme} />}
         <HeroPatternOverlay pattern={config.websiteHero?.pattern} theme={theme} />
-        {/* Ornamental decorations for Indian themes */}
-        {theme.ornaments && (
-          <>
-            <FourCorners color="rgba(255,255,255,0.15)" size={70} />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-              <MandalaBackground color="#ffffff" size={400} opacity={0.04} />
-            </div>
-          </>
-        )}
         <div className={`relative z-10 mx-auto flex w-full max-w-6xl flex-col ${
           previewMode ? 'gap-8' : 'gap-12 lg:flex-row lg:items-end lg:justify-between'
         }`}>

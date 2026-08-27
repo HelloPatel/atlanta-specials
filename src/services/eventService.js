@@ -3,6 +3,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  setDoc,
+  updateDoc,
   writeBatch,
   serverTimestamp,
   onSnapshot,
@@ -35,6 +37,19 @@ function toPublicEvent(event) {
   };
 }
 
+// Mirror an event to the public (guest-facing) collection. This is a
+// secondary write for the guest website — it must never block or fail the
+// core save, otherwise a stale/undeployed public rule would make the whole
+// events page appear broken. Failures are logged and reconciled later by
+// syncPublicEvents() on next load.
+async function mirrorPublicEvent(weddingId, eventId, eventData) {
+  try {
+    await setDoc(doc(publicEventsRef(weddingId), eventId), toPublicEvent(eventData));
+  } catch (error) {
+    console.error('Failed to mirror public event (guest website may be stale):', error);
+  }
+}
+
 export async function addEvent(weddingId, event) {
   const docRef = doc(eventsRef(weddingId));
   const privateEvent = {
@@ -51,10 +66,8 @@ export async function addEvent(weddingId, event) {
     order: event.order || 0,
     createdAt: serverTimestamp(),
   };
-  const batch = writeBatch(db);
-  batch.set(docRef, privateEvent);
-  batch.set(doc(publicEventsRef(weddingId), docRef.id), toPublicEvent(privateEvent));
-  await batch.commit();
+  await setDoc(docRef, privateEvent);
+  await mirrorPublicEvent(weddingId, docRef.id, privateEvent);
   return docRef.id;
 }
 
@@ -63,14 +76,12 @@ export async function updateEvent(weddingId, eventId, data) {
   const currentSnapshot = await getDoc(privateRef);
   if (!currentSnapshot.exists()) throw new Error('Event not found');
 
-  const nextEvent = { ...currentSnapshot.data(), ...data };
-  const batch = writeBatch(db);
-  batch.update(privateRef, {
+  await updateDoc(privateRef, {
     ...data,
     updatedAt: serverTimestamp(),
   });
-  batch.set(doc(publicEventsRef(weddingId), eventId), toPublicEvent(nextEvent));
-  await batch.commit();
+  const nextEvent = { ...currentSnapshot.data(), ...data };
+  await mirrorPublicEvent(weddingId, eventId, nextEvent);
 }
 
 export async function deleteEvent(weddingId, eventId) {

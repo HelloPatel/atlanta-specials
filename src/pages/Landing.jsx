@@ -53,10 +53,11 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="relative text-center px-6 pt-28 sm:pt-36 pb-16 sm:pb-28 max-w-5xl mx-auto animate-fade-in">
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[700px] rounded-full bg-gradient-to-b from-wine-50/60 via-phera-50/30 to-transparent blur-3xl animate-pulse-soft"></div>
-        </div>
+      <section className="relative text-center px-6 pt-28 sm:pt-36 pb-16 sm:pb-28 max-w-5xl mx-auto">
+        <div
+          className="absolute inset-0 -z-10"
+          style={{ background: 'radial-gradient(60% 55% at 50% 0%, rgba(171, 32, 77, 0.06), transparent 68%)' }}
+        ></div>
         <p className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-wine-600 tracking-[0.15em] uppercase mb-4 sm:mb-5 px-3 py-1.5 rounded-full bg-wine-50/80 border border-wine-100/60">
           <Sparkles size={12} /> For 200 to 1000+ guest weddings
         </p>
@@ -274,8 +275,10 @@ export default function Landing() {
 
       {/* Final CTA */}
       <section className="relative text-center px-4 sm:px-6 py-20 sm:py-28 bg-gradient-to-br from-wine-800 via-wine-900 to-gray-900 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-phera-500/8 blur-[120px]"></div>
-        <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full bg-wine-600/10 blur-[80px]"></div>
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(50% 60% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 70%)' }}
+        ></div>
         <div className="relative max-w-2xl mx-auto">
           <div className="inline-flex items-center justify-center size-12 rounded-2xl bg-white/10 backdrop-blur-sm mb-5 sm:mb-6 shadow-sm">
             <Sparkles className="text-phera-400" size={22} />

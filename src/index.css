@@ -317,17 +317,13 @@ p {
   to { transform: rotate(360deg); }
 }
 
-/* Decorative background patterns for wedding website */
+/* Subtle single-accent section washes (cohesive, not busy) */
 .bg-pattern-mandala {
-  background-image: radial-gradient(circle at 50% 50%, transparent 45%, rgba(171, 32, 77, 0.04) 46%, rgba(171, 32, 77, 0.04) 47%, transparent 48%),
-    radial-gradient(circle at 50% 50%, transparent 65%, rgba(171, 32, 77, 0.03) 66%, rgba(171, 32, 77, 0.03) 67%, transparent 68%);
-  background-size: 80px 80px;
+  background-image: radial-gradient(70% 60% at 50% 100%, rgba(171, 32, 77, 0.04), transparent 72%);
 }
 
 .bg-pattern-floral {
-  background-image: radial-gradient(ellipse at 20% 50%, rgba(251, 191, 36, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 50%, rgba(251, 113, 133, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 20%, rgba(167, 139, 250, 0.04) 0%, transparent 50%);
+  background-image: radial-gradient(70% 55% at 50% 0%, rgba(171, 32, 77, 0.05), transparent 70%);
 }
 
 .bg-pattern-geometric {
