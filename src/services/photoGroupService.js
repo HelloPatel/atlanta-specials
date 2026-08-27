@@ -138,6 +138,47 @@ export async function markCompleted(weddingId, groupId, nextGroupId = null) {
   await batch.commit();
 }
 
+// Reset the whole queue back to the start: every group becomes 'pending',
+// clearing any current/completed status so the event can run again.
+export async function resetQueue(weddingId) {
+  const groups = await getOrderedGroups(weddingId);
+  if (groups.length === 0) return;
+
+  const batch = writeBatch(db);
+  groups.forEach((group) => {
+    batch.update(groupDocRef(weddingId, group.id), {
+      status: 'pending',
+      updatedAt: serverTimestamp(),
+    });
+  });
+
+  await batch.commit();
+}
+
+// Start the queue: promote the first not-yet-completed group to 'current'.
+// No-op if a group is already current or nothing is waiting.
+export async function startQueue(weddingId) {
+  const groups = await getOrderedGroups(weddingId);
+  if (groups.some((group) => group.status === 'current')) return;
+
+  const firstPending = groups.find((group) => group.status !== 'completed');
+  if (!firstPending) return;
+
+  await setCurrentGroup(weddingId, firstPending.id);
+}
+
+// Stop the queue: send the current group back to 'pending' so nothing is live.
+export async function stopQueue(weddingId) {
+  const groups = await getOrderedGroups(weddingId);
+  const current = groups.find((group) => group.status === 'current');
+  if (!current) return;
+
+  await updateDoc(groupDocRef(weddingId, current.id), {
+    status: 'pending',
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export function subscribeToGroups(weddingId, callback) {
   return onSnapshot(
     photoGroupsRef(weddingId),
