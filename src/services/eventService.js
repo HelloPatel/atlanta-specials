@@ -101,12 +101,19 @@ export function subscribeToEvents(weddingId, callback) {
 }
 
 export function subscribeToPublicEvents(weddingId, callback) {
-  return onSnapshot(publicEventsRef(weddingId), (snap) => {
-    const list = snap.docs
-      .map((eventDoc) => ({ id: eventDoc.id, ...eventDoc.data() }))
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
-    callback(list);
-  });
+  return onSnapshot(
+    publicEventsRef(weddingId),
+    (snap) => {
+      const list = snap.docs
+        .map((eventDoc) => ({ id: eventDoc.id, ...eventDoc.data() }))
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      callback(list);
+    },
+    (error) => {
+      console.error('Failed to read public events (guest site may be stale):', error);
+      callback([]);
+    }
+  );
 }
 
 export async function getPublicEvents(weddingId) {

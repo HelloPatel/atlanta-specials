@@ -139,13 +139,20 @@ export async function markCompleted(weddingId, groupId, nextGroupId = null) {
 }
 
 export function subscribeToGroups(weddingId, callback) {
-  return onSnapshot(photoGroupsRef(weddingId), (snap) => {
-    const groups = snap.docs
-      .map((groupDoc) => ({ id: groupDoc.id, ...groupDoc.data() }))
-      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return onSnapshot(
+    photoGroupsRef(weddingId),
+    (snap) => {
+      const groups = snap.docs
+        .map((groupDoc) => ({ id: groupDoc.id, ...groupDoc.data() }))
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-    callback(groups);
-  });
+      callback(groups);
+    },
+    (error) => {
+      console.error('Failed to read photo groups (queue may be unavailable):', error);
+      callback([]);
+    }
+  );
 }
 
 export function getPhotoQueueLink(weddingId, slug) {

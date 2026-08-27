@@ -59,9 +59,18 @@ function useWeddingPublicData(weddingId) {
       return undefined;
     }
 
-    return onSnapshot(doc(db, COLLECTIONS.WEDDINGS, weddingId), (snap) => {
-      setWedding(snap.exists() ? { id: snap.id, ...snap.data() } : null);
-    });
+    return onSnapshot(
+      doc(db, COLLECTIONS.PUBLIC_WEDDINGS, weddingId),
+      (snap) => {
+        setWedding(snap.exists() ? { id: snap.id, ...snap.data() } : null);
+      },
+      (error) => {
+        // The private weddings/{id} doc is owner-only; guests must read the
+        // public projection. Log + null so the page never hangs.
+        console.error('Failed to load public wedding for photo queue:', error);
+        setWedding(null);
+      }
+    );
   }, [weddingId]);
 
   return wedding;
@@ -646,7 +655,7 @@ export default function PhotoGroupManager() {
 export function PublicPhotoGroupQueue() {
   const { weddingId: rawParam } = useParams();
   const [weddingId, setWeddingId] = useState(rawParam);
-  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId); }, [rawParam]);
+  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId).catch(() => setWeddingId(null)); }, [rawParam]);
   const wedding = useWeddingPublicData(weddingId);
   const { groups, loading } = usePhotoGroups(weddingId);
 
@@ -656,7 +665,7 @@ export function PublicPhotoGroupQueue() {
 export function PhotoGroupDisplayView() {
   const { weddingId: rawParam } = useParams();
   const [weddingId, setWeddingId] = useState(rawParam);
-  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId); }, [rawParam]);
+  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId).catch(() => setWeddingId(null)); }, [rawParam]);
   const wedding = useWeddingPublicData(weddingId);
   const { groups, loading } = usePhotoGroups(weddingId);
 
