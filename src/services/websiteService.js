@@ -41,9 +41,18 @@ export async function saveWebsiteConfig(weddingId, config) {
 }
 
 export function subscribeToWebsite(weddingId, callback) {
-  return onSnapshot(publicWeddingDocRef(weddingId), (snapshot) => {
-    callback(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null);
-  });
+  return onSnapshot(
+    publicWeddingDocRef(weddingId),
+    (snapshot) => {
+      callback(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } : null);
+    },
+    (error) => {
+      // Never leave the guest site spinning forever. Surface as "not found"
+      // (callback(null)) and log so a denied/failed read resolves the loading state.
+      console.error('Failed to read public website (guest site may be unavailable):', error);
+      callback(null);
+    }
+  );
 }
 
 export async function getPublicWebsite(weddingId) {

@@ -802,13 +802,13 @@ export default function BetsManager() {
 export function PublicBetsManager() {
   const { weddingId: rawParam } = useParams();
   const [weddingId, setWeddingId] = useState(rawParam);
-  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId); }, [rawParam]);
+  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId).catch(() => setWeddingId(null)); }, [rawParam]);
   return <GuestBetsView weddingId={weddingId} />;
 }
 
 export function BetsLeaderboardView() {
   const { weddingId: rawParam } = useParams();
   const [weddingId, setWeddingId] = useState(rawParam);
-  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId); }, [rawParam]);
+  useEffect(() => { resolveWeddingId(rawParam).then(setWeddingId).catch(() => setWeddingId(null)); }, [rawParam]);
   return <GuestBetsView weddingId={weddingId} leaderboardMode />;
 }

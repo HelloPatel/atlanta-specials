@@ -49,10 +49,17 @@ export default function PublicWeddingWebsite() {
 
     let cancelled = false;
     async function resolve() {
-      const id = await resolveWeddingId(rawParam);
-      if (cancelled) return;
-      if (!id) { setNotFound(true); setLoading(false); return; }
-      setResolvedId(id);
+      try {
+        const id = await resolveWeddingId(rawParam);
+        if (cancelled) return;
+        if (!id) { setNotFound(true); setLoading(false); return; }
+        setResolvedId(id);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Failed to resolve wedding id:', error);
+        setNotFound(true);
+        setLoading(false);
+      }
     }
     resolve();
     return () => { cancelled = true; };
