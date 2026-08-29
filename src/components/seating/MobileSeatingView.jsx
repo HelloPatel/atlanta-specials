@@ -268,6 +268,17 @@ export default function MobileSeatingView() {
     toast.success(`Applied ${layout.name} layout`);
   }, [canEdit, confirmReplace, replaceLayout, toast]);
 
+  const clearLayout = useCallback(() => {
+    if (!canEdit) return;
+    if (tables.length === 0 && zones.length === 0) return;
+    if (!window.confirm('Clear the current layout? All tables and zones for this event will be removed and guests unassigned.')) return;
+    setTables([]);
+    setZones([]);
+    setSelectedTableId(null);
+    setHasChanges(true);
+    toast.success('Layout cleared — pick a new one to start over');
+  }, [canEdit, tables.length, zones.length, toast]);
+
   const applyLayoutGenerator = useCallback((layoutType) => {
     if (!canEdit || !confirmReplace()) return;
     const guestCount = guests.filter((g) => g.rsvpStatus?.[selectedEventId] !== 'declined').length;
@@ -366,7 +377,18 @@ export default function MobileSeatingView() {
             <Plus size={18} />
           </button>
           <button onClick={fitLayout} className="h-11 rounded-xl bg-gray-100 px-4 text-xs font-semibold text-gray-700">Fit layout</button>
-          <span className="ml-auto text-right text-[11px] leading-tight text-gray-400">Tap a table<br />Positions locked</span>
+          {canEdit && (tables.length > 0 || zones.length > 0) ? (
+            <div className="ml-auto flex items-center gap-2">
+              <button onClick={() => setShowPresets(true)} className="flex h-11 items-center gap-1 rounded-xl bg-wine-50 px-3 text-xs font-semibold text-wine-700">
+                <Sparkles size={15} /> Layouts
+              </button>
+              <button onClick={clearLayout} className="flex h-11 items-center gap-1 rounded-xl bg-gray-100 px-3 text-xs font-semibold text-gray-600">
+                <Trash2 size={15} /> Clear
+              </button>
+            </div>
+          ) : (
+            <span className="ml-auto text-right text-[11px] leading-tight text-gray-400">Tap a table<br />Positions locked</span>
+          )}
         </div>
       )}
 

@@ -27,9 +27,11 @@ import {
   Play,
   Plus,
   RotateCcw,
+  Sparkles,
   Square,
   Trash2,
   Undo2,
+  Upload,
   Users,
 } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -43,7 +45,9 @@ import {
   deleteGroup,
   getPhotoDisplayLink,
   getPhotoQueueLink,
+  importGroups,
   markCompleted,
+  parseGroupsCsv,
   parseMembers,
   reorderGroups,
   resetQueue,
@@ -53,6 +57,7 @@ import {
   subscribeToGroups,
   updateGroup,
 } from '../../services/photoGroupService';
+import { subscribeToGuests } from '../../services/guestService';
 
 function getWeddingLabel(wedding) {
   return wedding?.coupleName || [wedding?.coupleName1, wedding?.coupleName2].filter(Boolean).join(' & ') || 'Wedding Photos';
@@ -180,6 +185,289 @@ function PhotoGroupFormModal({ group, open, onClose, onSubmit }) {
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
           <Button type="submit">{group ? 'Save changes' : 'Add group'}</Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function ImportCsvModal({ open, onClose, onImport }) {
+  const [text, setText] = useState('');
+  const [fileName, setFileName] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setText('');
+      setFileName('');
+      setError('');
+      setSubmitting(false);
+    }
+  }, [open]);
+
+  const parsedGroups = useMemo(() => parseGroupsCsv(text), [text]);
+
+  const handleFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError('');
+    try {
+      const contents = await file.text();
+      setText(contents);
+      setFileName(file.name);
+    } catch (readError) {
+      setError(`Could not read the file: ${readError.message}`);
+    }
+    event.target.value = '';
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (parsedGroups.length === 0) {
+      setError('No groups found. Add at least one row with a group name.');
+      return;
+    }
+    setError('');
+    setSubmitting(true);
+    try {
+      await onImport(parsedGroups);
+    } catch (importError) {
+      setError(`Import failed: ${importError.message}`);
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Import groups from CSV">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="rounded-xl bg-wine-50/70 px-3 py-2 text-xs text-wine-800">
+          <p className="font-medium">Format: one group per row.</p>
+          <p className="mt-1">First column is the <strong>group name</strong>; every column after it is a <strong>member</strong>.</p>
+          <p className="mt-1 font-mono text-[11px] text-wine-700">Bride&apos;s cousins, Aisha, Rohan, Priya</p>
+          <p className="text-[11px] text-wine-700">A header row (name, member…) is optional and skipped.</p>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium text-gray-700">Upload a CSV file</label>
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-3 py-3 text-sm text-gray-600 hover:border-wine-400 hover:text-wine-700">
+            <Upload size={16} />
+            <span>{fileName || 'Choose a .csv file'}</span>
+            <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleFile} />
+          </label>
+        </div>
+
+        <div>
+          <label htmlFor="csv-paste" className="mb-1 block text-sm font-medium text-gray-700">Or paste CSV</label>
+          <textarea
+            id="csv-paste"
+            value={text}
+            onChange={(event) => { setText(event.target.value); setFileName(''); }}
+            rows={6}
+            placeholder={'Group name, Member 1, Member 2\nBride\u2019s cousins, Aisha, Rohan, Priya'}
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600"
+          />
+        </div>
+
+        {error && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+        {parsedGroups.length > 0 && (
+          <div className="rounded-xl border border-wine-100 bg-white p-3">
+            <p className="text-sm font-medium text-gray-900">
+              {parsedGroups.length} group{parsedGroups.length === 1 ? '' : 's'} ready to import
+            </p>
+            <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs text-gray-600">
+              {parsedGroups.slice(0, 25).map((group, index) => (
+                <li key={`${group.name}-${index}`} className="truncate">
+                  <span className="font-medium text-gray-800">{group.name}</span>
+                  {group.members.length > 0 && <span className="text-gray-500"> — {group.members.join(', ')}</span>}
+                </li>
+              ))}
+              {parsedGroups.length > 25 && (
+                <li className="text-gray-400">…and {parsedGroups.length - 25} more</li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={submitting || parsedGroups.length === 0}>
+            {submitting ? 'Importing…' : `Import ${parsedGroups.length || ''} group${parsedGroups.length === 1 ? '' : 's'}`.trim()}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function guestFullName(guest) {
+  return [guest.firstName, guest.lastName].filter(Boolean).join(' ').trim();
+}
+
+const GUEST_GROUP_DIMENSIONS = [
+  { id: 'family', label: 'Family' },
+  { id: 'table', label: 'Seating table' },
+  { id: 'side', label: 'Side (bride / groom)' },
+  { id: 'relation', label: 'Relation' },
+  { id: 'tags', label: 'Tag' },
+];
+
+// Turn the guest list into { name, members } photo groups by a chosen dimension.
+function buildGroupsFromGuests(guests, dimension) {
+  const buckets = new Map();
+
+  const push = (key, label, guest) => {
+    if (!key) return;
+    if (!buckets.has(key)) buckets.set(key, { label, members: [] });
+    const name = guestFullName(guest);
+    if (name) buckets.get(key).members.push(name);
+    if (guest.plusOne && guest.plusOneName) {
+      buckets.get(key).members.push(`${guest.plusOneName.trim()} (+1)`);
+    }
+  };
+
+  guests.forEach((guest) => {
+    switch (dimension) {
+      case 'family': {
+        const label = (guest.familyName || '').trim();
+        push(label ? `fam:${label.toLowerCase()}` : '', label, guest);
+        break;
+      }
+      case 'table': {
+        const table = guest.tableNumber;
+        if (table === null || table === undefined || `${table}`.trim() === '') break;
+        push(`tbl:${table}`, `Table ${table}`, guest);
+        break;
+      }
+      case 'side': {
+        const side = (guest.side || '').trim().toLowerCase();
+        if (!side) break;
+        const label = side === 'groom' ? "Groom's side" : side === 'bride' ? "Bride's side" : side;
+        push(`side:${side}`, label, guest);
+        break;
+      }
+      case 'relation': {
+        const label = (guest.relation || '').trim();
+        push(label ? `rel:${label.toLowerCase()}` : '', label, guest);
+        break;
+      }
+      case 'tags': {
+        (guest.tags || []).forEach((tag) => {
+          const label = `${tag}`.trim();
+          push(label ? `tag:${label.toLowerCase()}` : '', label, guest);
+        });
+        break;
+      }
+      default:
+        break;
+    }
+  });
+
+  return Array.from(buckets.values())
+    .filter((bucket) => bucket.label && bucket.members.length > 0)
+    .map((bucket) => ({ name: bucket.label, members: bucket.members }))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+}
+
+function BuildFromGuestsModal({ open, weddingId, onClose, onImport }) {
+  const [guests, setGuests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [dimension, setDimension] = useState('family');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open || !weddingId) return undefined;
+    setLoading(true);
+    setError('');
+    const unsubscribe = subscribeToGuests(weddingId, (list) => {
+      setGuests(list);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, [open, weddingId]);
+
+  useEffect(() => {
+    if (!open) {
+      setDimension('family');
+      setError('');
+      setSubmitting(false);
+    }
+  }, [open]);
+
+  const previewGroups = useMemo(() => buildGroupsFromGuests(guests, dimension), [guests, dimension]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (previewGroups.length === 0) {
+      setError('No groups could be built. Try a different grouping, or add the data to your guests first.');
+      return;
+    }
+    setError('');
+    setSubmitting(true);
+    try {
+      await onImport(previewGroups);
+    } catch (importError) {
+      setError(`Could not create groups: ${importError.message}`);
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Build groups from guests">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <p className="text-sm text-gray-500">
+          Turn your existing guest list into photo groups automatically. Pick how you want to group them.
+        </p>
+
+        <div>
+          <label htmlFor="guest-group-dimension" className="mb-1 block text-sm font-medium text-gray-700">Group by</label>
+          <select
+            id="guest-group-dimension"
+            value={dimension}
+            onChange={(event) => setDimension(event.target.value)}
+            className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-base shadow-sm focus:border-wine-600 focus:outline-none focus:ring-1 focus:ring-wine-600 sm:text-sm"
+          >
+            {GUEST_GROUP_DIMENSIONS.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {error && <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+        <div className="rounded-xl border border-wine-100 bg-white p-3">
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading guests…</p>
+          ) : previewGroups.length === 0 ? (
+            <p className="text-sm text-gray-500">No groups for this option yet. Guests may be missing this field.</p>
+          ) : (
+            <>
+              <p className="text-sm font-medium text-gray-900">
+                {previewGroups.length} group{previewGroups.length === 1 ? '' : 's'} ready
+              </p>
+              <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto text-xs text-gray-600">
+                {previewGroups.slice(0, 30).map((group, index) => (
+                  <li key={`${group.name}-${index}`} className="truncate">
+                    <span className="font-medium text-gray-800">{group.name}</span>
+                    <span className="text-gray-400"> ({group.members.length})</span>
+                    {group.members.length > 0 && <span className="text-gray-500"> — {group.members.join(', ')}</span>}
+                  </li>
+                ))}
+                {previewGroups.length > 30 && (
+                  <li className="text-gray-400">…and {previewGroups.length - 30} more</li>
+                )}
+              </ul>
+            </>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button type="submit" disabled={submitting || loading || previewGroups.length === 0}>
+            {submitting ? 'Creating…' : `Create ${previewGroups.length || ''} group${previewGroups.length === 1 ? '' : 's'}`.trim()}
+          </Button>
         </div>
       </form>
     </Modal>
@@ -332,6 +620,8 @@ function AdminPhotoGroupManager({ wedding }) {
   const { currentGroup, pendingGroups, completedGroups, sortedGroups } = useMemo(() => getQueueState(groups), [groups]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [buildOpen, setBuildOpen] = useState(false);
   const { canEdit, isViewer } = useWedding();
   const toast = useToast();
 
@@ -354,6 +644,14 @@ function AdminPhotoGroupManager({ wedding }) {
 
     setModalOpen(false);
     setEditingGroup(null);
+  };
+
+  const handleImportGroups = async (parsedGroups) => {
+    if (!wedding?.id) return;
+    const count = await importGroups(wedding.id, parsedGroups);
+    setImportOpen(false);
+    setBuildOpen(false);
+    toast.success(`Imported ${count} group${count === 1 ? '' : 's'}`);
   };
 
   const handleDragEnd = async ({ active, over }) => {
@@ -457,6 +755,14 @@ function AdminPhotoGroupManager({ wedding }) {
           <Button size="sm" variant="outline" onClick={() => window.open(displayLink, '_blank')} disabled={!wedding?.id}>
             <MonitorPlay size={16} />
             <span className="hidden sm:inline">Display</span> view
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setBuildOpen(true)} disabled={!canEdit}>
+            <Sparkles size={16} />
+            From guests
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)} disabled={!canEdit}>
+            <Upload size={16} />
+            Import CSV
           </Button>
           <Button size="sm" onClick={() => { setEditingGroup(null); setModalOpen(true); }} disabled={!canEdit}>
             <Plus size={16} />
@@ -598,6 +904,19 @@ function AdminPhotoGroupManager({ wedding }) {
           setEditingGroup(null);
         }}
         onSubmit={handleSaveGroup}
+      />
+
+      <ImportCsvModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImportGroups}
+      />
+
+      <BuildFromGuestsModal
+        open={buildOpen}
+        weddingId={wedding?.id}
+        onClose={() => setBuildOpen(false)}
+        onImport={handleImportGroups}
       />
     </div>
   );
