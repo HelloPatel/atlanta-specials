@@ -37,6 +37,7 @@ import { db } from '../../firebase';
 import { COLLECTIONS } from '../../config/constants';
 import { useWedding } from '../../contexts/WeddingContext';
 import { Badge, Button, Card, Modal } from '../ui';
+import { useToast } from '../ui/Toast';
 import {
   addGroup,
   deleteGroup,
@@ -107,7 +108,12 @@ function usePhotoGroups(weddingId) {
 }
 
 function getQueueState(groups) {
-  const sortedGroups = [...groups].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const sortedGroups = [...groups].sort((a, b) => {
+    const aDone = a.status === 'completed' ? 1 : 0;
+    const bDone = b.status === 'completed' ? 1 : 0;
+    if (aDone !== bDone) return aDone - bDone;
+    return (a.order ?? 0) - (b.order ?? 0);
+  });
   const currentGroup = sortedGroups.find((group) => group.status === 'current') || null;
   const pendingGroups = sortedGroups.filter((group) => group.status !== 'completed' && group.id !== currentGroup?.id);
   const completedGroups = sortedGroups.filter((group) => group.status === 'completed');
@@ -327,6 +333,7 @@ function AdminPhotoGroupManager({ wedding }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const { canEdit, isViewer } = useWedding();
+  const toast = useToast();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -376,7 +383,11 @@ function AdminPhotoGroupManager({ wedding }) {
   const handleMarkCompleted = async () => {
     if (!currentGroup) return;
     const nextGroup = pendingGroups.find((group) => group.id !== currentGroup.id && group.status !== 'completed');
-    await markCompleted(wedding.id, currentGroup.id, nextGroup?.id || null);
+    try {
+      await markCompleted(wedding.id, currentGroup.id, nextGroup?.id || null);
+    } catch (error) {
+      toast.error(`Could not update the queue: ${error.message}`);
+    }
   };
 
   const pendingCount = pendingGroups.filter((group) => group.status === 'pending').length;
@@ -384,24 +395,43 @@ function AdminPhotoGroupManager({ wedding }) {
 
   const handleStartQueue = async () => {
     if (!wedding?.id) return;
-    await startQueue(wedding.id);
+    try {
+      await startQueue(wedding.id);
+      toast.success('Queue started');
+    } catch (error) {
+      toast.error(`Could not start the queue: ${error.message}`);
+    }
   };
 
   const handleStopQueue = async () => {
     if (!wedding?.id) return;
-    await stopQueue(wedding.id);
+    try {
+      await stopQueue(wedding.id);
+      toast.success('Queue stopped');
+    } catch (error) {
+      toast.error(`Could not stop the queue: ${error.message}`);
+    }
   };
 
   const handleResetQueue = async () => {
     if (!wedding?.id) return;
     const confirmed = window.confirm('Reset the entire queue? Every group goes back to pending and nothing will be live.');
     if (!confirmed) return;
-    await resetQueue(wedding.id);
+    try {
+      await resetQueue(wedding.id);
+      toast.success('Queue reset — every group is back to pending');
+    } catch (error) {
+      toast.error(`Could not reset the queue: ${error.message}`);
+    }
   };
 
   const handleReopenGroup = async (groupId) => {
     if (!wedding?.id) return;
-    await updateGroup(wedding.id, groupId, { status: 'pending' });
+    try {
+      await updateGroup(wedding.id, groupId, { status: 'pending' });
+    } catch (error) {
+      toast.error(`Could not reopen the group: ${error.message}`);
+    }
   };
 
   if (!wedding) {
@@ -555,25 +585,6 @@ function AdminPhotoGroupManager({ wedding }) {
                 description="A clean big-screen layout for TVs or projectors near the stage."
                 url={displayLink}
               />
-            </div>
-          </Card>
-
-          <Card title="Up next" className="border-wine-100">
-            <div className="space-y-3">
-              {pendingGroups.filter((group) => group.status === 'pending').slice(0, 5).map((group, index) => (
-                <div key={group.id} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium text-gray-900">{group.name}</p>
-                    <Badge>{index === 0 ? 'On deck' : `#${index + 1}`}</Badge>
-                  </div>
-                  {group.members?.length > 0 && (
-                    <p className="mt-1 text-sm text-gray-500">{group.members.join(' · ')}</p>
-                  )}
-                </div>
-              ))}
-              {pendingGroups.filter((group) => group.status === 'pending').length === 0 && (
-                <p className="text-sm text-gray-500">No upcoming groups right now.</p>
-              )}
             </div>
           </Card>
         </div>

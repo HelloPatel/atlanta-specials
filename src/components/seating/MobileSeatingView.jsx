@@ -15,6 +15,12 @@ import {
   getNextLockedTablePosition,
 } from './mobileSeating';
 import {
+  VENUE_LAYOUTS,
+  generateIndianWeddingLayout,
+  generateMehendiLayout,
+  generateReceptionLayout,
+} from './seatingLayouts';
+import {
   AlertTriangle,
   Cake,
   Camera,
@@ -71,6 +77,7 @@ export default function MobileSeatingView() {
   const [viewMode, setViewMode] = useState('layout');
   const [guestSearch, setGuestSearch] = useState('');
   const [showAddTable, setShowAddTable] = useState(false);
+  const [showPresets, setShowPresets] = useState(false);
   const [showEditTable, setShowEditTable] = useState(false);
   const [editTable, setEditTable] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
@@ -241,6 +248,46 @@ export default function MobileSeatingView() {
     setViewMode('layout');
   }, [canEdit, tables, updateTables, zones]);
 
+  const replaceLayout = useCallback((newTables, newZones) => {
+    setTables(newTables.map((t) => ({ ...t, id: uid(), assignedGuests: [] })));
+    setZones((newZones || []).map((z) => ({ ...z, id: uid() })));
+    setHasChanges(true);
+    setShowPresets(false);
+    setSelectedTableId(null);
+    setViewMode('layout');
+  }, []);
+
+  const confirmReplace = useCallback(() => {
+    if (tables.length === 0 && zones.length === 0) return true;
+    return window.confirm('Replace the current layout with this preset? Assigned guests will be cleared.');
+  }, [tables.length, zones.length]);
+
+  const applyPreset = useCallback((layout) => {
+    if (!canEdit || !confirmReplace()) return;
+    replaceLayout(layout.tables, layout.zones);
+    toast.success(`Applied ${layout.name} layout`);
+  }, [canEdit, confirmReplace, replaceLayout, toast]);
+
+  const applyLayoutGenerator = useCallback((layoutType) => {
+    if (!canEdit || !confirmReplace()) return;
+    const guestCount = guests.filter((g) => g.rsvpStatus?.[selectedEventId] !== 'declined').length;
+    const seatsPerTable = layoutType === 'reception' ? 8 : 10;
+    const tableCount = Math.max(6, Math.ceil((guestCount || 80) / seatsPerTable) + 1);
+    try {
+      let generated;
+      switch (layoutType) {
+        case 'indianWedding': generated = generateIndianWeddingLayout(tableCount); break;
+        case 'mehendi': generated = generateMehendiLayout(tableCount); break;
+        case 'reception': generated = generateReceptionLayout(tableCount); break;
+        default: return;
+      }
+      replaceLayout(generated.tables, generated.zones);
+      toast.success(`Applied ${layoutType} layout for ${guestCount} guests`);
+    } catch (err) {
+      toast.error('Failed to apply layout: ' + err.message);
+    }
+  }, [canEdit, confirmReplace, guests, replaceLayout, selectedEventId, toast]);
+
   const openEditTable = useCallback(() => {
     if (!selectedTable || !canEdit) return;
     setEditTable({
@@ -329,8 +376,13 @@ export default function MobileSeatingView() {
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
             <LayoutGrid size={36} className="mb-3 text-wine-300" />
             <p className="text-sm font-semibold text-gray-700">No layout yet</p>
-            <p className="mt-1 max-w-xs text-xs leading-relaxed text-gray-500">Add tables here. Mobile places them automatically and keeps every position locked.</p>
-            {canEdit && <Button className="mt-4" onClick={() => setShowAddTable(true)}><Plus size={16} /> Add table</Button>}
+            <p className="mt-1 max-w-xs text-xs leading-relaxed text-gray-500">Start from a full venue layout, or add tables one at a time. Mobile places them automatically and keeps every position locked.</p>
+            {canEdit && (
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                <Button onClick={() => setShowPresets(true)}><Sparkles size={16} /> Choose a layout</Button>
+                <Button variant="secondary" onClick={() => setShowAddTable(true)}><Plus size={16} /> Add table</Button>
+              </div>
+            )}
           </div>
         ) : (
           <div
@@ -491,7 +543,12 @@ export default function MobileSeatingView() {
               <h2 className="font-semibold text-gray-900">Tables</h2>
               <p className="text-xs text-gray-500">Tap a table to manage its guests.</p>
             </div>
-            {canEdit && <Button size="sm" onClick={() => setShowAddTable(true)}><Plus size={15} /> Add</Button>}
+            {canEdit && (
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="secondary" onClick={() => setShowPresets(true)}><Sparkles size={15} /> Layouts</Button>
+                <Button size="sm" onClick={() => setShowAddTable(true)}><Plus size={15} /> Add</Button>
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             {tables.map((table) => {
@@ -664,6 +721,54 @@ export default function MobileSeatingView() {
               <p className="mt-1 text-xs text-gray-500">{preset.capacity} seats</p>
             </button>
           ))}
+        </div>
+      </Modal>
+
+      <Modal open={showPresets} onClose={() => setShowPresets(false)} title="Layout presets" size="lg">
+        <p className="mb-3 text-sm text-gray-600">Pick a full venue layout. It replaces the current tables and zones for this event — positions stay locked on mobile, and you can still add or edit tables afterward.</p>
+
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Auto-fit to your guest count</div>
+        <div className="mb-5 grid grid-cols-1 gap-2">
+          {[
+            { type: 'indianWedding', label: 'Indian Wedding', desc: 'Rounds around a central stage & dance floor' },
+            { type: 'reception', label: 'Reception', desc: 'Head table with rounds and a dance floor' },
+            { type: 'mehendi', label: 'Mehendi / Sangeet', desc: 'Relaxed lounge-style seating' },
+          ].map((gen) => (
+            <button
+              key={gen.type}
+              onClick={() => applyLayoutGenerator(gen.type)}
+              className="flex items-center gap-3 rounded-2xl border border-gray-200 p-3 text-left transition-colors hover:border-wine-200 hover:bg-wine-50"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-wine-50 text-wine-700"><Sparkles size={18} /></span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold text-gray-900">{gen.label}</span>
+                <span className="block text-xs text-gray-500">{gen.desc}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Fixed venue presets</div>
+        <div className="grid grid-cols-1 gap-2">
+          {VENUE_LAYOUTS.map((layout) => {
+            const Icon = layout.icon || LayoutGrid;
+            return (
+              <button
+                key={layout.name}
+                onClick={() => applyPreset(layout)}
+                className="flex items-center gap-3 rounded-2xl border border-gray-200 p-3 text-left transition-colors hover:border-wine-200 hover:bg-wine-50"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ivory-100 text-wine-700"><Icon size={18} /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-gray-900">{layout.name}</span>
+                  {layout.description && <span className="block text-xs text-gray-500">{layout.description}</span>}
+                </span>
+                <span className="shrink-0 text-right text-[11px] font-medium text-gray-400">
+                  {layout.tables?.length || 0} tables
+                </span>
+              </button>
+            );
+          })}
         </div>
       </Modal>
 
