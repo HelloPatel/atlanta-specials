@@ -3,8 +3,9 @@ import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToEvents, addEvent, updateEvent, deleteEvent, syncPublicEvents } from '../../services/eventService';
 import { subscribeToGuests } from '../../services/guestService';
 import { Button, Input, Modal, Badge, useToast } from '../ui';
-import { Plus, Edit3, Trash2, Calendar, Clock, MapPin, Users, Sparkles, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Edit3, Trash2, Calendar, Clock, MapPin, Sparkles, ChevronUp, ChevronDown } from 'lucide-react';
 import { EVENT_TEMPLATES } from '../../config/constants';
+import EventGuestPicker from './EventGuestPicker';
 
 // Subtle accent colors for each event type to give visual distinction
 const EVENT_COLORS = {
@@ -152,58 +153,52 @@ export default function EventList() {
                   )}
 
                   <div className="md:pl-8">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color.bg}`}>
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className={`w-10 h-10 flex-shrink-0 rounded-lg flex items-center justify-center ${color.bg}`}>
                           <span className={`text-lg font-display font-bold ${color.accent}`}>{idx + 1}</span>
                         </div>
-                        <div>
-                          <h3 className="text-base font-semibold text-gray-900">{event.name}</h3>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            {event.inviteAll && (
-                              <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                                <Users size={11} /> All guests
-                              </span>
-                            )}
-                            {!event.inviteAll && (
-                              <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                                <Users size={11} /> {(event.guestIds || []).length} invited
-                              </span>
-                            )}
-                            {event.dressCode && (
-                              <span className="text-xs text-gray-400">
-                                &middot; {event.dressCode}
-                              </span>
-                            )}
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold text-gray-900 truncate">{event.name}</h3>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                             {(() => {
                               const invited = event.inviteAll ? guests : guests.filter((g) => (event.guestIds || []).includes(g.id));
                               const accepted = invited.filter((g) => (g.rsvpStatus || {})[event.id] === 'accepted').length;
                               const declined = invited.filter((g) => (g.rsvpStatus || {})[event.id] === 'declined').length;
-                              if (accepted + declined === 0) return null;
+                              const pending = invited.length - accepted - declined;
                               return (
-                                <span className="text-xs text-gray-400">
-                                  &middot; <span className="text-green-600">{accepted}✓</span> <span className="text-red-500">{declined}✗</span>
+                                <span className="inline-flex items-center gap-1.5 text-xs">
+                                  <span className="text-green-600 font-medium">{accepted} yes</span>
+                                  <span className="text-gray-300">·</span>
+                                  <span className="text-red-500 font-medium">{declined} no</span>
+                                  <span className="text-gray-300">·</span>
+                                  <span className="text-gray-400">{pending} not yet</span>
                                 </span>
                               );
                             })()}
+                            {event.dressCode && (
+                              <span className="inline-flex items-center gap-1 text-xs text-wine-700">
+                                <Sparkles size={11} /> {event.dressCode}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex flex-shrink-0 gap-0.5">
                         {idx > 0 && (
-                          <button aria-label={`Move ${event.name} earlier`} onClick={() => handleReorder(idx, -1)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                          <button aria-label={`Move ${event.name} earlier`} onClick={() => handleReorder(idx, -1)} className="flex size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                             <ChevronUp size={15} />
                           </button>
                         )}
                         {idx < events.length - 1 && (
-                          <button aria-label={`Move ${event.name} later`} onClick={() => handleReorder(idx, 1)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                          <button aria-label={`Move ${event.name} later`} onClick={() => handleReorder(idx, 1)} className="flex size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                             <ChevronDown size={15} />
                           </button>
                         )}
-                        <button aria-label={`Edit ${event.name}`} onClick={() => setEditing(event)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                        <button aria-label={`Edit ${event.name}`} onClick={() => setEditing(event)} className="flex size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                           <Edit3 size={15} />
                         </button>
-                        <button aria-label={`Delete ${event.name}`} onClick={() => handleDelete(event.id)} className="flex size-10 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                        <button aria-label={`Delete ${event.name}`} onClick={() => handleDelete(event.id)} className="flex size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
                           <Trash2 size={15} />
                         </button>
                       </div>
@@ -248,12 +243,13 @@ export default function EventList() {
         prefill={prefill}
         weddingId={activeWedding.id}
         eventCount={events.length}
+        guests={guests}
       />
     </div>
   );
 }
 
-function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount }) {
+function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount, guests = [] }) {
   const isEdit = !!event;
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -266,13 +262,13 @@ function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount }
       setForm({
         name: prefill.name || '', date: '', startTime: '', endTime: '',
         venue: '', address: '', dressCode: prefill.dressCode || '', description: '',
-        inviteAll: true,
+        inviteAll: true, guestIds: [],
       });
     } else {
       setForm({
         name: '', date: '', startTime: '', endTime: '',
         venue: '', address: '', dressCode: '', description: '',
-        inviteAll: true,
+        inviteAll: true, guestIds: [],
       });
     }
   }, [event, prefill, open]);
@@ -351,6 +347,17 @@ function EventFormModal({ open, onClose, event, prefill, weddingId, eventCount }
           <input type="checkbox" checked={form.inviteAll || false} onChange={(e) => update('inviteAll', e.target.checked)} className="rounded border-gray-300 text-wine-700 focus:ring-wine-500" />
           <span className="text-gray-700">Invite all guests to this event</span>
         </label>
+
+        {!form.inviteAll && (
+          <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+            <p className="mb-2 text-sm font-medium text-gray-700">Who's invited?</p>
+            <EventGuestPicker
+              guests={guests}
+              value={form.guestIds || []}
+              onChange={(ids) => update('guestIds', ids)}
+            />
+          </div>
+        )}
 
         <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" type="button" onClick={onClose} disabled={saving}>Cancel</Button>

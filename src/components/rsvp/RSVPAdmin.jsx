@@ -14,7 +14,7 @@ import { Button, Modal, Input, Badge, Card } from '../ui';
 import { RSVP_STATUS, DIETARY_OPTIONS } from '../../config/constants';
 import {
   Copy, ExternalLink, Share2, Check, X, Clock, Users, Mail,
-  MessageCircle, Link2, ChevronDown, Filter, Download,
+  MessageCircle, Link2, ChevronDown, Filter, Download, Eye, EyeOff,
 } from 'lucide-react';
 
 export default function RSVPAdmin() {
@@ -42,10 +42,11 @@ export default function RSVPAdmin() {
 
   // Compute RSVP stats
   const stats = useMemo(() => {
-    const result = { total: guests.length, accepted: 0, declined: 0, pending: 0, noResponse: 0 };
+    const result = { total: guests.length, accepted: 0, declined: 0, pending: 0, noResponse: 0, notSeen: 0 };
     
     guests.forEach((g) => {
       const rsvp = g.rsvpStatus || {};
+      if (!g.rsvpViewedAt) result.notSeen++;
       if (selectedEvent === 'all') {
         // Overall: accepted if accepted to ANY event
         const statuses = Object.values(rsvp);
@@ -74,7 +75,9 @@ export default function RSVPAdmin() {
       }
 
       // Status filter
-      if (filterStatus !== 'all') {
+      if (filterStatus === 'not-seen') {
+        if (g.rsvpViewedAt) return false;
+      } else if (filterStatus !== 'all') {
         const rsvp = g.rsvpStatus || {};
         const status = selectedEvent === 'all'
           ? (Object.values(rsvp).length === 0 ? 'none' : Object.values(rsvp).includes('accepted') ? 'accepted' : Object.values(rsvp).every((s) => s === 'declined') ? 'declined' : 'pending')
@@ -226,6 +229,7 @@ export default function RSVPAdmin() {
         <div className="hidden md:contents">
           <StatCard label="Pending" count={stats.pending} color="amber" icon={Clock} />
           <StatCard label="No Response" count={stats.noResponse} color="gray" icon={Mail} />
+          <StatCard label="Not Seen" count={stats.notSeen} color="amber" icon={EyeOff} />
         </div>
 
         <div className="flex-1" />
@@ -322,6 +326,7 @@ export default function RSVPAdmin() {
           <option value="declined">Declined</option>
           <option value="pending">Pending</option>
           <option value="no-response">No Response</option>
+          <option value="not-seen">Not seen invite</option>
         </select>
       </div>
 
@@ -335,6 +340,7 @@ export default function RSVPAdmin() {
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Guest</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Family</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-600">Side</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Seen</th>
                 {(selectedEvent === 'all' ? events : events.filter((e) => e.id === selectedEvent)).map((evt) => (
                   <th key={evt.id} className="text-center px-3 py-3 font-medium text-gray-600 min-w-[100px]">
                     {evt.name}
@@ -355,6 +361,9 @@ export default function RSVPAdmin() {
                     <span className={`text-xs font-medium ${guest.side === 'bride' ? 'text-wine-700' : 'text-blue-600'}`}>
                       {guest.side === 'bride' ? 'Bride' : 'Groom'}
                     </span>
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <ViewedBadge guest={guest} />
                   </td>
                   {(selectedEvent === 'all' ? events : events.filter((e) => e.id === selectedEvent)).map((evt) => {
                     const status = (guest.rsvpStatus || {})[evt.id];
@@ -413,6 +422,7 @@ export default function RSVPAdmin() {
                 <div>
                   <p className="text-sm font-medium text-gray-900">{guest.firstName} {guest.lastName}</p>
                   <p className="text-xs text-gray-500">{guest.familyName || 'No family'} · <span className="capitalize">{guest.side}</span></p>
+                  <div className="mt-1"><ViewedBadge guest={guest} /></div>
                 </div>
                 <div className="flex gap-1">
                   <button onClick={() => handleBulkRsvp(guest.id, 'accepted')} className="p-2 rounded-lg hover:bg-green-50 text-green-600" title="Accept all">
@@ -549,6 +559,46 @@ export default function RSVPAdmin() {
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
+
+function fmtTimeAgo(ts) {
+  if (!ts) return '';
+  const d = ts?.toDate ? ts.toDate() : (ts?.seconds ? new Date(ts.seconds * 1000) : new Date(ts));
+  if (isNaN(d?.getTime?.())) return '';
+  const secs = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (secs < 60) return 'just now';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function ViewedBadge({ guest, compact = false }) {
+  const viewed = !!guest.rsvpViewedAt;
+  if (viewed) {
+    const ago = fmtTimeAgo(guest.rsvpViewedAt);
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs font-medium text-green-600"
+        title={ago ? `Opened their invitation ${ago}` : 'Opened their invitation'}
+      >
+        <Eye size={13} />
+        {!compact && <span>Seen{ago ? ` · ${ago}` : ''}</span>}
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-xs font-medium text-amber-500"
+      title="Hasn't opened their invitation yet — a reminder could help"
+    >
+      <EyeOff size={13} />
+      {!compact && <span>Not seen</span>}
+    </span>
+  );
+}
 
 function StatCard({ label, count, color, icon: Icon }) {
   const colors = {

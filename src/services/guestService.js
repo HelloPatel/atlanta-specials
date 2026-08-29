@@ -133,42 +133,60 @@ export function subscribeToGuests(weddingId, callback) {
 
 // ─── Bulk import ────────────────────────────────────────────────────────────
 
-export async function importGuestsBatch(weddingId, guests) {
+function buildImportedGuest(guest) {
+  return {
+    firstName: guest.firstName || '',
+    lastName: guest.lastName || '',
+    email: guest.email || '',
+    phone: guest.phone || '',
+    familyId: guest.familyId || null,
+    familyName: guest.familyName || '',
+    side: guest.side || 'bride',
+    relation: guest.relation || '',
+    dietary: guest.dietary || 'vegetarian',
+    dietaryNotes: guest.dietaryNotes || '',
+    tableNumber: guest.tableNumber || null,
+    seatIndex: null,
+    rsvpStatus: {},
+    rsvpMethod: 'manual',
+    plusOne: guest.plusOne || false,
+    plusOneName: guest.plusOneName || '',
+    needsHotel: false,
+    hotelNotes: '',
+    travelFrom: '',
+    arrivalDate: null,
+    departureDate: null,
+    language: guest.language || 'en',
+    notes: guest.notes || '',
+    tags: guest.tags || [],
+    importedFrom: 'excel',
+    createdAt: serverTimestamp(),
+  };
+}
+
+/**
+ * Import guests and return the created records as { id, guest } pairs so the
+ * caller can reconcile connected data (e.g. adding each new guest to the
+ * events they were marked invited to). Doc ids are generated client-side up
+ * front, which keeps the whole import in the same batched write.
+ */
+export async function importGuestsWithIds(weddingId, guests) {
   const ref = guestsRef(weddingId);
   const publicRef = publicGuestsRef(weddingId);
-  return commitInChunks(guests, (batch, guest) => {
+  const created = [];
+  await commitInChunks(guests, (batch, guest) => {
     const privateRef = doc(ref);
-    const privateGuest = {
-      firstName: guest.firstName || '',
-      lastName: guest.lastName || '',
-      email: guest.email || '',
-      phone: guest.phone || '',
-      familyId: guest.familyId || null,
-      familyName: guest.familyName || '',
-      side: guest.side || 'bride',
-      relation: guest.relation || '',
-      dietary: guest.dietary || 'vegetarian',
-      dietaryNotes: guest.dietaryNotes || '',
-      tableNumber: guest.tableNumber || null,
-      seatIndex: null,
-      rsvpStatus: {},
-      rsvpMethod: 'manual',
-      plusOne: guest.plusOne || false,
-      plusOneName: guest.plusOneName || '',
-      needsHotel: false,
-      hotelNotes: '',
-      travelFrom: '',
-      arrivalDate: null,
-      departureDate: null,
-      language: guest.language || 'en',
-      notes: guest.notes || '',
-      tags: guest.tags || [],
-      importedFrom: 'excel',
-      createdAt: serverTimestamp(),
-    };
+    const privateGuest = buildImportedGuest(guest);
     batch.set(privateRef, privateGuest);
     batch.set(doc(publicRef, privateRef.id), toPublicGuest(privateGuest));
+    created.push({ id: privateRef.id, guest });
   }, 2);
+  return created;
+}
+
+export async function importGuestsBatch(weddingId, guests) {
+  const created = await importGuestsWithIds(weddingId, guests);
+  return created.length;
 }
 
 export async function syncPublicGuestDirectory(weddingId, guests) {

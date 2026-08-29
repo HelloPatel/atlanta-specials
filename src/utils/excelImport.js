@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { invitedEventNamesForGuest, parseInvitedEventNames } from './eventInvites';
 
 // Default column mapping for Indian wedding guest lists
 const DEFAULT_COLUMN_MAP = {
@@ -34,6 +35,11 @@ const DEFAULT_COLUMN_MAP = {
   'plus one': 'plusOne',
   'plus one?': 'plusOne',
   'plusone': 'plusOne',
+  'invited events': '_invitedEvents',
+  'invited event': '_invitedEvents',
+  'events': '_invitedEvents',
+  'invited to': '_invitedEvents',
+  'invited': '_invitedEvents',
 };
 
 const MAX_IMPORT_FILE_SIZE = 10 * 1024 * 1024;
@@ -133,6 +139,7 @@ export function mapRowsToGuests(rows, columnMapping) {
     const guest = {};
     let fullName = '';
     let rawTags = '';
+    let rawInvitedEvents = '';
 
     Object.entries(columnMapping).forEach(([header, field]) => {
       const value = String(row[header] ?? '').trim();
@@ -141,6 +148,8 @@ export function mapRowsToGuests(rows, columnMapping) {
         fullName = value;
       } else if (field === '_tags') {
         rawTags = value;
+      } else if (field === '_invitedEvents') {
+        rawInvitedEvents = value;
       } else if (field === 'side') {
         const lower = value.toLowerCase();
         if (/(groom|ladka|var)/.test(lower)) guest.side = 'groom';
@@ -169,6 +178,9 @@ export function mapRowsToGuests(rows, columnMapping) {
     guest.lastName = String(guest.lastName || '').trim();
     if (rawTags || Object.values(columnMapping).includes('_tags')) {
       guest.tags = [...new Set(rawTags.split(/[,;]/).map((tag) => tag.trim()).filter(Boolean))];
+    }
+    if (rawInvitedEvents || Object.values(columnMapping).includes('_invitedEvents')) {
+      guest._invitedEvents = parseInvitedEventNames(rawInvitedEvents);
     }
 
     return guest;
@@ -258,7 +270,7 @@ export function findDuplicates(existingGuests, newGuests) {
 /**
  * Export guests to Excel file and trigger download.
  */
-export function exportGuestsToExcel(guests, fileName = 'guest-list.xlsx') {
+export function exportGuestsToExcel(guests, events = [], fileName = 'guest-list.xlsx') {
   const data = guests.map((g) => ({
     'First Name': g.firstName,
     'Last Name': g.lastName,
@@ -269,7 +281,9 @@ export function exportGuestsToExcel(guests, fileName = 'guest-list.xlsx') {
     'Relation': g.relation,
     'Dietary': g.dietary,
     'Tags': (g.tags || []).join(', '),
+    'Invited Events': invitedEventNamesForGuest(g, events).join(', '),
     'RSVP': Object.values(g.rsvpStatus || {}).includes('accepted') ? 'Accepted' : Object.values(g.rsvpStatus || {}).includes('declined') ? 'Declined' : 'Pending',
+    'Viewed RSVP': g.rsvpViewedAt ? 'Yes' : 'No',
     'Checked In': g.checkedIn ? 'Yes' : 'No',
     'Notes': g.notes,
   }));
@@ -295,6 +309,7 @@ export function downloadGuestTemplate() {
       'Relation': 'Cousin',
       'Dietary': 'Vegetarian',
       'Tags': 'VIP',
+      'Invited Events': 'Ceremony, Reception',
       'Notes': '',
     },
     {
@@ -307,6 +322,7 @@ export function downloadGuestTemplate() {
       'Relation': 'Uncle',
       'Dietary': 'Vegetarian',
       'Tags': 'VIP, Elderly',
+      'Invited Events': 'Ceremony, Reception',
       'Notes': 'Needs wheelchair accessible seating',
     },
     {
@@ -319,6 +335,7 @@ export function downloadGuestTemplate() {
       'Relation': 'Family Friend',
       'Dietary': 'Jain (No onion/garlic)',
       'Tags': '',
+      'Invited Events': 'Reception',
       'Notes': '',
     },
     {
@@ -331,6 +348,7 @@ export function downloadGuestTemplate() {
       'Relation': 'College Friend',
       'Dietary': 'Non-Vegetarian',
       'Tags': 'College Friend',
+      'Invited Events': 'Sangeet, Reception',
       'Notes': 'Coming with wife Neha',
     },
     {
@@ -343,6 +361,7 @@ export function downloadGuestTemplate() {
       'Relation': 'Aunt',
       'Dietary': 'Vegan',
       'Tags': 'Elderly',
+      'Invited Events': 'Ceremony',
       'Notes': 'No dairy options',
     },
   ];
@@ -353,7 +372,7 @@ export function downloadGuestTemplate() {
   ws['!cols'] = [
     { wch: 14 }, { wch: 14 }, { wch: 24 }, { wch: 12 },
     { wch: 20 }, { wch: 8 }, { wch: 16 }, { wch: 22 },
-    { wch: 18 }, { wch: 36 },
+    { wch: 18 }, { wch: 24 }, { wch: 36 },
   ];
 
   const wb = XLSX.utils.book_new();

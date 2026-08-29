@@ -1,8 +1,8 @@
-import { Grid3X3, CircleDot, Square, Wine, Cake, Gift, Wand2 } from 'lucide-react';
+import { Grid3X3, CircleDot, Square, Cake, Gift } from 'lucide-react';
 
 /**
- * Advanced seating layout generator for Indian weddings.
- * Includes stagger effect, Indian wedding-specific layouts, and optimal positioning.
+ * Seating layout generators and venue presets.
+ * Includes stagger effect and optimal positioning helpers.
  */
 
 /**
@@ -26,151 +26,6 @@ export function generateStaggeredLayout(tableCount, startX = 100, startY = 100, 
   }
 
   return positions;
-}
-
-/**
- * Indian wedding ballroom layout with traditional seating arrangements
- * Includes mandap/stage area, bride family, groom family seating, dance floor
- */
-export function generateIndianWeddingLayout(totalTables, venueWidth = 1000, venueHeight = 800) {
-  const layout = {
-    mandap: {
-      x: venueWidth / 2 - 120,
-      y: 80,
-      width: 240,
-      height: 120,
-      type: 'stage',
-      label: 'Mandap/Stage',
-    },
-    danceFloor: {
-      x: venueWidth / 2 - 150,
-      y: venueHeight - 300,
-      width: 300,
-      height: 200,
-      type: 'dance-floor',
-      label: 'Dance Floor',
-    },
-    bar: {
-      x: 50,
-      y: venueHeight - 150,
-      width: 120,
-      height: 100,
-      type: 'bar',
-      label: 'Bar',
-    },
-    cocktail: {
-      x: venueWidth - 170,
-      y: venueHeight - 150,
-      width: 120,
-      height: 100,
-      type: 'cocktail-area',
-      label: 'Cocktail Area',
-    },
-  };
-
-  // Divide tables into two groups: bride family (left) and groom family (right)
-  const brideTableCount = Math.ceil(totalTables / 2);
-  const groomTableCount = totalTables - brideTableCount;
-
-  const tables = [];
-  let tableIdx = 1;
-
-  // Bride family tables (left side)
-  const bridePositions = generateStaggeredLayout(
-    brideTableCount,
-    80,
-    250,
-    Math.ceil(brideTableCount / 3)
-  );
-
-  for (const pos of bridePositions) {
-    tables.push({
-      id: `table-${tableIdx}`,
-      name: `Table ${tableIdx}`,
-      x: Math.min(pos.x, venueWidth / 2 - 200),
-      y: pos.y,
-      width: 120,
-      height: 120,
-      capacity: 10,
-      shape: 'round',
-      side: 'bride',
-      label: `Bride Family T${tableIdx}`,
-    });
-    tableIdx++;
-  }
-
-  // Groom family tables (right side)
-  const groomPositions = generateStaggeredLayout(
-    groomTableCount,
-    venueWidth / 2 + 100,
-    250,
-    Math.ceil(groomTableCount / 3)
-  );
-
-  for (const pos of groomPositions) {
-    tables.push({
-      id: `table-${tableIdx}`,
-      name: `Table ${tableIdx}`,
-      x: Math.max(pos.x, venueWidth / 2 + 100),
-      y: pos.y,
-      width: 120,
-      height: 120,
-      capacity: 10,
-      shape: 'round',
-      side: 'groom',
-      label: `Groom Family T${tableIdx}`,
-    });
-    tableIdx++;
-  }
-
-  return { tables, zones: [layout.mandap, layout.danceFloor, layout.bar, layout.cocktail] };
-}
-
-/**
- * Mehendi/Sangeet event layout - more casual, multiple focal points
- */
-export function generateMehendiLayout(totalTables, venueWidth = 1000, venueHeight = 800) {
-  const layout = {
-    stage: {
-      x: venueWidth / 2 - 150,
-      y: 60,
-      width: 300,
-      height: 100,
-      type: 'stage',
-      label: 'Performance Stage',
-    },
-    danceFloor: {
-      x: 50,
-      y: venueHeight / 2 - 100,
-      width: 200,
-      height: 200,
-      type: 'dance-floor',
-      label: 'Dance Area',
-    },
-    seating: {
-      x: venueWidth / 2 + 100,
-      y: venueHeight / 2 - 100,
-      width: 300,
-      height: 200,
-      type: 'cocktail-area',
-      label: 'Cocktail Seating',
-    },
-  };
-
-  const positions = generateStaggeredLayout(totalTables, 50, 250, 5);
-  const tables = positions.map((pos, idx) => ({
-    id: `table-${idx + 1}`,
-    name: `Table ${idx + 1}`,
-    x: pos.x,
-    y: pos.y,
-    width: 100,
-    height: 100,
-    capacity: 8,
-    shape: 'cocktail',
-    eventType: 'mehendi',
-  }));
-
-  return { tables, zones: [layout.stage, layout.danceFloor, layout.seating] };
 }
 
 /**
@@ -329,41 +184,6 @@ export function optimizeTablePositions(tables, venueWidth = 1000, venueHeight = 
   return optimized;
 }
 
-/**
- * Generate layout suggestions for different venue sizes
- */
-export function getLayoutSuggestions(guestCount, venueSize = 'medium') {
-  const configurations = {
-    small: {
-      tablesPerRow: 3,
-      capacity: 100,
-      venueWidth: 600,
-      venueHeight: 500,
-    },
-    medium: {
-      tablesPerRow: 4,
-      capacity: 400,
-      venueWidth: 1000,
-      venueHeight: 800,
-    },
-    large: {
-      tablesPerRow: 5,
-      capacity: 1000,
-      venueWidth: 1400,
-      venueHeight: 1000,
-    },
-  };
-
-  const config = configurations[venueSize] || configurations.medium;
-  const averageCapacity = 10;
-  const estimatedTables = Math.ceil(guestCount / averageCapacity);
-
-  return {
-    config,
-    estimatedTables,
-    layout: generateIndianWeddingLayout(estimatedTables, config.venueWidth, config.venueHeight),
-  };
-}
 
 
 // ─── Venue layout presets ───────────────────────────────────────────────────
@@ -475,41 +295,6 @@ export const VENUE_LAYOUTS = (() => {
       ],
     },
     {
-      name: 'Indian Wedding Reception (40 rounds)',
-      description: 'Head table at top, stage/DJ at bottom, staggered tables left & right of dance floor',
-      icon: Wine,
-      tables: [
-        { name: 'Head Table', shape: 'head-table', capacity: 14, width: 400, height: 60, x: 750, y: 60 },
-        ...(() => {
-          const t = []; let n = 0;
-          // Left side — 3 staggered columns × 7 rows
-          for (let r = 0; r < 7; r++) {
-            const stagger = r % 2 === 1 ? 45 : 0;
-            t.push({ ...round10, name: `Table ${++n}`, x: 60 + stagger, y: 250 + r * 210 });
-            t.push({ ...round10, name: `Table ${++n}`, x: 250 + stagger, y: 250 + r * 210 });
-            t.push({ ...round10, name: `Table ${++n}`, x: 440 + stagger, y: 250 + r * 210 });
-          }
-          // Right side — 3 staggered columns × 7 rows
-          for (let r = 0; r < 7; r++) {
-            const stagger = r % 2 === 1 ? -45 : 0;
-            t.push({ ...round10, name: `Table ${++n}`, x: 1360 + stagger, y: 250 + r * 210 });
-            t.push({ ...round10, name: `Table ${++n}`, x: 1550 + stagger, y: 250 + r * 210 });
-            t.push({ ...round10, name: `Table ${++n}`, x: 1740 + stagger, y: 250 + r * 210 });
-          }
-          return t.slice(0, 40);
-        })(),
-      ],
-      zones: [
-        { type: 'stage', label: 'Stage', width: 450, height: 100, x: 730, y: 1800, color: '#fee2e2' },
-        { type: 'dj', label: 'DJ', width: 130, height: 60, x: 890, y: 1680, color: '#e0e7ff' },
-        { type: 'dancefloor', label: 'Dance Floor', width: 460, height: 460, x: 720, y: 550, color: '#fef3c7' },
-        { type: 'bar', label: 'Bar', width: 180, height: 60, x: 60, y: 1800, color: '#dbeafe' },
-        { type: 'desserts', label: 'Desserts', width: 160, height: 60, x: 1750, y: 1800, color: '#fef9c3' },
-        { type: 'gifts', label: 'Gifts & Cards', width: 140, height: 70, x: 1750, y: 60, color: '#fce7f3' },
-        { type: 'photo', label: 'Photo Booth', width: 140, height: 80, x: 60, y: 60, color: '#f3e8ff' },
-      ],
-    },
-    {
       name: 'Intimate Dinner (10 rounds)',
       description: 'Sweetheart table at top, staggered tables left & right of dance floor',
       icon: Cake,
@@ -566,54 +351,6 @@ export const VENUE_LAYOUTS = (() => {
         { type: 'stage', label: 'Stage / DJ', width: 360, height: 100, x: 720, y: 1680, color: '#e0e7ff' },
         { type: 'dancefloor', label: 'Dance Floor', width: 420, height: 380, x: 690, y: 420, color: '#fef3c7' },
         { type: 'bar', label: 'Bar', width: 180, height: 60, x: 60, y: 1550, color: '#dbeafe' },
-      ],
-    },
-    {
-      name: 'Ceremony: Mandap with Arc Seating',
-      description: 'Individual chairs fanned in arcs around a central aisle, all facing the mandap',
-      icon: Wand2,
-      tables: (() => {
-        // Individual chairs (capacity 1) arranged in concentric arcs centred on
-        // the mandap so every seat has a clear view. A central aisle splits the
-        // fan; outer rows are wider and hold more chairs.
-        const chairs = [];
-        const Fx = 1200;          // focal point (mandap centre) x
-        const Fy = 300;           // focal point y — chairs sit below, facing up
-        const chairSize = 34;
-        const rowCount = 6;
-        const R0 = 300;           // radius of the front row from the focal point
-        const rowGap = 62;        // radial spacing between rows
-        const halfSpan = (78 * Math.PI) / 180;  // fan half-width
-        const aisleHalf = (7 * Math.PI) / 180;  // central walkway half-angle
-        const seatArc = 56;       // target arc distance between chairs
-        let n = 0;
-        for (let r = 0; r < rowCount; r++) {
-          const R = R0 + r * rowGap;
-          const count = Math.max(6, Math.round((2 * halfSpan * R) / seatArc));
-          for (let i = 0; i < count; i++) {
-            const theta = count === 1 ? 0 : -halfSpan + (i * (2 * halfSpan)) / (count - 1);
-            if (Math.abs(theta) < aisleHalf) continue; // leave the aisle open
-            const cx = Fx + R * Math.sin(theta);
-            const cy = Fy + R * Math.cos(theta);
-            chairs.push({
-              name: `S${++n}`,
-              shape: 'square',
-              capacity: 1,
-              width: chairSize,
-              height: chairSize,
-              // convert desired chair centre → stored top-left (shape offset 40/30)
-              x: cx - 40 - chairSize / 2,
-              y: cy - 30 - chairSize / 2,
-              rotation: Math.round((theta * 180) / Math.PI), // fan toward the mandap
-            });
-          }
-        }
-        return chairs;
-      })(),
-      zones: [
-        { type: 'stage', label: 'Mandap', width: 300, height: 220, x: 1050, y: 60, color: '#fee2e2' },
-        { type: 'custom', label: 'Aisle', width: 70, height: 620, x: 1165, y: 320, color: '#f1f5f9' },
-        { type: 'entrance', label: 'Entrance', width: 140, height: 50, x: 1130, y: 980, color: '#f1f5f9' },
       ],
     },
   ];

@@ -17,8 +17,6 @@ import {
 import { itemBox } from './seatingCollision';
 import {
   VENUE_LAYOUTS,
-  generateIndianWeddingLayout,
-  generateMehendiLayout,
   generateReceptionLayout,
 } from './seatingLayouts';
 import {
@@ -296,8 +294,6 @@ export default function MobileSeatingView() {
     try {
       let generated;
       switch (layoutType) {
-        case 'indianWedding': generated = generateIndianWeddingLayout(tableCount); break;
-        case 'mehendi': generated = generateMehendiLayout(tableCount); break;
         case 'reception': generated = generateReceptionLayout(tableCount); break;
         default: return;
       }
@@ -831,9 +827,7 @@ export default function MobileSeatingView() {
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Auto-fit to your guest count</div>
         <div className="mb-5 grid grid-cols-1 gap-2">
           {[
-            { type: 'indianWedding', label: 'Indian Wedding', desc: 'Rounds around a central stage & dance floor' },
             { type: 'reception', label: 'Reception', desc: 'Head table with rounds and a dance floor' },
-            { type: 'mehendi', label: 'Mehendi / Sangeet', desc: 'Relaxed lounge-style seating' },
           ].map((gen) => (
             <button
               key={gen.type}

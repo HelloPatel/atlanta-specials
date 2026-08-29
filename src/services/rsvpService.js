@@ -4,6 +4,7 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp,
+  increment,
   collection,
   addDoc,
   onSnapshot,
@@ -130,6 +131,28 @@ export async function lookupGuestForRsvp(weddingId, { phone, name }) {
   }
 
   return [];
+}
+
+// ─── RSVP engagement tracking ───────────────────────────────────────────────
+// When a guest opens their invitation (via name search or a personalized link),
+// we stamp the private guest doc so the couple can see who has actually looked
+// at their RSVP — and who still needs a nudge. This is a public, unauthenticated
+// write restricted by rules to the rsvpViewedAt/rsvpViewCount keys only.
+
+export async function recordRsvpView(weddingId, guestId) {
+  if (!weddingId || !guestId) return;
+  try {
+    await updateDoc(
+      doc(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.GUESTS, guestId),
+      {
+        rsvpViewedAt: serverTimestamp(),
+        rsvpViewCount: increment(1),
+      },
+    );
+  } catch (err) {
+    // Non-critical: never block the guest's RSVP flow on a tracking write.
+    console.warn('Could not record RSVP view:', err?.message || err);
+  }
 }
 
 // ─── Generate shareable RSVP link ───────────────────────────────────────────

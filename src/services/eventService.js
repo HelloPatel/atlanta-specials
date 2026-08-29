@@ -123,6 +123,19 @@ export async function getPublicEvents(weddingId) {
     .sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
+/**
+ * Apply a batch of invited-event updates (from resolveInvitedEventUpdates).
+ * Each update sets the event's explicit guest list. Used to reconcile the
+ * "Invited Events" CSV column after a guest import so the events page and the
+ * guest list stay in sync. Returns the number of events changed.
+ */
+export async function applyInvitedEventUpdates(weddingId, updates = []) {
+  for (const { eventId, guestIds } of updates) {
+    await updateEvent(weddingId, eventId, { guestIds });
+  }
+  return updates.length;
+}
+
 export async function syncPublicEvents(weddingId, events) {
   const publicSnapshot = await getDocs(publicEventsRef(weddingId));
   const eventIds = new Set(events.map((event) => event.id));

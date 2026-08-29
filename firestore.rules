@@ -90,7 +90,7 @@ service cloud.firestore {
         // the unauthenticated RSVP flow working while preventing tampering.
         allow update: if isEditor(weddingId)
           || request.resource.data.diff(resource.data).affectedKeys()
-               .hasOnly(['rsvpStatus', 'dietary', 'rsvpMethod']);
+               .hasOnly(['rsvpStatus', 'dietary', 'rsvpMethod', 'rsvpViewedAt', 'rsvpViewCount']);
         allow create, delete: if isEditor(weddingId);
       }
 

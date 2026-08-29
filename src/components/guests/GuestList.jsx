@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useWedding } from '../../contexts/WeddingContext';
-import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatch, importGuestsBatch, updateGuestsBatch, syncPublicGuestDirectory } from '../../services/guestService';
-import { subscribeToEvents } from '../../services/eventService';
+import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatch, importGuestsBatch, importGuestsWithIds, updateGuestsBatch, syncPublicGuestDirectory } from '../../services/guestService';
+import { subscribeToEvents, applyInvitedEventUpdates } from '../../services/eventService';
 import { subscribeToSeating } from '../../services/seatingService';
+import { resolveInvitedEventUpdates, invitedEventNamesForGuest } from '../../utils/eventInvites';
 import { Button, Input, Badge, Modal, useToast } from '../ui';
 import { AlertTriangle, CheckCircle2, Download, Edit3, FileSpreadsheet, Plus, Search, Trash2, Upload, XCircle } from 'lucide-react';
 import {
@@ -312,7 +313,7 @@ export default function GuestList() {
           <Button variant="outline" onClick={downloadGuestTemplate} className="flex-shrink-0 whitespace-nowrap">
             <Download size={16} /> Template
           </Button>
-          <Button variant="outline" onClick={() => exportGuestsToExcel(guests)} className="flex-shrink-0 whitespace-nowrap">
+          <Button variant="outline" onClick={() => exportGuestsToExcel(guests, events)} className="flex-shrink-0 whitespace-nowrap">
             <Download size={16} /> Export
           </Button>
         </div>
@@ -658,6 +659,7 @@ export default function GuestList() {
         onClose={() => setShowImportModal(false)}
         weddingId={activeWedding.id}
         existingGuests={guests}
+        events={events}
       />
     </div>
   );
@@ -1066,7 +1068,7 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
 
 // ─── Import Modal ──────────────────────────────────────────────────────────
 
-function ImportModal({ open, onClose, weddingId, existingGuests }) {
+function ImportModal({ open, onClose, weddingId, existingGuests, events = [] }) {
   const [step, setStep] = useState('upload'); // upload → map → preview → done
   const [file, setFile] = useState(null);
   const [parsed, setParsed] = useState(null);
@@ -1095,6 +1097,7 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
     { value: 'notes', label: 'Notes' },
     { value: 'plusOne', label: 'Plus One (Yes/No)' },
     { value: '_tags', label: 'Tags (comma-sep)' },
+    { value: '_invitedEvents', label: 'Invited Events (comma-sep)' },
   ];
 
   const processFile = async (f) => {
@@ -1139,11 +1142,25 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
       const toImport = mappedGuests.filter((_, index) =>
         !dupeIndices.has(index) && !invalidIndices.has(index),
       );
-      const count = await importGuestsBatch(weddingId, toImport);
+      const created = await importGuestsWithIds(weddingId, toImport);
+
+      // Connect the "Invited Events" column to the events page: add each new
+      // guest to the explicit guest list of every event they were marked
+      // invited to (invite-all events are already covered).
+      let invitedEventsSynced = 0;
+      const entries = created
+        .filter(({ guest }) => (guest._invitedEvents || []).length > 0)
+        .map(({ id, guest }) => ({ guestId: id, eventNames: guest._invitedEvents }));
+      if (entries.length > 0 && events.length > 0) {
+        const updates = resolveInvitedEventUpdates(events, entries);
+        invitedEventsSynced = await applyInvitedEventUpdates(weddingId, updates);
+      }
+
       setResult({
         success: true,
-        count,
+        count: created.length,
         skipped: duplicates.length + invalidRows.length,
+        invitedEventsSynced,
       });
       setStep('done');
     } catch (err) {
@@ -1320,6 +1337,9 @@ function ImportModal({ open, onClose, weddingId, existingGuests }) {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Import Complete</h3>
               <p className="text-sm text-gray-500 mb-6">{result.count} guests imported successfully.</p>
+              {result.invitedEventsSynced > 0 && (
+                <p className="-mt-4 mb-6 text-xs text-wine-700">Synced invitations across {result.invitedEventsSynced} event{result.invitedEventsSynced === 1 ? '' : 's'}.</p>
+              )}
               {result.skipped > 0 && <p className="-mt-4 mb-6 text-xs text-gray-400">{result.skipped} duplicate or invalid rows were skipped.</p>}
             </>
           ) : (

@@ -15,7 +15,7 @@ import GuestSidebar from './GuestSidebar';
 import RulesPanel from './RulesPanel';
 import { evaluateSeatingRules } from './seatingRules';
 import { autoSuggestSeating } from './seatingAutoSuggest';
-import { generateIndianWeddingLayout, generateMehendiLayout, generateReceptionLayout, generateStaggeredLayout, VENUE_LAYOUTS } from './seatingLayouts';
+import { generateReceptionLayout, generateStaggeredLayout, VENUE_LAYOUTS } from './seatingLayouts';
 import { loadFloorPlan, FLOOR_PLAN_ACCEPT } from './floorPlanImport';
 import { itemBox, resolveNoOverlap } from './seatingCollision';
 import { isIndividualSeat } from './seatingSeat';
@@ -537,7 +537,7 @@ export default function SeatingCanvas() {
     shouldFitRef.current = true;
   };
 
-  // Apply layout generator (Indian wedding, mehendi, reception, staggered)
+  // Apply layout generator (reception, staggered)
   const applyLayoutGenerator = (layoutType) => {
     const guestCount = guests.filter(g => g.rsvpStatus?.[selectedEventId] !== 'declined').length;
     // Derive a sensible table count from the guest count (generators expect a
@@ -548,12 +548,6 @@ export default function SeatingCanvas() {
 
     try {
       switch (layoutType) {
-        case 'indianWedding':
-          ({ tables: newTables, zones: newZones } = generateIndianWeddingLayout(tableCount));
-          break;
-        case 'mehendi':
-          ({ tables: newTables, zones: newZones } = generateMehendiLayout(tableCount));
-          break;
         case 'reception':
           ({ tables: newTables, zones: newZones } = generateReceptionLayout(tableCount));
           break;
@@ -1593,18 +1587,6 @@ function VenuePresetsPanel({ onApply, onClose, onApplyGenerator }) {
   const [tab, setTab] = useState('presets'); // 'presets' or 'event-layouts'
 
   const eventLayouts = [
-    {
-      id: 'indianWedding',
-      name: 'Indian Wedding Reception',
-      description: 'Mandap/stage, bride & groom family sides, dance floor, bar, cocktail area',
-      icon: Wine,
-    },
-    {
-      id: 'mehendi',
-      name: 'Mehendi Celebration',
-      description: 'Casual layout with performance stage, dance area, cocktail seating',
-      icon: Music,
-    },
     {
       id: 'reception',
       name: 'Formal Reception',

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   getPublicWeddingData,
   submitRsvpResponse,
+  recordRsvpView,
 } from '../services/rsvpService';
 import { resolveWeddingId } from '../services/weddingService';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
@@ -128,6 +129,7 @@ export default function PublicRSVP() {
   const [lang, setLang] = useState('en'); // 'en' | 'hi' | 'gu'
   const [seniorMode, setSeniorMode] = useState(false);
   const [darkMode, setDarkMode] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false);
+  const viewedHouseholdsRef = useRef(new Set());
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const textScale = seniorMode ? 'text-lg' : 'text-sm';
@@ -195,6 +197,18 @@ export default function PublicRSVP() {
     let family = guest.familyName
       ? allGuests.filter((g) => g.familyName === guest.familyName)
       : [guest];
+
+    // Record that this household opened their invitation, so the couple can
+    // see who has engaged and who still needs a reminder. Once per household
+    // per session; never blocks the RSVP flow.
+    if (weddingId && !viewedHouseholdsRef.current.has(guest.id)) {
+      family.forEach((g) => {
+        if (!viewedHouseholdsRef.current.has(g.id)) {
+          viewedHouseholdsRef.current.add(g.id);
+          recordRsvpView(weddingId, g.id);
+        }
+      });
+    }
 
     // Sort: adults first, then alphabetical
     family.sort((a, b) => {
