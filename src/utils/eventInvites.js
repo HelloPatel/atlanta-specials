@@ -46,6 +46,33 @@ export function parseInvitedEventNames(raw) {
  *
  * Returns [{ eventId, guestIds }] only for events whose guest list changed.
  */
+/**
+ * For a single guest, compute the minimal event updates so the guest is
+ * invited to exactly the events in `invitedEventIds` (a Set or array of event
+ * ids). Invite-all events are skipped — the guest is already invited and their
+ * explicit guestIds list is not touched. Returns [{ eventId, guestIds }] only
+ * for events whose explicit guest list actually changed (added or removed).
+ */
+export function resolveGuestInviteUpdates(events = [], guestId, invitedEventIds = []) {
+  if (!guestId) return [];
+  const wanted = new Set([...invitedEventIds].map((id) => String(id)));
+  const updates = [];
+
+  events.forEach((event) => {
+    if (!event || event.inviteAll) return;
+    const current = event.guestIds || [];
+    const has = current.includes(guestId);
+    const shouldHave = wanted.has(String(event.id));
+    if (has === shouldHave) return;
+    const guestIds = shouldHave
+      ? [...current, guestId]
+      : current.filter((id) => id !== guestId);
+    updates.push({ eventId: event.id, guestIds });
+  });
+
+  return updates;
+}
+
 export function resolveInvitedEventUpdates(events = [], entries = []) {
   const byName = new Map();
   events.forEach((event) => {

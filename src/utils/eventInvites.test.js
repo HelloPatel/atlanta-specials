@@ -4,6 +4,7 @@ import {
   invitedEventNamesForGuest,
   parseInvitedEventNames,
   resolveInvitedEventUpdates,
+  resolveGuestInviteUpdates,
 } from './eventInvites';
 
 const events = [
@@ -78,5 +79,32 @@ describe('resolveInvitedEventUpdates', () => {
     expect(updates).toHaveLength(1);
     expect(updates[0].eventId).toBe('e3');
     expect(updates[0].guestIds.sort()).toEqual(['g2', 'g3']);
+  });
+});
+
+describe('resolveGuestInviteUpdates', () => {
+  it('adds the guest to newly-selected restricted events', () => {
+    const updates = resolveGuestInviteUpdates(events, 'g9', ['e3']);
+    expect(updates).toEqual([{ eventId: 'e3', guestIds: ['g9'] }]);
+  });
+
+  it('removes the guest from deselected restricted events', () => {
+    const updates = resolveGuestInviteUpdates(events, 'g1', []);
+    expect(updates).toEqual([{ eventId: 'e2', guestIds: [] }]);
+  });
+
+  it('never touches invite-all events', () => {
+    const updates = resolveGuestInviteUpdates(events, 'g9', ['e1', 'e2']);
+    expect(updates.some((u) => u.eventId === 'e1')).toBe(false);
+    expect(updates).toEqual([{ eventId: 'e2', guestIds: ['g1', 'g9'] }]);
+  });
+
+  it('returns nothing when selection matches current state', () => {
+    const updates = resolveGuestInviteUpdates(events, 'g1', ['e1', 'e2']);
+    expect(updates).toEqual([]);
+  });
+
+  it('returns nothing without a guestId', () => {
+    expect(resolveGuestInviteUpdates(events, null, ['e2'])).toEqual([]);
   });
 });

@@ -3,7 +3,7 @@ import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToGuests, addGuest, updateGuest, deleteGuest, deleteGuestsBatch, importGuestsBatch, importGuestsWithIds, updateGuestsBatch, syncPublicGuestDirectory } from '../../services/guestService';
 import { subscribeToEvents, applyInvitedEventUpdates } from '../../services/eventService';
 import { subscribeToSeating } from '../../services/seatingService';
-import { resolveInvitedEventUpdates, invitedEventNamesForGuest } from '../../utils/eventInvites';
+import { resolveInvitedEventUpdates, resolveGuestInviteUpdates, guestInvitedToEvent, invitedEventNamesForGuest } from '../../utils/eventInvites';
 import { Button, Input, Badge, Modal, useToast } from '../ui';
 import { AlertTriangle, CheckCircle2, Download, Edit3, FileSpreadsheet, Plus, Search, Trash2, Upload, XCircle } from 'lucide-react';
 import {
@@ -900,6 +900,7 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
   const isEdit = !!guest;
   const toast = useToast();
   const [form, setForm] = useState({});
+  const [invitedEventIds, setInvitedEventIds] = useState(() => new Set());
 
   useEffect(() => {
     if (guest) {
@@ -913,6 +914,25 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
       });
     }
   }, [guest, open]);
+
+  // Seed the invited-events toggles from the source of truth on each event
+  // (inviteAll or explicit guestIds). Invite-all events are always on.
+  useEffect(() => {
+    const next = new Set();
+    events.forEach((ev) => {
+      if (ev.inviteAll || (guest && guestInvitedToEvent(ev, guest.id))) next.add(ev.id);
+    });
+    setInvitedEventIds(next);
+  }, [events, guest, open]);
+
+  const toggleInvitedEvent = (eventId) => {
+    setInvitedEventIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(eventId)) next.delete(eventId);
+      else next.add(eventId);
+      return next;
+    });
+  };
 
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
@@ -934,10 +954,16 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
       return;
     }
     try {
+      let guestId = guest?.id;
       if (isEdit) {
         await updateGuest(weddingId, guest.id, form);
       } else {
-        await addGuest(weddingId, form);
+        guestId = await addGuest(weddingId, form);
+      }
+      // Sync event invitations (skips invite-all events automatically).
+      const inviteUpdates = resolveGuestInviteUpdates(events, guestId, invitedEventIds);
+      if (inviteUpdates.length > 0) {
+        await applyInvitedEventUpdates(weddingId, inviteUpdates);
       }
       onClose();
     } catch (err) {
@@ -1001,6 +1027,39 @@ function GuestFormModal({ open, onClose, guest, weddingId, events }) {
         )}
 
         <Input label="Traveling From" value={form.travelFrom || ''} onChange={(e) => update('travelFrom', e.target.value)} placeholder="City" />
+
+        {/* Invited to events — writes to each event's guest list (source of truth) */}
+        {events.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Invited to events</label>
+            <div className="flex flex-wrap gap-2">
+              {events.map((ev) => {
+                const on = invitedEventIds.has(ev.id);
+                return (
+                  <button
+                    key={ev.id}
+                    type="button"
+                    onClick={() => !ev.inviteAll && toggleInvitedEvent(ev.id)}
+                    disabled={ev.inviteAll}
+                    title={ev.inviteAll ? 'All guests are invited to this event' : undefined}
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      ev.inviteAll
+                        ? 'bg-green-50 text-green-700 cursor-default'
+                        : on
+                          ? 'bg-wine-700 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {on && <span className="mr-1">✓</span>}
+                    {ev.name}
+                    {ev.inviteAll && <span className="ml-1 opacity-70">(all)</span>}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-xs text-gray-500">Tap an event to invite this guest. Events marked “(all)” include everyone automatically.</p>
+          </div>
+        )}
 
         {/* Per-event RSVP */}
         {events.length > 0 && (
