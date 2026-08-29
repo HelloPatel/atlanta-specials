@@ -377,7 +377,12 @@ export default function WebsiteBuilder() {
                     </div>
                     <p className="text-lg font-semibold text-gray-900">{theme.name}</p>
                     <p className="mt-1 text-sm text-gray-600">{theme.description}</p>
-                    <p className="mt-3 text-xs uppercase tracking-[0.3em] text-gray-500">{theme.fontName} · {theme.bodyFontName}</p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-700 shadow-sm">
+                        {theme.layout} layout
+                      </span>
+                      <span className="text-xs uppercase tracking-[0.3em] text-gray-500">{theme.fontName} · {theme.bodyFontName}</span>
+                    </div>
                   </button>
                 );
               })}

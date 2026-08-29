@@ -6,7 +6,8 @@ export const WEBSITE_THEMES = {
   'classic-rose': {
     key: 'classic-rose',
     name: 'Classic Rose',
-    description: 'Soft florals, romantic blush, and timeless elegance.',
+    description: 'Botanical framing, a serif monogram, and soft blush romance.',
+    layout: 'botanical',
     primary: '#be123c',
     accent: '#e11d48',
     background: '#fff1f2',
@@ -25,7 +26,8 @@ export const WEBSITE_THEMES = {
   'royal-gold': {
     key: 'royal-gold',
     name: 'Royal Gold',
-    description: 'Warm gold accents with a luxurious celebration feel.',
+    description: 'A dark, luxe hero with a gold script name and a live countdown.',
+    layout: 'luxe',
     primary: '#92400e',
     accent: '#d97706',
     background: '#fffbeb',
@@ -36,7 +38,9 @@ export const WEBSITE_THEMES = {
     fontFamily: '"Cormorant Garamond", Georgia, serif',
     bodyFontName: 'Mulish',
     bodyFontFamily: '"Mulish", system-ui, sans-serif',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Mulish:wght@400;500;600&display=swap',
+    scriptFontName: 'Tangerine',
+    scriptFontFamily: '"Tangerine", "Cormorant Garamond", cursive',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Mulish:wght@400;500;600&family=Tangerine:wght@700&display=swap',
     ornaments: true,
     heroOverlay: 'linear-gradient(135deg, rgba(69, 26, 3, 0.76), rgba(146, 64, 14, 0.42))',
     heroBackground: 'radial-gradient(circle at 76% 16%, rgba(251, 191, 36, 0.72), transparent 32%), linear-gradient(135deg, #92400e, #451a03)',
@@ -44,7 +48,8 @@ export const WEBSITE_THEMES = {
   'garden-green': {
     key: 'garden-green',
     name: 'Garden Green',
-    description: 'Fresh botanical tones with an airy outdoor vibe.',
+    description: 'Airy botanical layout with leafy dividers and a framed portrait.',
+    layout: 'botanical',
     primary: '#166534',
     accent: '#059669',
     background: '#f0fdf4',
@@ -63,7 +68,8 @@ export const WEBSITE_THEMES = {
   'modern-minimal': {
     key: 'modern-minimal',
     name: 'Modern Minimal',
-    description: 'Clean slate neutrals with a refined editorial look.',
+    description: 'Editorial magazine layout: top nav, giant ampersand, hairline rules.',
+    layout: 'editorial',
     primary: '#1e293b',
     accent: '#0f766e',
     background: '#f8fafc',
@@ -82,7 +88,8 @@ export const WEBSITE_THEMES = {
   'marigold-mandap': {
     key: 'marigold-mandap',
     name: 'Marigold Mandap',
-    description: 'Vibrant marigold orange with traditional Indian warmth.',
+    description: 'Editorial layout with vibrant marigold warmth and a bold display serif.',
+    layout: 'editorial',
     primary: '#c2410c',
     accent: '#ea580c',
     background: '#fff7ed',
@@ -101,7 +108,8 @@ export const WEBSITE_THEMES = {
   'midnight-sangeet': {
     key: 'midnight-sangeet',
     name: 'Midnight Sangeet',
-    description: 'Deep navy and violet for an elegant evening celebration.',
+    description: 'Dark evening luxe: violet-navy hero, gold script, countdown centerpiece.',
+    layout: 'luxe',
     primary: '#312e81',
     accent: '#7c3aed',
     background: '#eef2ff',
@@ -112,12 +120,18 @@ export const WEBSITE_THEMES = {
     fontFamily: '"DM Serif Display", Georgia, serif',
     bodyFontName: 'Jost',
     bodyFontFamily: '"Jost", system-ui, sans-serif',
-    fontUrl: 'https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Jost:wght@400;500;600&display=swap',
+    scriptFontName: 'Tangerine',
+    scriptFontFamily: '"Tangerine", "DM Serif Display", cursive',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Jost:wght@400;500;600&family=Tangerine:wght@700&display=swap',
     ornaments: true,
     heroOverlay: 'linear-gradient(135deg, rgba(30, 27, 75, 0.82), rgba(49, 46, 129, 0.48))',
     heroBackground: 'radial-gradient(circle at 78% 16%, rgba(167, 139, 250, 0.55), transparent 34%), linear-gradient(135deg, #312e81, #1e1b4b)',
   },
 };
+
+// Layouts drive genuinely different structure (hero + section styling), not
+// just a palette swap. Each theme opts into one.
+export const WEBSITE_LAYOUTS = ['editorial', 'botanical', 'luxe'];
 
 export const WEBSITE_HERO_PATTERNS = ['none', 'mandala', 'floral', 'geometric', 'paisley'];
 
@@ -127,6 +141,31 @@ export function getThemeConfig(themeKey) {
 
 export function getCoupleDisplayName(wedding) {
   return wedding?.coupleName || [wedding?.coupleName1, wedding?.coupleName2].filter(Boolean).join(' & ') || 'Our Wedding';
+}
+
+// Split a couple into two display names so layouts can stack them around a
+// large ampersand / monogram. Falls back gracefully to a single name.
+export function getCoupleNames(wedding) {
+  const first = (wedding?.coupleName1 || '').trim();
+  const second = (wedding?.coupleName2 || '').trim();
+  if (first || second) {
+    return { first: first || second, second: first ? second : '' };
+  }
+  const combined = (wedding?.coupleName || '').trim();
+  if (!combined) return { first: 'Our', second: 'Wedding' };
+  const parts = combined.split(/\s+(?:&|and|\+|x)\s+/i);
+  if (parts.length >= 2) {
+    return { first: parts[0].trim(), second: parts.slice(1).join(' & ').trim() };
+  }
+  return { first: combined, second: '' };
+}
+
+// Two-letter monogram (first initial of each partner) for botanical/luxe crests.
+export function getCoupleInitials(wedding) {
+  const { first, second } = getCoupleNames(wedding);
+  const a = (first || '').charAt(0).toUpperCase();
+  const b = (second || '').charAt(0).toUpperCase();
+  return (a + b) || 'W';
 }
 
 export function createDefaultWebsiteConfig(eventIds = []) {
