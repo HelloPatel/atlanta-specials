@@ -33,7 +33,7 @@ export default function PrivacyPolicy() {
 
       <LegalSection title="3. How information is collected">
         <p>
-          We collect information directly from account holders, through Google or email authentication, from
+          We collect information directly from account holders, through email authentication, from
           collaborators, from wedding guests using public features, and automatically through essential security
           and service technologies. A couple or planner may enter information about another person. If that happens,
           the account holder must provide any notice or obtain any consent required by law.

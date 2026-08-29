@@ -11,7 +11,7 @@ export default function Register() {
   const [acceptedLegal, setAcceptedLegal] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register, loginWithGoogle } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -35,34 +35,6 @@ export default function Register() {
         setError('An account with this email already exists');
       } else {
         setError(err.message);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogle = async () => {
-    setError('');
-    if (!acceptedLegal) {
-      setError('Please accept the Terms of Service and acknowledge the Privacy Policy.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const user = await loginWithGoogle({ legalConsent: true });
-      if (user) navigate('/dashboard');
-    } catch (err) {
-      console.error('Google sign-in error:', err.code, err.message);
-      if (err.code === 'auth/unauthorized-domain') {
-        setError('This domain is not authorized for Google sign-in. Add it in Firebase Console → Auth → Settings → Authorized domains.');
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        // User clicked button multiple times, ignore
-      } else if (err.code === 'auth/internal-error') {
-        setError('Google sign-in failed (internal error). Check that Google provider is enabled in Firebase Console.');
-      } else if (err.code === 'auth/network-request-failed') {
-        setError('Network error. Check your internet connection and try again.');
-      } else {
-        setError(`Google sign-in failed: ${err.code || err.message}`);
       }
     } finally {
       setLoading(false);
@@ -105,20 +77,6 @@ export default function Register() {
               {' '}and acknowledge the <Link className="font-semibold text-wine-700 hover:text-wine-900" to="/privacy">Privacy Policy</Link>.
             </span>
           </label>
-
-          <Button variant="outline" className="w-full mb-4" onClick={handleGoogle} disabled={loading || !acceptedLegal}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-5 w-5" />
-            Continue with Google
-          </Button>
-
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">or use email</span>
-            </div>
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button, Input } from '../components/ui';
 import { APP_NAME } from '../config/constants';
@@ -9,12 +9,8 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [searchParams] = useSearchParams();
-  const { login, loginWithGoogle } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const redirectError = searchParams.get('authError') === 'registration-required'
-    ? 'No Phera account was found for that Google address. Sign up first to accept the Terms and Privacy Policy.'
-    : '';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,33 +21,6 @@ export default function Login() {
       navigate('/dashboard');
     } catch (err) {
       setError(err.code === 'auth/invalid-credential' ? 'Invalid email or password' : err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogle = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      const user = await loginWithGoogle();
-      if (user) navigate('/dashboard');
-      // If null, redirect flow is in progress
-    } catch (err) {
-      console.error('Google sign-in error:', err.code, err.message);
-      if (err.code === 'auth/unauthorized-domain') {
-        setError('This domain is not authorized for Google sign-in. Add it in Firebase Console → Auth → Settings → Authorized domains.');
-      } else if (err.code === 'auth/cancelled-popup-request') {
-        // User clicked button multiple times, ignore
-      } else if (err.code === 'auth/internal-error') {
-        setError('Google sign-in failed (internal error). Check that Google provider is enabled in Firebase Console.');
-      } else if (err.code === 'auth/network-request-failed') {
-        setError('Network error. Check your internet connection and try again.');
-      } else if (err.code === 'auth/phera-registration-required') {
-        setError('No Phera account was found for that Google address. Sign up first to accept the Terms and Privacy Policy.');
-      } else {
-        setError(`Google sign-in failed: ${err.code || err.message}`);
-      }
     } finally {
       setLoading(false);
     }
@@ -75,25 +44,11 @@ export default function Login() {
         <div className="rounded-2xl bg-white/90 backdrop-blur-sm p-8 shadow-lifted border border-white/60">
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Welcome back</h2>
 
-          {(error || redirectError) && (
+          {error && (
             <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error || redirectError}
+              {error}
             </div>
           )}
-
-          <Button variant="outline" className="w-full mb-4" onClick={handleGoogle} disabled={loading}>
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" className="h-5 w-5" />
-            Continue with Google
-          </Button>
-
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white px-2 text-gray-500">or use email</span>
-            </div>
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input

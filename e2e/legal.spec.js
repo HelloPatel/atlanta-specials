@@ -28,9 +28,7 @@ test.describe('Legal and consent flows', () => {
     await page.goto('/register');
 
     const consent = page.getByRole('checkbox');
-    const googleButton = page.getByRole('button', { name: /continue with google/i });
     await expect(consent).not.toBeChecked();
-    await expect(googleButton).toBeDisabled();
 
     await page.getByLabel(/full name/i).fill('Test User');
     await page.getByLabel(/email/i).fill('test@example.com');
@@ -39,13 +37,6 @@ test.describe('Legal and consent flows', () => {
     await expect(page.getByText(/please accept the terms of service/i)).toBeVisible();
 
     await consent.check();
-    await expect(googleButton).toBeEnabled();
-  });
-
-  test('Google login directs unregistered users through consented signup', async ({ page }) => {
-    await page.goto('/login?authError=registration-required');
-
-    await expect(page.getByText(/No Phera account was found/)).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Sign up free' })).toHaveAttribute('href', '/register');
+    await expect(consent).toBeChecked();
   });
 });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToGuests } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
@@ -14,6 +14,7 @@ import {
   getMobileLayoutBounds,
   getNextLockedTablePosition,
 } from './mobileSeating';
+import { itemBox } from './seatingCollision';
 import {
   VENUE_LAYOUTS,
   generateIndianWeddingLayout,
@@ -33,8 +34,10 @@ import {
   List,
   Mic,
   Minus,
+  Move,
   Music,
   Plus,
+  RotateCw,
   Save,
   Search,
   Sparkles,
@@ -73,6 +76,8 @@ export default function MobileSeatingView() {
   const [venueImage, setVenueImage] = useState(null);
   const [venueOpacity, setVenueOpacity] = useState(0.3);
   const [selectedTableId, setSelectedTableId] = useState(null);
+  const [movingTableId, setMovingTableId] = useState(null);
+  const canvasRef = useRef(null);
   const [mobileZoom, setMobileZoom] = useState(0.35);
   const [viewMode, setViewMode] = useState('layout');
   const [guestSearch, setGuestSearch] = useState('');
@@ -130,6 +135,10 @@ export default function MobileSeatingView() {
     () => tables.find((table) => table.id === selectedTableId) || null,
     [tables, selectedTableId],
   );
+
+  useEffect(() => {
+    if (viewMode !== 'layout') setMovingTableId(null);
+  }, [viewMode]);
 
   const tableByGuestId = useMemo(() => {
     const result = {};
@@ -329,6 +338,61 @@ export default function MobileSeatingView() {
     setSelectedTableId(null);
   }, [canEdit, selectedTable, updateTables]);
 
+  const rotateSelectedTable = useCallback(() => {
+    if (!selectedTable || !canEdit) return;
+    updateTables((current) => current.map((table) => (
+      table.id === selectedTable.id
+        ? { ...table, rotation: (((table.rotation || 0) + 45) % 360) }
+        : table
+    )));
+  }, [canEdit, selectedTable, updateTables]);
+
+  const startMovingTable = useCallback(() => {
+    if (!selectedTable || !canEdit) return;
+    setMovingTableId(selectedTable.id);
+  }, [canEdit, selectedTable]);
+
+  const cancelMove = useCallback(() => setMovingTableId(null), []);
+
+  const handleCanvasTap = useCallback((event) => {
+    if (!movingTableId || !canvasRef.current) return;
+    const moving = tables.find((table) => table.id === movingTableId);
+    if (!moving) { setMovingTableId(null); return; }
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const pointX = (event.clientX - rect.left) / mobileZoom;
+    const pointY = (event.clientY - rect.top) / mobileZoom;
+    const width = moving.width || 120;
+    const height = moving.height || 120;
+
+    // Center the table on the tap; convert to stored top-left (render offset is 40/30).
+    const x = Math.max(0, pointX - width / 2 - 40);
+    const y = Math.max(0, pointY - height / 2 - 30);
+
+    const movingBox = itemBox({ ...moving, x, y }, 'table');
+    const obstacles = [
+      ...tables.filter((table) => table.id !== movingTableId).map((table) => itemBox(table, 'table')),
+      ...zones.map((zone) => itemBox(zone, 'zone')),
+    ];
+    const clashes = obstacles.some((ob) => (
+      movingBox.left < ob.right &&
+      movingBox.right > ob.left &&
+      movingBox.top < ob.bottom &&
+      movingBox.bottom > ob.top
+    ));
+
+    if (clashes) {
+      toast.error('That spot overlaps another table — pick an open area');
+      return; // stay in move mode so they can try again
+    }
+
+    updateTables((current) => current.map((table) => (
+      table.id === movingTableId ? { ...table, x, y } : table
+    )));
+    setMovingTableId(null);
+    toast.success('Table moved');
+  }, [movingTableId, tables, zones, mobileZoom, updateTables, toast]);
+
   if (!activeWedding) return null;
 
   return (
@@ -394,6 +458,16 @@ export default function MobileSeatingView() {
 
       {/* Layout */}
       {viewMode === 'layout' && <div className="venue-canvas seating-scroll relative flex-1 overflow-auto">
+        {movingTableId && (
+          <div className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b border-wine-200 bg-wine-50/95 px-4 py-2.5 backdrop-blur-sm">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-wine-800">
+              <Move size={14} /> Tap an open spot to place the table
+            </p>
+            <button onClick={cancelMove} className="rounded-lg px-2.5 py-1 text-xs font-semibold text-wine-700 hover:bg-wine-100">
+              Cancel
+            </button>
+          </div>
+        )}
         {tables.length === 0 && zones.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
             <LayoutGrid size={36} className="mb-3 text-wine-300" />
@@ -408,10 +482,13 @@ export default function MobileSeatingView() {
           </div>
         ) : (
           <div
+            ref={canvasRef}
+            onClick={handleCanvasTap}
             style={{
               width: canvasBounds.width * mobileZoom,
               height: canvasBounds.height * mobileZoom,
               position: 'relative',
+              cursor: movingTableId ? 'crosshair' : 'default',
             }}
           >
             <div
@@ -507,20 +584,20 @@ export default function MobileSeatingView() {
               return (
                 <div
                   key={table.id}
-                  onClick={() => setSelectedTableId(isSelected ? null : table.id)}
+                  onClick={() => { if (!movingTableId) setSelectedTableId(isSelected ? null : table.id); }}
                   style={{
                     position: 'absolute',
                     left: table.x,
                     top: table.y,
                     width: (table.width || 120) + 80,
                     height: (table.height || 120) + 60,
-                    cursor: 'pointer',
+                    cursor: movingTableId ? 'crosshair' : 'pointer',
                     zIndex: isSelected ? 10 : 1,
                   }}
                   role="button"
                   tabIndex={0}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
+                    if ((event.key === 'Enter' || event.key === ' ') && !movingTableId) {
                       event.preventDefault();
                       setSelectedTableId(isSelected ? null : table.id);
                     }
@@ -648,7 +725,7 @@ export default function MobileSeatingView() {
       )}
 
       {/* Table detail bottom sheet */}
-      {selectedTable && (
+      {selectedTable && !movingTableId && (
         <div className="sheet-reveal max-h-[48dvh] shrink-0 overflow-auto border-t border-gray-200 bg-white shadow-[0_-8px_24px_rgba(70,40,50,0.10)]">
           <div className="sticky top-0 bg-white/95 backdrop-blur-sm px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div>
@@ -659,6 +736,8 @@ export default function MobileSeatingView() {
               </p>
             </div>
             <div className="flex items-center gap-1">
+              {canEdit && <button onClick={startMovingTable} className="flex size-11 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100" aria-label={`Move ${selectedTable.name}`}><Move size={17} /></button>}
+              {canEdit && <button onClick={rotateSelectedTable} className="flex size-11 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100" aria-label={`Rotate ${selectedTable.name}`}><RotateCw size={17} /></button>}
               {canEdit && <button onClick={openEditTable} className="flex size-11 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100" aria-label={`Edit ${selectedTable.name}`}><Edit3 size={17} /></button>}
               <button onClick={() => setSelectedTableId(null)} aria-label="Close table details" className="flex size-11 items-center justify-center rounded-xl text-gray-500 hover:bg-gray-100"><X size={20} /></button>
             </div>

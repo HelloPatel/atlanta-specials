@@ -11,13 +11,13 @@ export default function CookieNotice() {
         <p>
           Phera and its providers may use cookies, local storage, session storage, software development kits, and
           similar technologies. These tools remember authentication state, preserve security tokens, remember limited
-          interface preferences, complete Google sign-in, and protect forms and databases against abuse.
+          interface preferences, and protect forms and databases against abuse.
         </p>
       </LegalSection>
 
       <LegalSection title="2. Essential purposes">
         <ul>
-          <li><strong>Authentication:</strong> Firebase Authentication keeps users signed in and completes email or Google login.</li>
+          <li><strong>Authentication:</strong> Firebase Authentication keeps users signed in and completes email login.</li>
           <li><strong>Security:</strong> Firebase App Check and Google reCAPTCHA evaluate abuse and automated traffic.</li>
           <li><strong>Preferences:</strong> local storage may remember onboarding completion and similar product settings.</li>
           <li><strong>Reliability:</strong> temporary browser storage may support navigation and service operation.</li>

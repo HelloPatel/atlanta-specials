@@ -77,6 +77,9 @@ export default function SeatingCanvas() {
   const [undoStack, setUndoStack] = useState([]);
   const [detailTableId, setDetailTableId] = useState(null);
   const canvasScrollRef = useRef(null);
+  const panWrapperRef = useRef(null);
+  const panState = useRef(null);
+  const [isPanning, setIsPanning] = useState(false);
   const qrPrintRef = useRef(null);
   const shouldFitRef = useRef(false);
   const fittedEventRef = useRef(null);
@@ -645,6 +648,45 @@ export default function SeatingCanvas() {
     setHasChanges(true);
   };
 
+  // Grab-to-pan: click empty canvas background and drag to move around the floor plan.
+  const handlePanMove = useCallback((e) => {
+    const st = panState.current;
+    const el = canvasScrollRef.current;
+    if (!st || !el) return;
+    el.scrollLeft = st.scrollLeft - (e.clientX - st.startX);
+    el.scrollTop = st.scrollTop - (e.clientY - st.startY);
+  }, []);
+
+  const handlePanEnd = useCallback(() => {
+    panState.current = null;
+    setIsPanning(false);
+    window.removeEventListener('mousemove', handlePanMove);
+    window.removeEventListener('mouseup', handlePanEnd);
+  }, [handlePanMove]);
+
+  const handlePanStart = useCallback((e) => {
+    // Only start panning on a plain left-click of the empty background (the
+    // scroll container or the scaled wrapper) — never over a table or zone.
+    if (e.button !== 0) return;
+    if (e.target !== canvasScrollRef.current && e.target !== panWrapperRef.current) return;
+    const el = canvasScrollRef.current;
+    if (!el) return;
+    panState.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      scrollLeft: el.scrollLeft,
+      scrollTop: el.scrollTop,
+    };
+    setIsPanning(true);
+    window.addEventListener('mousemove', handlePanMove);
+    window.addEventListener('mouseup', handlePanEnd);
+  }, [handlePanMove, handlePanEnd]);
+
+  useEffect(() => () => {
+    window.removeEventListener('mousemove', handlePanMove);
+    window.removeEventListener('mouseup', handlePanEnd);
+  }, [handlePanMove, handlePanEnd]);
+
   // Table position drag via grip handle — collision-aware (no overlap allowed)
   const handleTableDrag = useCallback((tableId, deltaX, deltaY) => {
     setTables((prev) => {
@@ -905,7 +947,7 @@ export default function SeatingCanvas() {
             </div>
           )}
 
-          <div ref={canvasScrollRef} className="seating-print-area relative z-0 flex-1 rounded-2xl border border-gray-200/60 overflow-auto venue-canvas seating-scroll shadow-venue">
+          <div ref={canvasScrollRef} onMouseDown={handlePanStart} className={`seating-print-area relative z-0 flex-1 rounded-2xl border border-gray-200/60 overflow-auto venue-canvas seating-scroll shadow-venue ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}>
             {events.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
                 <p>Add events first to start seating</p>
@@ -927,6 +969,7 @@ export default function SeatingCanvas() {
               </div>
             ) : (
               <div
+                ref={panWrapperRef}
                 style={{
                   transform: `scale(${zoom})`,
                   transformOrigin: '0 0',
