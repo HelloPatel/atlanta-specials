@@ -7,6 +7,30 @@ import { publishWedding } from '../services/weddingService';
 
 const WeddingContext = createContext(null);
 
+// ─── Role → feature access matrix ───────────────────────────────────────────
+// Feature keys map 1:1 to the sidebar routes (dashboard, guests, events,
+// seating, rsvp, print, photos, bets, website).
+// `null` = full access (owner/editor). Otherwise { view, edit } where 'ALL'
+// means every feature, or an array of feature keys.
+const ALL_FEATURES = [
+  'dashboard', 'guests', 'events', 'seating',
+  'rsvp', 'print', 'photos', 'bets', 'website',
+];
+
+const ROLE_ACCESS = {
+  owner: null,
+  editor: null,
+  viewer: { view: 'ALL', edit: [] },
+  // Wedding planner: coordinates logistics — edits Photo Groups + Games,
+  // reads Events + Seating, and never touches guest personal info.
+  planner: { view: ['events', 'seating', 'photos', 'bets'], edit: ['photos', 'bets'] },
+  // Dealer: runs the Games (bets) page only.
+  dealer: { view: ['bets'], edit: ['bets'] },
+};
+
+// Roles that must not see guest personal info (names, contact, dietary, family).
+const NO_GUEST_PII_ROLES = ['planner', 'dealer'];
+
 export function WeddingProvider({ children }) {
   const { user, userProfile } = useAuth();
   const [ownedWeddings, setOwnedWeddings] = useState([]);
@@ -115,6 +139,36 @@ export function WeddingProvider({ children }) {
   const isViewer = userRole === 'viewer';
   const canEdit = userRole === 'owner' || userRole === 'editor';
 
+  // Granular per-feature permission helpers (used by planner/dealer roles).
+  const canViewFeature = useMemo(() => {
+    const access = ROLE_ACCESS[userRole];
+    return (feature) => {
+      if (access === undefined) return canEdit; // unknown role → fall back to canEdit
+      if (access === null) return true;         // owner / editor
+      if (access.view === 'ALL') return true;
+      return access.view.includes(feature);
+    };
+  }, [userRole, canEdit]);
+
+  const canEditFeature = useMemo(() => {
+    const access = ROLE_ACCESS[userRole];
+    return (feature) => {
+      if (access === undefined) return canEdit;
+      if (access === null) return true;
+      if (access.edit === 'ALL') return true;
+      return Array.isArray(access.edit) && access.edit.includes(feature);
+    };
+  }, [userRole, canEdit]);
+
+  // Ordered list of features this role may see (used for nav + default route).
+  const allowedFeatures = useMemo(
+    () => ALL_FEATURES.filter((f) => canViewFeature(f)),
+    [canViewFeature],
+  );
+
+  // Whether the current role may see guest personal info anywhere in the app.
+  const canViewGuestPII = !NO_GUEST_PII_ROLES.includes(userRole);
+
   useEffect(() => {
     if (!activeWedding || !canEdit) return;
     publishWedding(activeWedding.id, activeWedding).catch((error) => {
@@ -140,9 +194,13 @@ export function WeddingProvider({ children }) {
     setActiveWedding,
     selectWedding,
     loading,
-    userRole,    // 'owner' | 'editor' | 'viewer'
+    userRole,    // 'owner' | 'editor' | 'viewer' | 'planner' | 'dealer'
     isViewer,    // true if read-only
-    canEdit,     // true if owner or editor
+    canEdit,     // true if owner or editor (global edit)
+    canViewFeature,   // (feature) => bool — may this role open the page
+    canEditFeature,   // (feature) => bool — may this role edit the page
+    allowedFeatures,  // ordered feature keys this role can see
+    canViewGuestPII,  // false for planner/dealer
   };
 
   return <WeddingContext.Provider value={value}>{children}</WeddingContext.Provider>;

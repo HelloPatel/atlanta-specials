@@ -1,8 +1,8 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense } from 'react';
 import { lazyWithRetry } from './utils/lazyWithRetry';
 import { AuthProvider } from './contexts/AuthContext';
-import { WeddingProvider } from './contexts/WeddingContext';
+import { WeddingProvider, useWedding } from './contexts/WeddingContext';
 import { ToastProvider } from './components/ui';
 import ErrorBoundary from './components/ErrorBoundary';
 import AppShell from './components/layout/AppShell';
@@ -59,6 +59,18 @@ function PageLoader() {
   );
 }
 
+// Redirects roles that can't view a feature (planner/dealer) to their first
+// allowed page. Owners/editors/viewers pass through unchanged.
+function FeatureGuard({ feature, children }) {
+  const { canViewFeature, allowedFeatures, activeWedding, loading } = useWedding();
+  if (loading) return <PageLoader />;
+  if (activeWedding && !canViewFeature(feature)) {
+    const fallback = allowedFeatures?.[0] ? `/${allowedFeatures[0]}` : '/dashboard';
+    return <Navigate to={fallback} replace />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <ErrorBoundary>
@@ -95,15 +107,15 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/guests" element={<GuestManager />} />
-            <Route path="/events" element={<EventManager />} />
-            <Route path="/seating" element={<SeatingChart />} />
-            <Route path="/rsvp" element={<RSVPManager />} />
-            <Route path="/photos" element={<PhotoGroupManager />} />
-            <Route path="/bets" element={<BetsManager />} />
-            <Route path="/website" element={<WeddingWebsite />} />
-            <Route path="/print" element={<PrintExport />} />
+            <Route path="/dashboard" element={<FeatureGuard feature="dashboard"><Dashboard /></FeatureGuard>} />
+            <Route path="/guests" element={<FeatureGuard feature="guests"><GuestManager /></FeatureGuard>} />
+            <Route path="/events" element={<FeatureGuard feature="events"><EventManager /></FeatureGuard>} />
+            <Route path="/seating" element={<FeatureGuard feature="seating"><SeatingChart /></FeatureGuard>} />
+            <Route path="/rsvp" element={<FeatureGuard feature="rsvp"><RSVPManager /></FeatureGuard>} />
+            <Route path="/photos" element={<FeatureGuard feature="photos"><PhotoGroupManager /></FeatureGuard>} />
+            <Route path="/bets" element={<FeatureGuard feature="bets"><BetsManager /></FeatureGuard>} />
+            <Route path="/website" element={<FeatureGuard feature="website"><WeddingWebsite /></FeatureGuard>} />
+            <Route path="/print" element={<FeatureGuard feature="print"><PrintExport /></FeatureGuard>} />
             <Route path="/seed" element={<SeedData />} />
           </Route>
 

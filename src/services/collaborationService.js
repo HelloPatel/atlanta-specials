@@ -15,10 +15,17 @@ import {
 import { db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
 
-// Roles: 'editor' (full access like owner), 'viewer' (read-only)
+// Roles:
+//   'editor'  – full access like owner
+//   'viewer'  – read-only across everything
+//   'planner' – wedding planner: edit Photo Groups + Games, read-only Events + Seating,
+//               no access to guest personal info (Guest List / RSVPs / Print)
+//   'dealer'  – edit the Games (bets) page only
 export const COLLAB_ROLES = {
   EDITOR: 'editor',
   VIEWER: 'viewer',
+  PLANNER: 'planner',
+  DEALER: 'dealer',
 };
 
 function collabRef(weddingId) {

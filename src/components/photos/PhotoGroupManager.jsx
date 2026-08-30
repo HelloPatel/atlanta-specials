@@ -623,7 +623,9 @@ function AdminPhotoGroupManager({ wedding }) {
   const [editingGroup, setEditingGroup] = useState(null);
   const [importOpen, setImportOpen] = useState(false);
   const [buildOpen, setBuildOpen] = useState(false);
-  const { canEdit, isViewer } = useWedding();
+  const { canEditFeature } = useWedding();
+  const canEdit = canEditFeature('photos');
+  const isViewer = !canEdit;
   const toast = useToast();
 
   const sensors = useSensors(

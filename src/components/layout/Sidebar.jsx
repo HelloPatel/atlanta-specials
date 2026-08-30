@@ -19,22 +19,24 @@ import { useWedding } from '../../contexts/WeddingContext';
 import { APP_NAME } from '../../config/constants';
 
 export const NAV_ITEMS = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/guests', icon: Users, label: 'Guest List' },
-  { to: '/events', icon: Calendar, label: 'Events' },
-  { to: '/seating', icon: Grid3X3, label: 'Seating' },
-  { to: '/rsvp', icon: Mail, label: 'RSVPs' },
-  { to: '/print', icon: Printer, label: 'Print' },
-  { to: '/photos', icon: Camera, label: 'Photo Groups' },
-  { to: '/bets', icon: Trophy, label: 'Games' },
-  { to: '/website', icon: Globe, label: 'Website' },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', feature: 'dashboard' },
+  { to: '/guests', icon: Users, label: 'Guest List', feature: 'guests' },
+  { to: '/events', icon: Calendar, label: 'Events', feature: 'events' },
+  { to: '/seating', icon: Grid3X3, label: 'Seating', feature: 'seating' },
+  { to: '/rsvp', icon: Mail, label: 'RSVPs', feature: 'rsvp' },
+  { to: '/print', icon: Printer, label: 'Print', feature: 'print' },
+  { to: '/photos', icon: Camera, label: 'Photo Groups', feature: 'photos' },
+  { to: '/bets', icon: Trophy, label: 'Games', feature: 'bets' },
+  { to: '/website', icon: Globe, label: 'Website', feature: 'website' },
 ];
 
 export default function Sidebar({ onNavigate, mobile = false }) {
   const [collapsed, setCollapsed] = useState(false);
   const { logout } = useAuth();
-  const { activeWedding } = useWedding();
+  const { activeWedding, canViewFeature, allowedFeatures } = useWedding();
   const navigate = useNavigate();
+  const visibleNavItems = NAV_ITEMS.filter((item) => canViewFeature(item.feature));
+  const homePath = `/${allowedFeatures?.[0] || 'dashboard'}`;
 
   const handleLogout = async () => {
     await logout();
@@ -50,7 +52,7 @@ export default function Sidebar({ onNavigate, mobile = false }) {
     >
       {/* Logo → home (dashboard) */}
       <NavLink
-        to="/dashboard"
+        to={homePath}
         onClick={onNavigate}
         aria-label={`${APP_NAME} home`}
         className="flex items-center gap-3 px-4 py-5 border-b border-gray-100 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-wine-600"
@@ -73,7 +75,7 @@ export default function Sidebar({ onNavigate, mobile = false }) {
 
       {/* Nav links */}
       <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ to, icon: Icon, label }) => (
+        {visibleNavItems.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}

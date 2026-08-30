@@ -9,7 +9,17 @@ import {
   COLLAB_ROLES,
 } from '../../services/collaborationService';
 import { Button, Modal, Badge, useToast } from '../ui';
-import { UserPlus, Trash2, Shield, Eye, Edit3, Crown, Mail } from 'lucide-react';
+import { UserPlus, Trash2, Shield, Eye, Edit3, Crown, Mail, Briefcase, Dices } from 'lucide-react';
+
+// Metadata for every assignable collaborator role.
+const ROLE_META = {
+  editor:  { label: 'Editor',  Icon: Edit3,     color: 'text-blue-600',    avatar: 'bg-blue-100 text-blue-700',       badge: 'primary', desc: 'Full access. Can add guests, edit events, manage seating' },
+  planner: { label: 'Planner', Icon: Briefcase, color: 'text-emerald-600', avatar: 'bg-emerald-100 text-emerald-700', badge: 'success', desc: 'Edit Photo Groups & Games, read-only Events & Seating. Cannot see guest info' },
+  dealer:  { label: 'Dealer',  Icon: Dices,     color: 'text-amber-600',   avatar: 'bg-amber-100 text-amber-700',     badge: 'warning', desc: 'Runs the Games (bets) page only' },
+  viewer:  { label: 'Viewer',  Icon: Eye,       color: 'text-gray-600',    avatar: 'bg-gray-200 text-gray-600',       badge: 'default', desc: 'Read-only. Can see everything but cannot make changes' },
+};
+
+const roleMeta = (role) => ROLE_META[role] || ROLE_META.viewer;
 
 export default function CollaboratorsPanel() {
   const { activeWedding, canEdit } = useWedding();
@@ -96,12 +106,13 @@ export default function CollaboratorsPanel() {
           </div>
 
           {/* Collaborators */}
-          {collaborators.map((collab) => (
+          {collaborators.map((collab) => {
+            const meta = roleMeta(collab.role);
+            const RoleIcon = meta.Icon;
+            return (
             <div key={collab.id} className="flex items-center gap-3 px-3 py-2.5 bg-gray-50 rounded-lg">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                collab.role === 'editor' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-600'
-              }`}>
-                {collab.role === 'editor' ? <Edit3 size={14} /> : <Eye size={14} />}
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${meta.avatar}`}>
+                <RoleIcon size={14} />
               </div>
               <div className="flex-1">
                 <div className="text-sm font-medium text-gray-900">
@@ -118,6 +129,8 @@ export default function CollaboratorsPanel() {
                     className="rounded border border-gray-200 px-2 py-1 text-xs"
                   >
                     <option value="editor">Editor (full access)</option>
+                    <option value="planner">Planner (photos & games)</option>
+                    <option value="dealer">Dealer (games only)</option>
                     <option value="viewer">Viewer (read-only)</option>
                   </select>
                   <button
@@ -131,12 +144,11 @@ export default function CollaboratorsPanel() {
               )}
 
               {!isOwner && (
-                <Badge variant={collab.role === 'editor' ? 'primary' : 'default'}>
-                  {collab.role === 'editor' ? 'Editor' : 'Viewer'}
-                </Badge>
+                <Badge variant={meta.badge}>{meta.label}</Badge>
               )}
             </div>
-          ))}
+          );
+          })}
 
           {collaborators.length === 0 && (
             <p className="text-xs text-gray-400 px-3 py-2">
@@ -160,14 +172,16 @@ export default function CollaboratorsPanel() {
             <Crown size={12} className="text-wine-700 mt-0.5 flex-shrink-0" />
             <div><strong>Owner</strong>: Full control, manage collaborators, delete wedding</div>
           </div>
-          <div className="flex items-start gap-2">
-            <Edit3 size={12} className="text-blue-600 mt-0.5 flex-shrink-0" />
-            <div><strong>Editor</strong>: Add/edit guests, events, seating, RSVP. Good for your spouse</div>
-          </div>
-          <div className="flex items-start gap-2">
-            <Eye size={12} className="text-gray-500 mt-0.5 flex-shrink-0" />
-            <div><strong>Viewer</strong>: See everything, change nothing. Good for parents</div>
-          </div>
+          {['editor', 'planner', 'dealer', 'viewer'].map((role) => {
+            const meta = ROLE_META[role];
+            const RoleIcon = meta.Icon;
+            return (
+              <div key={role} className="flex items-start gap-2">
+                <RoleIcon size={12} className={`${meta.color} mt-0.5 flex-shrink-0`} />
+                <div><strong>{meta.label}</strong>: {meta.desc}</div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -204,34 +218,26 @@ export default function CollaboratorsPanel() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
             <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setInviteRole(COLLAB_ROLES.EDITOR)}
-                className={`rounded-lg border p-3 text-left transition-colors ${
-                  inviteRole === 'editor'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Edit3 size={14} className="text-blue-600" />
-                  <span className="text-sm font-medium">Editor</span>
-                </div>
-                <p className="text-xs text-gray-500">Full access. Can add guests, edit events, manage seating</p>
-              </button>
-              <button
-                onClick={() => setInviteRole(COLLAB_ROLES.VIEWER)}
-                className={`rounded-lg border p-3 text-left transition-colors ${
-                  inviteRole === 'viewer'
-                    ? 'border-gray-500 bg-gray-50'
-                    : 'border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Eye size={14} className="text-gray-600" />
-                  <span className="text-sm font-medium">Viewer</span>
-                </div>
-                <p className="text-xs text-gray-500">Read-only. Can see everything but cannot make changes</p>
-              </button>
+              {['editor', 'planner', 'dealer', 'viewer'].map((role) => {
+                const meta = ROLE_META[role];
+                const RoleIcon = meta.Icon;
+                const selected = inviteRole === role;
+                return (
+                  <button
+                    key={role}
+                    onClick={() => setInviteRole(role)}
+                    className={`rounded-lg border p-3 text-left transition-colors ${
+                      selected ? 'border-wine-500 bg-wine-50' : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <RoleIcon size={14} className={meta.color} />
+                      <span className="text-sm font-medium">{meta.label}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{meta.desc}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

@@ -218,7 +218,9 @@ function ShareLinkCard({ title, description, url }) {
 
 function AdminBetsManager({ wedding }) {
   const { betsConfig, votes, loading } = useBetsData(wedding?.id);
-  const { canEdit, isViewer } = useWedding();
+  const { canEditFeature } = useWedding();
+  const canEdit = canEditFeature('bets');
+  const isViewer = !canEdit;
   const [questionModalOpen, setQuestionModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const leaderboard = useMemo(

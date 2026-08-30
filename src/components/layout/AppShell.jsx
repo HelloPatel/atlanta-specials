@@ -12,8 +12,9 @@ export default function AppShell() {
   const mainRef = useRef(null);
   const mobileCloseRef = useRef(null);
   const { pathname } = useLocation();
-  const { activeWedding } = useWedding();
+  const { activeWedding, canViewFeature } = useWedding();
   const currentPage = NAV_ITEMS.find((item) => item.to === pathname)?.label || 'Wedding workspace';
+  const mobileNavItems = NAV_ITEMS.filter((item) => canViewFeature(item.feature)).slice(0, 4);
 
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
@@ -93,10 +94,9 @@ export default function AppShell() {
       {/* Mobile bottom navigation */}
       <nav aria-label="Primary mobile navigation" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200/80 pb-[env(safe-area-inset-bottom)]">
         <div className="grid grid-cols-5 items-stretch px-1 py-1">
-          <MobileNavItem to="/dashboard" icon={LayoutDashboard} label="Home" />
-          <MobileNavItem to="/guests" icon={Users} label="Guests" />
-          <MobileNavItem to="/seating" icon={Grid3X3} label="Seating" />
-          <MobileNavItem to="/rsvp" icon={Mail} label="RSVPs" />
+          {mobileNavItems.map(({ to, icon: Icon, label }) => (
+            <MobileNavItem key={to} to={to} icon={Icon} label={label} />
+          ))}
           <button
             onClick={() => setMobileOpen(true)}
             aria-label="More navigation options"
