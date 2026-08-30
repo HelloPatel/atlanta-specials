@@ -742,12 +742,12 @@ function AdminPhotoGroupManager({ wedding }) {
 
   return (
     <div className="space-y-6 overflow-hidden">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Photo Groups</h1>
           <p className="mt-1 text-xs sm:text-sm text-gray-500">Run a live queue for photographers, the MC, guests, and the venue display.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => window.open(queueLink, '_blank')} disabled={!wedding?.id}>
             <Users size={16} />
             <span className="hidden sm:inline">Guest</span> queue
