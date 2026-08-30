@@ -7,8 +7,7 @@ import LegalFooter from '../components/legal/LegalFooter';
 import { APP_NAME } from '../config/constants';
 import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles, Play } from 'lucide-react';
 
-function useReveal() {
-  const ref = useRef(null);
+function useReveal() {  const ref = useRef(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -35,6 +34,66 @@ function useReveal() {
   return ref;
 }
 
+// Cinematic phera (walking around the sacred fire) loop used purely as an
+// ambient aesthetic backdrop behind the landing hero. Faces are intentionally
+// de-emphasized — the clip favors the outfits and the motion. Swaps to a
+// portrait encode on small screens and falls back to a still for users who
+// prefer reduced motion.
+function HeroVideoBackdrop() {
+  const [src, setSrc] = useState('/hero/phera-desktop.mp4');
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return undefined;
+    const small = window.matchMedia('(max-width: 640px)');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => {
+      setSrc(small.matches ? '/hero/phera-mobile.mp4' : '/hero/phera-desktop.mp4');
+      setReduceMotion(reduce.matches);
+    };
+    update();
+    small.addEventListener('change', update);
+    reduce.addEventListener('change', update);
+    return () => {
+      small.removeEventListener('change', update);
+      reduce.removeEventListener('change', update);
+    };
+  }, []);
+
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+      {reduceMotion ? (
+        <img src="/hero/phera-poster.jpg" alt="" className="h-full w-full object-cover object-center" />
+      ) : (
+        <video
+          key={src}
+          className="h-full w-full object-cover object-center"
+          autoPlay
+          muted
+          loop
+          playsInline
+          poster="/hero/phera-poster.jpg"
+        >
+          <source src={src} type="video/mp4" />
+        </video>
+      )}
+      {/* Soft blush-white scrim keeps the dark hero text fully legible while the
+          motion shimmers through underneath. */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(to bottom, rgba(255,255,255,0.86) 0%, rgba(255,250,252,0.64) 42%, rgba(255,255,255,0.9) 100%)',
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{ background: 'radial-gradient(60% 55% at 50% 0%, rgba(171, 32, 77, 0.08), transparent 68%)' }}
+      />
+    </div>
+  );
+}
+
 export default function Landing() {
   return (
     <div className="min-h-screen font-body">
@@ -53,34 +112,33 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section className="relative text-center px-6 pt-28 sm:pt-36 pb-16 sm:pb-28 max-w-5xl mx-auto">
-        <div
-          className="absolute inset-0 -z-10"
-          style={{ background: 'radial-gradient(60% 55% at 50% 0%, rgba(171, 32, 77, 0.06), transparent 68%)' }}
-        ></div>
-        <p className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-wine-600 tracking-[0.15em] uppercase mb-4 sm:mb-5 px-3 py-1.5 rounded-full bg-wine-50/80 border border-wine-100/60">
-          <Sparkles size={12} /> For 200 to 1000+ guest weddings
-        </p>
-        <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.08] mb-5 sm:mb-7 text-balance">
-          One place for your entire<br className="hidden sm:block" />{' '}
-          <span className="text-wine-700 relative">
-            Indian wedding
-            <svg className="absolute -bottom-1 left-0 w-full h-3 text-wine-200/60" viewBox="0 0 200 12" preserveAspectRatio="none">
-              <path d="M0 8 Q50 0 100 8 T200 8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-            </svg>
-          </span>
-        </h1>
-        <p className="text-sm sm:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
-          Guest lists, seating charts, RSVPs, multiple events, different invite lists. All handled. No more WhatsApp chaos.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-          <Link to="/register" className="group inline-flex items-center gap-2 px-7 py-3.5 text-base font-semibold text-white bg-wine-700 hover:bg-wine-800 rounded-2xl shadow-glow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring w-full sm:w-auto justify-center">
-            Start Planning Free 
-            <span className="inline-flex items-center justify-center size-6 rounded-full bg-white/15 group-hover:translate-x-0.5 transition-transform duration-300 ease-spring">
-              <ArrowRight size={14} />
+      <section className="relative isolate overflow-hidden">
+        <HeroVideoBackdrop />
+        <div className="text-center px-6 pt-28 sm:pt-36 pb-16 sm:pb-28 max-w-5xl mx-auto">
+          <p className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-wine-600 tracking-[0.15em] uppercase mb-4 sm:mb-5 px-3 py-1.5 rounded-full bg-wine-50/80 border border-wine-100/60">
+            <Sparkles size={12} /> For 200 to 1000+ guest weddings
+          </p>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.08] mb-5 sm:mb-7 text-balance">
+            One place for your entire<br className="hidden sm:block" />{' '}
+            <span className="text-wine-700 relative">
+              Indian wedding
+              <svg className="absolute -bottom-1 left-0 w-full h-3 text-wine-200/60" viewBox="0 0 200 12" preserveAspectRatio="none">
+                <path d="M0 8 Q50 0 100 8 T200 8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+              </svg>
             </span>
-          </Link>
-          <p className="text-xs text-gray-400">Takes 2 minutes. No credit card.</p>
+          </h1>
+          <p className="text-sm sm:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
+            Guest lists, seating charts, RSVPs, multiple events, different invite lists. All handled. No more WhatsApp chaos.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <Link to="/register" className="group inline-flex items-center gap-2 px-7 py-3.5 text-base font-semibold text-white bg-wine-700 hover:bg-wine-800 rounded-2xl shadow-glow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring w-full sm:w-auto justify-center">
+              Start Planning Free 
+              <span className="inline-flex items-center justify-center size-6 rounded-full bg-white/15 group-hover:translate-x-0.5 transition-transform duration-300 ease-spring">
+                <ArrowRight size={14} />
+              </span>
+            </Link>
+            <p className="text-xs text-gray-400">Takes 2 minutes. No credit card.</p>
+          </div>
         </div>
       </section>
 
