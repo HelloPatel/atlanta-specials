@@ -65,7 +65,7 @@ export default function SeatingCanvas() {
   const [showPresets, setShowPresets] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const [customTable, setCustomTable] = useState({ name: '', shape: 'round', capacity: 10, width: 120, height: 120 });
   const [venueImage, setVenueImage] = useState(null);
   const [venueOpacity, setVenueOpacity] = useState(0.3);
@@ -83,7 +83,6 @@ export default function SeatingCanvas() {
   const panState = useRef(null);
   const [isPanning, setIsPanning] = useState(false);
   const qrPrintRef = useRef(null);
-  const exportMenuRef = useRef(null);
   const shouldFitRef = useRef(false);
   const fittedEventRef = useRef(null);
   const pendingScrollRef = useRef(null);
@@ -205,18 +204,6 @@ export default function SeatingCanvas() {
       // Clipboard API unavailable — ignore.
     }
   }, [finderLink]);
-
-  // Close the Export dropdown when clicking outside of it.
-  useEffect(() => {
-    if (!showExportMenu) return undefined;
-    const handleClick = (e) => {
-      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
-        setShowExportMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [showExportMenu]);
 
   const handlePrintQr = useCallback(() => {
     if (!finderLink || !qrPrintRef.current) return;
@@ -872,44 +859,9 @@ export default function SeatingCanvas() {
               </Button>
             )}
 
-            <div className="relative" ref={exportMenuRef}>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowExportMenu((v) => !v)}
-                disabled={tables.length === 0 && !selectedEventId}
-              >
-                <Download size={14} /> Export
-              </Button>
-              {showExportMenu && (
-                <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
-                  <button
-                    type="button"
-                    onClick={() => { setShowExportMenu(false); handleExportSeating(); }}
-                    disabled={tables.length === 0}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <FileSpreadsheet size={14} /> Export spreadsheet
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowExportMenu(false); handleDownloadPdf(); }}
-                    disabled={tables.length === 0 || isDownloadingPdf}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <Download size={14} /> {isDownloadingPdf ? 'Creating PDF…' : 'Download PDF'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setShowExportMenu(false); setShowQrModal(true); }}
-                    disabled={!selectedEventId}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <QrCode size={14} /> QR code
-                  </button>
-                </div>
-              )}
-            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowExport(true)} disabled={tables.length === 0 && !selectedEventId}>
+              <Download size={14} /> Export
+            </Button>
 
             {/* Floor plan opacity + remove — upload lives under the Import button */}
             {venueImage && (
@@ -1190,6 +1142,51 @@ export default function SeatingCanvas() {
             }
           }}
         />
+      </Modal>
+
+      {/* Export options modal — mirrors the Import button's modal pattern */}
+      <Modal open={showExport} onClose={() => setShowExport(false)} title="Export Seating" size="md">
+        <div className="space-y-3">
+          <p className="text-sm text-gray-500">
+            Choose how to share this event's seating{selectedEvent ? ` for ${selectedEvent.name}` : ''}.
+          </p>
+          <button
+            type="button"
+            onClick={() => { setShowExport(false); handleExportSeating(); }}
+            disabled={tables.length === 0}
+            className="flex w-full items-start gap-3 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-wine-300 hover:bg-wine-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-transparent"
+          >
+            <FileSpreadsheet size={20} className="mt-0.5 text-wine-600" />
+            <span>
+              <span className="block text-sm font-semibold text-gray-900">Export spreadsheet</span>
+              <span className="block text-xs text-gray-500">Download tables and guest assignments as an Excel file.</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowExport(false); handleDownloadPdf(); }}
+            disabled={tables.length === 0 || isDownloadingPdf}
+            className="flex w-full items-start gap-3 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-wine-300 hover:bg-wine-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-transparent"
+          >
+            <Download size={20} className="mt-0.5 text-wine-600" />
+            <span>
+              <span className="block text-sm font-semibold text-gray-900">{isDownloadingPdf ? 'Creating PDF…' : 'Download PDF'}</span>
+              <span className="block text-xs text-gray-500">A printable seating chart PDF of the current layout.</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowExport(false); setShowQrModal(true); }}
+            disabled={!selectedEventId}
+            className="flex w-full items-start gap-3 rounded-xl border border-gray-200 p-4 text-left transition-colors hover:border-wine-300 hover:bg-wine-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-transparent"
+          >
+            <QrCode size={20} className="mt-0.5 text-wine-600" />
+            <span>
+              <span className="block text-sm font-semibold text-gray-900">QR code</span>
+              <span className="block text-xs text-gray-500">A table-finder QR guests can scan to find their seat.</span>
+            </span>
+          </button>
+        </div>
       </Modal>
 
       {/* Venue Layout Presets modal */}
