@@ -28,7 +28,6 @@ import { saveWebsiteConfig } from '../../services/websiteService';
 import WeddingWebsitePreview from './WeddingWebsitePreview';
 import {
   WEBSITE_THEMES,
-  WEBSITE_HERO_PATTERNS,
   getCoupleDisplayName,
   getPublicWeddingWebsiteLink,
   normalizeWebsiteConfig,
@@ -36,13 +35,6 @@ import {
 } from './websiteThemes';
 
 const websiteThemes = Object.values(WEBSITE_THEMES);
-const heroPatternLabels = {
-  none: 'Theme Gradient',
-  mandala: 'Mandala',
-  floral: 'Floral',
-  geometric: 'Geometric',
-  paisley: 'Paisley',
-};
 
 function Toggle({ checked, onChange, label, disabled = false, helperText }) {
   return (
@@ -484,21 +476,6 @@ export default function WebsiteBuilder() {
                 placeholder="A joyful weekend of love, laughter, and forever."
                 className={textareaClass}
               />
-            </div>
-            <div className="md:col-span-2">
-              <label htmlFor="website-hero-pattern" className="mb-1 block text-sm font-medium text-gray-700">Background Style</label>
-              <select
-                id="website-hero-pattern"
-                value={config.websiteHero.pattern || 'none'}
-                onChange={(event) => setHeroValue('pattern', event.target.value)}
-                disabled={editingLocked}
-                className={textareaClass}
-              >
-                {WEBSITE_HERO_PATTERNS.map((pattern) => (
-                  <option key={pattern} value={pattern}>{heroPatternLabels[pattern] || pattern}</option>
-                ))}
-              </select>
-              <p className="mt-2 text-xs text-gray-500">Choose the pattern layered over your theme's hero background.</p>
             </div>
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-gray-700">Hero Background Image</label>
