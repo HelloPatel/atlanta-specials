@@ -1,0 +1,12 @@
+Background music embedded in the demo clips (events, games, hero, import,
+photos, seating).webm:
+
+  "Calm Pills - Relaxing Ambient Music" (curated by Alaeddin Hallak)
+  Source: https://archive.org/details/CalmPills
+  License: CC0 1.0 Universal (Public Domain Dedication)
+           https://creativecommons.org/publicdomain/zero/1.0/
+
+CC0 places the work in the public domain; no attribution is required. This
+note is kept only as a record of provenance. The track is mixed in low and
+faded, and is only audible when a demo is opened in the maximize lightbox
+(inline autoplaying previews remain muted per browser policy).

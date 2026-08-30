@@ -44,7 +44,6 @@ export default function VideoModal({ open, src, caption, onClose }) {
         <video
           className="aspect-video w-full object-contain"
           src={src}
-          muted
           loop
           playsInline
           autoPlay
