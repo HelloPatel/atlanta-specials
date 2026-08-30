@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   getPublicWeddingData,
@@ -10,6 +10,11 @@ import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { COLLECTIONS, DIETARY_OPTIONS, APP_NAME } from '../config/constants';
 import { Search, Check, X, ChevronRight, Heart, Users } from 'lucide-react';
+import {
+  resolveWebsiteTheme,
+  normalizeWebsiteConfig,
+  hexToRgba,
+} from '../components/website/websiteThemes';
 
 /**
  * Simple fuzzy match: returns true if the query and target differ by ≤ 2 edits,
@@ -104,6 +109,27 @@ const TRANSLATIONS = {
   },
 };
 
+// Scoped overrides that re-point the page's Tailwind rose/wine utilities at the
+// resolved theme's CSS variables. Only elements inside `.rsvp-theme` are affected,
+// so the loading / error / password screens keep the default palette until the
+// wedding (and its theme) has loaded.
+const RSVP_THEME_CSS = `
+.rsvp-theme .bg-wine-700 { background-color: var(--rsvp-primary) !important; }
+.rsvp-theme .hover\\:bg-wine-800:hover { background-color: var(--rsvp-primary) !important; filter: brightness(0.9); }
+.rsvp-theme .bg-wine-100 { background-color: var(--rsvp-primary-tint) !important; }
+.rsvp-theme .bg-wine-300 { background-color: var(--rsvp-accent) !important; }
+.rsvp-theme .text-wine-700,
+.rsvp-theme .text-wine-600,
+.rsvp-theme .text-wine-800 { color: var(--rsvp-primary) !important; }
+.rsvp-theme .text-wine-400 { color: var(--rsvp-accent) !important; }
+.rsvp-theme .hover\\:bg-wine-50:hover { background-color: var(--rsvp-primary-soft) !important; }
+.rsvp-theme .hover\\:border-wine-300:hover { border-color: var(--rsvp-border-soft) !important; }
+.rsvp-theme .hover\\:text-wine-700:hover,
+.rsvp-theme .hover\\:text-wine-800:hover { color: var(--rsvp-primary) !important; }
+.rsvp-theme .focus\\:border-wine-600:focus { border-color: var(--rsvp-primary) !important; }
+.rsvp-theme .focus\\:ring-wine-100:focus { --tw-ring-color: var(--rsvp-ring) !important; }
+`;
+
 export default function PublicRSVP() {
   const { weddingId: rawParam } = useParams();
   const [searchParams] = useSearchParams();
@@ -133,10 +159,44 @@ export default function PublicRSVP() {
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const textScale = seniorMode ? 'text-lg' : 'text-sm';
   const headingScale = seniorMode ? 'text-2xl' : 'text-lg';
-  const darkBg = 'bg-gradient-to-br from-rose-50 via-white to-amber-50';
-  const darkCard = 'bg-white/80 backdrop-blur-sm border-white/40';
-  const darkText = 'text-gray-900';
-  const darkMuted = 'text-gray-500';
+
+  // Resolve the couple's chosen website theme so the RSVP page matches the
+  // wedding site they designed. Falls back to the default rose theme until the
+  // wedding doc loads. Theme fields (websiteTheme + websiteCustomColors) are
+  // mirrored into the public wedding doc, so no extra fetch is needed.
+  const theme = useMemo(
+    () => resolveWebsiteTheme(normalizeWebsiteConfig(weddingData?.wedding || {})),
+    [weddingData]
+  );
+
+  // CSS custom properties that remap the page's rose/wine palette to the chosen
+  // theme. Applied on the themed root; a scoped <style> block (below) points the
+  // Tailwind wine/rose utilities at these variables so every accent stays in sync.
+  const themeVars = useMemo(
+    () => ({
+      '--rsvp-primary': theme.primary,
+      '--rsvp-accent': theme.accent,
+      '--rsvp-primary-tint': hexToRgba(theme.primary, 0.12),
+      '--rsvp-primary-soft': hexToRgba(theme.primary, 0.07),
+      '--rsvp-ring': hexToRgba(theme.primary, 0.18),
+      '--rsvp-border-soft': hexToRgba(theme.primary, 0.35),
+      '--rsvp-bg': theme.background,
+    }),
+    [theme]
+  );
+
+  // Load the theme's web fonts once, cleaning up on unmount / theme change.
+  useEffect(() => {
+    if (!theme?.fontUrl) return undefined;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = theme.fontUrl;
+    link.dataset.rsvpThemeFont = 'true';
+    document.head.appendChild(link);
+    return () => {
+      if (link.parentNode) link.parentNode.removeChild(link);
+    };
+  }, [theme?.fontUrl]);
 
   useEffect(() => {
     async function load() {
@@ -395,7 +455,8 @@ export default function PublicRSVP() {
   }
 
   return (
-    <div className={`min-h-screen ${darkBg}`}>
+    <div className="rsvp-theme min-h-screen" style={{ ...themeVars, background: 'var(--rsvp-bg)' }}>
+      <style>{RSVP_THEME_CSS}</style>
       {/* Header */}
       <header className="text-center pt-10 pb-6 px-4">
         {/* Accessibility toggle */}
@@ -413,7 +474,7 @@ export default function PublicRSVP() {
         <div className="w-12 h-12 rounded-full bg-wine-100 text-wine-700 flex items-center justify-center mx-auto mb-3">
           <Heart size={24} />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{wedding.coupleName || 'Wedding RSVP'}</h1>
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: theme.fontFamily }}>{wedding.coupleName || 'Wedding RSVP'}</h1>
         {settings.customMessage && (
           <p className="text-gray-600 mt-2 max-w-lg mx-auto leading-relaxed">{settings.customMessage}</p>
         )}

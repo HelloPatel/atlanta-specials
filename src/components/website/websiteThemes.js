@@ -139,6 +139,37 @@ export function getThemeConfig(themeKey) {
   return WEBSITE_THEMES[themeKey] || WEBSITE_THEMES['classic-rose'];
 }
 
+// Convert a #rrggbb hex to an rgba() string. Falls back to translucent white for
+// malformed input so callers can safely build gradients/overlays.
+export function hexToRgba(hex, alpha) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex || '')) return `rgba(255, 255, 255, ${alpha})`;
+  const normalized = hex.slice(1);
+  const red = parseInt(normalized.slice(0, 2), 16);
+  const green = parseInt(normalized.slice(2, 4), 16);
+  const blue = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+}
+
+// Resolve the final theme object (base preset + any custom color overrides) for a
+// normalized website config. Single source of truth shared by the public website
+// preview and the public RSVP page so both stay visually in sync.
+export function resolveWebsiteTheme(config = {}) {
+  const baseTheme = getThemeConfig(config.websiteTheme);
+  const custom = config.websiteCustomColors || {};
+  return {
+    ...baseTheme,
+    primary: custom.primary || baseTheme.primary,
+    accent: custom.accent || baseTheme.accent,
+    background: custom.background || baseTheme.background,
+    heroOverlay: custom.primary
+      ? `linear-gradient(135deg, ${hexToRgba(baseTheme.text, 0.74)}, ${hexToRgba(custom.primary, 0.5)})`
+      : baseTheme.heroOverlay,
+    heroBackground: custom.primary
+      ? `radial-gradient(circle at 78% 16%, ${hexToRgba(custom.accent || baseTheme.accent, 0.5)}, transparent 34%), linear-gradient(135deg, ${custom.primary}, ${baseTheme.text})`
+      : baseTheme.heroBackground,
+  };
+}
+
 export function getCoupleDisplayName(wedding) {
   return wedding?.coupleName || [wedding?.coupleName1, wedding?.coupleName2].filter(Boolean).join(' & ') || 'Our Wedding';
 }

@@ -6,6 +6,7 @@ import {
   getCoupleInitials,
   getCoupleNames,
   getThemeConfig,
+  resolveWebsiteTheme,
   normalizeWebsiteConfig,
 } from './websiteThemes';
 
@@ -424,18 +425,7 @@ export default function WeddingWebsitePreview({
 }) {
   const config = useMemo(() => normalizeWebsiteConfig(rawConfig), [rawConfig]);
   const baseTheme = useMemo(() => getThemeConfig(config.websiteTheme), [config.websiteTheme]);
-  const theme = useMemo(() => ({
-    ...baseTheme,
-    primary: config.websiteCustomColors?.primary || baseTheme.primary,
-    accent: config.websiteCustomColors?.accent || baseTheme.accent,
-    background: config.websiteCustomColors?.background || baseTheme.background,
-    heroOverlay: config.websiteCustomColors?.primary
-      ? `linear-gradient(135deg, ${hexToRgba(baseTheme.text, 0.74)}, ${hexToRgba(config.websiteCustomColors.primary, 0.5)})`
-      : baseTheme.heroOverlay,
-    heroBackground: config.websiteCustomColors?.primary
-      ? `radial-gradient(circle at 78% 16%, ${hexToRgba(config.websiteCustomColors?.accent || baseTheme.accent, 0.5)}, transparent 34%), linear-gradient(135deg, ${config.websiteCustomColors.primary}, ${baseTheme.text})`
-      : baseTheme.heroBackground,
-  }), [baseTheme, config.websiteCustomColors]);
+  const theme = useMemo(() => resolveWebsiteTheme(config), [config]);
   const coupleName = getCoupleDisplayName(wedding);
   const names = useMemo(() => getCoupleNames(wedding), [wedding]);
   const initials = useMemo(() => getCoupleInitials(wedding), [wedding]);

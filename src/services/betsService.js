@@ -12,10 +12,28 @@ import { COLLECTIONS } from '../config/constants';
 const BETS_DOC_ID = 'config';
 const POINTS_PER_QUESTION = 10;
 const BAD_WORDS = [
-  'fuck', 'shit', 'ass', 'bitch', 'cunt', 'dick', 'pussy', 'cock', 'bastard', 'piss',
-  'damn', 'hell', 'slut', 'whore', 'fag', 'nigger', 'nigga', 'chink', 'spic', 'kike',
-  'retard', 'crap', 'douche', 'moron', 'idiot',
+  'fuck', 'shit', 'ass', 'asshole', 'bitch', 'cunt', 'dick', 'pussy', 'cock', 'bastard',
+  'piss', 'slut', 'whore', 'fag', 'faggot', 'nigger', 'nigga', 'chink', 'spic', 'kike',
+  'retard', 'douchebag', 'jackass', 'dyke', 'wanker', 'bollocks', 'twat', 'prick',
 ];
+
+// Precompiled, once, at module load. Each word becomes a case-insensitive regex
+// that (a) requires the slur to stand on its own via \b word boundaries — so real
+// names like "Harshit", "Cassandra", or "Dickson" are NOT flagged — and (b) allows
+// filler separators between letters so spaced / punctuated obfuscation ("f u c k",
+// "s.h.i.t", "b-i-t-c-h") is still caught. Leetspeak with digits/symbols is already
+// rejected earlier by the letters-only rule.
+const PROFANITY_PATTERNS = BAD_WORDS.map((word) => {
+  const spaced = word.split('').join("[\\s._'*\\-]*");
+  return new RegExp(`\\b${spaced}\\b`, 'i');
+});
+
+// Returns true when the supplied text contains a disallowed word as a standalone
+// token (including lightly obfuscated / spaced-out variants).
+export function containsProfanity(text) {
+  const value = (text || '').toString();
+  return PROFANITY_PATTERNS.some((pattern) => pattern.test(value));
+}
 
 export const DEFAULT_BETS_CONFIG = {
   questions: [],
@@ -55,7 +73,7 @@ export function validateGuestName(guestName) {
   if (trimmedName.length < 2) return 'Please enter your full name.';
   if (trimmedName.length > 40) return 'Name is too long.';
   if (!/^[a-zA-Z\s'-]+$/.test(trimmedName)) return 'Please use letters only.';
-  if (BAD_WORDS.some((word) => trimmedName.toLowerCase().includes(word))) return 'Please enter a clean name.';
+  if (containsProfanity(trimmedName)) return 'Please enter a clean name.';
 
   return '';
 }

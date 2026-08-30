@@ -42,9 +42,17 @@ describe('betsService', () => {
     });
 
     it('rejects bad words', () => {
-      // This tests the BAD_WORDS filter without knowing exact words
-      // Just ensure clean names pass
+      // Clean names — including ones that naive substring matching would wrongly flag
       expect(validateGuestName('Priya Sharma')).toBe('');
+      expect(validateGuestName('Harshit Shah')).toBe(''); // contains "shit" as a substring
+      expect(validateGuestName('Cassandra')).toBe(''); // contains "ass" as a substring
+      expect(validateGuestName('Dickson')).toBe(''); // contains "dick" as a substring
+      // Actual profanity as a standalone word is rejected
+      expect(validateGuestName('Fuck You')).toContain('clean name');
+      expect(validateGuestName('Bitch')).toContain('clean name');
+      // Spaced / punctuated obfuscation is still caught
+      expect(validateGuestName('f u c k')).toContain('clean name');
+      expect(validateGuestName("s-h-i-t")).toContain('clean name');
     });
 
     it('trims whitespace before validating', () => {
