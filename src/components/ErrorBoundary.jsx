@@ -6,11 +6,21 @@ import { isChunkLoadError } from '../utils/lazyWithRetry';
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, resetKey: props.resetKey };
   }
 
   static getDerivedStateFromError(error) {
     return { hasError: true, error };
+  }
+
+  // When the resetKey changes (e.g. the user navigates to another route), clear
+  // a previously caught error so a transient page-level crash can self-heal
+  // instead of stranding the user on the error screen until a manual refresh.
+  static getDerivedStateFromProps(props, state) {
+    if (props.resetKey !== state.resetKey) {
+      return { hasError: false, error: null, resetKey: props.resetKey };
+    }
+    return null;
   }
 
   componentDidCatch(error, errorInfo) {

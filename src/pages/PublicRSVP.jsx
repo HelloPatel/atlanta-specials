@@ -126,18 +126,17 @@ export default function PublicRSVP() {
   const [passwordUnlocked, setPasswordUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [passwordError, setPasswordError] = useState('');
-  const [lang, setLang] = useState('en'); // 'en' | 'hi' | 'gu'
+  const lang = 'en';
   const [seniorMode, setSeniorMode] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => window.matchMedia?.('(prefers-color-scheme: dark)')?.matches ?? false);
   const viewedHouseholdsRef = useRef(new Set());
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
   const textScale = seniorMode ? 'text-lg' : 'text-sm';
   const headingScale = seniorMode ? 'text-2xl' : 'text-lg';
-  const darkBg = darkMode ? 'bg-gray-900 text-gray-100' : 'bg-gradient-to-br from-rose-50 via-white to-amber-50';
-  const darkCard = darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white/80 backdrop-blur-sm border-white/40';
-  const darkText = darkMode ? 'text-gray-100' : 'text-gray-900';
-  const darkMuted = darkMode ? 'text-gray-400' : 'text-gray-500';
+  const darkBg = 'bg-gradient-to-br from-rose-50 via-white to-amber-50';
+  const darkCard = 'bg-white/80 backdrop-blur-sm border-white/40';
+  const darkText = 'text-gray-900';
+  const darkMuted = 'text-gray-500';
 
   useEffect(() => {
     async function load() {
@@ -399,20 +398,8 @@ export default function PublicRSVP() {
     <div className={`min-h-screen ${darkBg}`}>
       {/* Header */}
       <header className="text-center pt-10 pb-6 px-4">
-        {/* Language toggle */}
+        {/* Accessibility toggle */}
         <div className="flex justify-center gap-1.5 mb-4">
-          {[{ code: 'en', label: 'EN' }, { code: 'hi', label: 'हिं' }, { code: 'gu', label: 'ગુ' }].map(({ code, label }) => (
-            <button
-              key={code}
-              onClick={() => setLang(code)}
-              className={`min-h-10 rounded-xl px-3 py-2 text-xs font-semibold transition-colors active:scale-[0.98] ${
-                lang === code ? 'bg-wine-700 text-white' : 'bg-white/70 text-gray-600 hover:bg-wine-50'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-          <span className="w-px bg-gray-300 mx-1" />
           <button
             onClick={() => setSeniorMode(!seniorMode)}
             className={`min-h-10 rounded-xl px-3 py-2 text-xs font-semibold transition-colors active:scale-[0.98] ${
@@ -421,15 +408,6 @@ export default function PublicRSVP() {
             title="Large text mode for easier reading"
           >
             {seniorMode ? 'Aa−' : 'Aa+'}
-          </button>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              darkMode ? 'bg-wine-700 text-white' : 'bg-white/70 text-gray-600 hover:bg-wine-50'
-            }`}
-            title="Toggle dark mode"
-          >
-            {darkMode ? '☀️' : '🌙'}
           </button>
         </div>
         <div className="w-12 h-12 rounded-full bg-wine-100 text-wine-700 flex items-center justify-center mx-auto mb-3">
@@ -503,7 +481,7 @@ export default function PublicRSVP() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-gray-900 truncate">
-                        {familyName ? `The ${familyName} Family` : `${members[0]?.firstName || ''} ${members[0]?.lastName || ''}`.trim()}
+                        {familyName ? formatHousehold(familyName) : `${members[0]?.firstName || ''} ${members[0]?.lastName || ''}`.trim()}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
                         {members.map((m) => `${m.firstName} ${m.lastName}`).join(', ')}
@@ -539,7 +517,7 @@ export default function PublicRSVP() {
             <RsvpCard>
               <h2 className="text-lg font-semibold text-gray-900">
                 {selectedFamily[0]?.familyName
-                  ? `Welcome, ${selectedFamily[0].familyName} Family! 🎉`
+                  ? `Welcome, ${formatHousehold(selectedFamily[0].familyName)}! 🎉`
                   : `Welcome, ${selectedFamily[0]?.firstName}! 🎉`
                 }
               </h2>
@@ -801,4 +779,15 @@ function formatDate(dateStr) {
   try {
     return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   } catch { return dateStr; }
+}
+
+// Normalize a stored familyName to exactly "The <core> Family", tolerating data
+// that already includes a leading "The" and/or a trailing "Family" so we never
+// render duplicates like "The Trivedi Family Family".
+function formatHousehold(name) {
+  let core = String(name || '').trim();
+  if (!core) return '';
+  core = core.replace(/^the\s+/i, '').replace(/\s+family$/i, '').trim();
+  if (!core) return '';
+  return `The ${core} Family`;
 }
