@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { resolveWeddingId } from '../../services/weddingService';
+import WebsiteThemeScope from '../website/WebsiteThemeScope';
 import {
   closestCenter,
   DndContext,
@@ -980,7 +981,8 @@ function PublicQueueShell({ wedding, groups, loading, displayMode = false }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-wine-50 via-white to-amber-50">
+    <WebsiteThemeScope wedding={wedding}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, var(--wt-primary-soft), #ffffff 55%, var(--wt-accent-soft))' }}>
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <div className="text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-wine-600">Photo Queue</p>
@@ -1049,6 +1051,7 @@ function PublicQueueShell({ wedding, groups, loading, displayMode = false }) {
         </Card>
       </main>
     </div>
+    </WebsiteThemeScope>
   );
 }
 

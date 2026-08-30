@@ -126,6 +126,11 @@ export default function WebsiteBuilder() {
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [showCustomColors, setShowCustomColors] = useState(false);
 
+  // While the site is published (live for guests), the whole builder is locked.
+  // Editors must unpublish to make changes, then republish — this prevents a
+  // live page from being changed into a half-edited state.
+  const editingLocked = !canEdit || config.websitePublished;
+
   useEffect(() => {
     if (!activeWedding) return undefined;
     return subscribeToEvents(activeWedding.id, setEvents);
@@ -283,12 +288,19 @@ export default function WebsiteBuilder() {
   };
 
   const handleSave = async (published = config.websitePublished) => {
+    const wasPublishToggle = published !== config.websitePublished;
+    // A live (published) site can only be changed by first unpublishing.
+    // Publish/unpublish toggles are always allowed; plain saves while published
+    // are blocked so guests never see a half-edited page.
+    if (!wasPublishToggle && config.websitePublished) {
+      toast.error('Unpublish your website before saving changes so live guests don\'t see a half-finished page.');
+      return;
+    }
     setSaving(true);
     try {
       const nextConfig = sanitizeWebsiteConfig({ ...config, websitePublished: published });
       await saveWebsiteConfig(activeWedding.id, nextConfig);
       setConfig(nextConfig);
-      const wasPublishToggle = published !== config.websitePublished;
       if (wasPublishToggle) {
         toast.success(published ? 'Website published — it\'s live for guests.' : 'Website unpublished.');
       } else {
@@ -361,7 +373,7 @@ export default function WebsiteBuilder() {
                   <button
                     key={theme.key}
                     type="button"
-                    disabled={!canEdit}
+                    disabled={editingLocked}
                     onClick={() => canEdit && updateSection('websiteTheme', theme.key)}
                     className={`rounded-3xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-500 focus-visible:ring-offset-2 ${
                       selected ? 'border-wine-600 ring-2 ring-wine-100' : 'border-gray-200 hover:border-gray-300'
@@ -418,7 +430,7 @@ export default function WebsiteBuilder() {
                         <input
                           type="color"
                           value={config.websiteCustomColors?.[colorField.key] || colorField.fallback}
-                          disabled={!canEdit}
+                          disabled={editingLocked}
                           onChange={(event) => handleCustomColorChange(colorField.key, event.target.value)}
                           className="h-11 w-14 rounded-lg border border-gray-300 bg-white p-1 disabled:bg-gray-50"
                         />
@@ -459,7 +471,7 @@ export default function WebsiteBuilder() {
               type="date"
               value={config.websiteHero.date}
               onChange={(event) => setHeroValue('date', event.target.value)}
-              disabled={!canEdit}
+              disabled={editingLocked}
             />
             <div className="md:col-span-2">
               <label htmlFor="website-hero-tagline" className="mb-1 block text-sm font-medium text-gray-700">Tagline or Quote</label>
@@ -468,7 +480,7 @@ export default function WebsiteBuilder() {
                 value={config.websiteHero.tagline}
                 onChange={(event) => setHeroValue('tagline', event.target.value)}
                 rows={3}
-                disabled={!canEdit}
+                disabled={editingLocked}
                 placeholder="A joyful weekend of love, laughter, and forever."
                 className={textareaClass}
               />
@@ -479,7 +491,7 @@ export default function WebsiteBuilder() {
                 id="website-hero-pattern"
                 value={config.websiteHero.pattern || 'none'}
                 onChange={(event) => setHeroValue('pattern', event.target.value)}
-                disabled={!canEdit}
+                disabled={editingLocked}
                 className={textareaClass}
               >
                 {WEBSITE_HERO_PATTERNS.map((pattern) => (
@@ -492,7 +504,7 @@ export default function WebsiteBuilder() {
               <label className="mb-2 block text-sm font-medium text-gray-700">Hero Background Image</label>
               <div className="flex flex-wrap items-center gap-3">
                 <label className={`inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium ${canEdit ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default bg-gray-50 text-gray-500'}`}>
-                  <input type="file" accept="image/*" className="hidden" disabled={!canEdit} onChange={handleImageUpload} />
+                  <input type="file" accept="image/*" className="hidden" disabled={editingLocked} onChange={handleImageUpload} />
                   <ImagePlus size={16} />
                   {uploadingHero ? 'Uploading...' : config.websiteHero.backgroundImage ? 'Replace Image' : 'Upload Image'}
                 </label>
@@ -543,7 +555,7 @@ export default function WebsiteBuilder() {
                       className="mt-1 h-4 w-4 rounded border-gray-300 text-wine-700 focus:ring-wine-600"
                       checked={checked}
                       onChange={() => handleEventToggle(event.id)}
-                      disabled={!canEdit}
+                      disabled={editingLocked}
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -568,7 +580,7 @@ export default function WebsiteBuilder() {
             <Toggle
               checked={config.websiteStory.enabled}
               onChange={(enabled) => updateSection('websiteStory', { ...config.websiteStory, enabled })}
-              disabled={!canEdit}
+              disabled={editingLocked}
               label="Show our story"
               helperText="Share how you met, the proposal, or what this celebration means to you."
             />
@@ -576,7 +588,7 @@ export default function WebsiteBuilder() {
               value={config.websiteStory.text}
               onChange={(event) => updateSection('websiteStory', { ...config.websiteStory, text: event.target.value })}
               rows={6}
-              disabled={!canEdit}
+              disabled={editingLocked}
               placeholder="Tell your story here..."
               className={textareaClass}
             />
@@ -589,7 +601,7 @@ export default function WebsiteBuilder() {
             <Toggle
               checked={config.websiteGallery.enabled}
               onChange={(enabled) => updateSection('websiteGallery', { ...config.websiteGallery, enabled })}
-              disabled={!canEdit}
+              disabled={editingLocked}
               label="Show photo gallery"
               helperText="Upload up to 12 favorite photos to create a beautiful memory wall for guests."
             />
@@ -606,7 +618,7 @@ export default function WebsiteBuilder() {
                   accept="image/*"
                   multiple
                   className="hidden"
-                  disabled={!canEdit || config.websiteGallery.images.length >= 12}
+                  disabled={editingLocked || config.websiteGallery.images.length >= 12}
                   onChange={handleGalleryUpload}
                 />
                 <ImagePlus size={16} />
@@ -645,7 +657,7 @@ export default function WebsiteBuilder() {
             <Toggle
               checked={config.websiteHotels.enabled}
               onChange={(enabled) => updateSection('websiteHotels', { ...config.websiteHotels, enabled })}
-              disabled={!canEdit}
+              disabled={editingLocked}
               label="Show hotels and travel details"
               helperText="Recommend hotel blocks, nearby stays, and booking links."
             />
@@ -680,7 +692,7 @@ export default function WebsiteBuilder() {
                       ...config.websiteHotels,
                       items: updateArrayItem(config.websiteHotels.items, index, 'name', event.target.value),
                     })}
-                    disabled={!canEdit}
+                    disabled={editingLocked}
                   />
                   <Input
                     label="Group Rate Code"
@@ -689,7 +701,7 @@ export default function WebsiteBuilder() {
                       ...config.websiteHotels,
                       items: updateArrayItem(config.websiteHotels.items, index, 'groupRateCode', event.target.value),
                     })}
-                    disabled={!canEdit}
+                    disabled={editingLocked}
                   />
                   <div className="md:col-span-2">
                     <Input
@@ -699,7 +711,7 @@ export default function WebsiteBuilder() {
                         ...config.websiteHotels,
                         items: updateArrayItem(config.websiteHotels.items, index, 'address', event.target.value),
                       })}
-                      disabled={!canEdit}
+                      disabled={editingLocked}
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -710,7 +722,7 @@ export default function WebsiteBuilder() {
                         ...config.websiteHotels,
                         items: updateArrayItem(config.websiteHotels.items, index, 'link', event.target.value),
                       })}
-                      disabled={!canEdit}
+                      disabled={editingLocked}
                       placeholder="https://"
                     />
                   </div>
@@ -726,7 +738,7 @@ export default function WebsiteBuilder() {
             <Toggle
               checked={config.websiteRegistry.enabled}
               onChange={(enabled) => updateSection('websiteRegistry', { ...config.websiteRegistry, enabled })}
-              disabled={!canEdit}
+              disabled={editingLocked}
               label="Show registry links"
               helperText="Add any external registries or gifting pages you'd like guests to visit."
             />
@@ -761,7 +773,7 @@ export default function WebsiteBuilder() {
                       ...config.websiteRegistry,
                       items: updateArrayItem(config.websiteRegistry.items, index, 'name', event.target.value),
                     })}
-                    disabled={!canEdit}
+                    disabled={editingLocked}
                   />
                   <Input
                     label="URL"
@@ -770,7 +782,7 @@ export default function WebsiteBuilder() {
                       ...config.websiteRegistry,
                       items: updateArrayItem(config.websiteRegistry.items, index, 'url', event.target.value),
                     })}
-                    disabled={!canEdit}
+                    disabled={editingLocked}
                     placeholder="https://"
                   />
                 </div>
@@ -785,7 +797,7 @@ export default function WebsiteBuilder() {
             <Toggle
               checked={config.websiteRsvp.enabled}
               onChange={(enabled) => updateSection('websiteRsvp', { ...config.websiteRsvp, enabled })}
-              disabled={!canEdit}
+              disabled={editingLocked}
               label="Show RSVP button"
               helperText="Display a clear RSVP call-to-action on the public website."
             />
@@ -793,7 +805,7 @@ export default function WebsiteBuilder() {
               label="Button Text"
               value={config.websiteRsvp.buttonText}
               onChange={(event) => updateSection('websiteRsvp', { ...config.websiteRsvp, buttonText: event.target.value })}
-              disabled={!canEdit}
+              disabled={editingLocked}
               placeholder="RSVP Now"
             />
           </div>
@@ -808,7 +820,7 @@ export default function WebsiteBuilder() {
               value={config.websiteFooter}
               onChange={(event) => updateSection('websiteFooter', event.target.value)}
               rows={3}
-              disabled={!canEdit}
+              disabled={editingLocked}
               placeholder="We can't wait to celebrate with you!"
               className={textareaClass}
             />
@@ -904,7 +916,7 @@ export default function WebsiteBuilder() {
             </Button>
             {canEdit && (
               <>
-                <Button size="sm" variant="outline" className="shrink-0" onClick={() => handleSave()} disabled={saving}>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => handleSave()} disabled={saving || config.websitePublished} title={config.websitePublished ? 'Unpublish to edit your website' : undefined}>
                   <Save size={14} />
                   {config.websitePublished ? 'Save Changes' : 'Save Draft'}
                 </Button>
@@ -912,6 +924,9 @@ export default function WebsiteBuilder() {
                   <Send size={14} />
                   {config.websitePublished ? 'Unpublish' : 'Publish'}
                 </Button>
+                {config.websitePublished && (
+                  <p className="w-full text-right text-xs text-amber-700">Your site is live — unpublish to edit, then republish.</p>
+                )}
               </>
             )}
           </div>
