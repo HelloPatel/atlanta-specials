@@ -6,8 +6,8 @@ export const WEBSITE_THEMES = {
   'classic-rose': {
     key: 'classic-rose',
     name: 'Classic Rose',
-    description: 'Botanical framing, a serif monogram, and soft blush romance.',
-    layout: 'botanical',
+    description: 'An arched invitation window with a serif monogram and soft blush romance.',
+    layout: 'arch',
     primary: '#be123c',
     accent: '#e11d48',
     background: '#fff1f2',
@@ -88,8 +88,8 @@ export const WEBSITE_THEMES = {
   'marigold-mandap': {
     key: 'marigold-mandap',
     name: 'Marigold Mandap',
-    description: 'Editorial layout with vibrant marigold warmth and a bold display serif.',
-    layout: 'editorial',
+    description: 'A bold poster layout with a top menu, oversized names, and giant date numerals.',
+    layout: 'poster',
     primary: '#c2410c',
     accent: '#ea580c',
     background: '#fff7ed',
@@ -108,8 +108,8 @@ export const WEBSITE_THEMES = {
   'midnight-sangeet': {
     key: 'midnight-sangeet',
     name: 'Midnight Sangeet',
-    description: 'Dark evening luxe: violet-navy hero, gold script, countdown centerpiece.',
-    layout: 'luxe',
+    description: 'A dark two-column split: script names and countdown beside an evening photo panel.',
+    layout: 'split',
     primary: '#312e81',
     accent: '#7c3aed',
     background: '#eef2ff',
@@ -131,7 +131,7 @@ export const WEBSITE_THEMES = {
 
 // Layouts drive genuinely different structure (hero + section styling), not
 // just a palette swap. Each theme opts into one.
-export const WEBSITE_LAYOUTS = ['editorial', 'botanical', 'luxe'];
+export const WEBSITE_LAYOUTS = ['editorial', 'botanical', 'luxe', 'arch', 'poster', 'split'];
 
 export const WEBSITE_HERO_PATTERNS = ['none', 'mandala', 'floral', 'geometric', 'paisley'];
 

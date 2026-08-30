@@ -136,6 +136,25 @@ function Divider({ theme, className = '' }) {
       </div>
     );
   }
+  if (layout === 'arch') {
+    return (
+      <div className={`mx-auto mt-5 flex items-center justify-center gap-2 ${className}`}>
+        <span className="h-px w-12" style={{ backgroundColor: hexToRgba(theme.accent, 0.55) }} />
+        <span className="text-sm leading-none" style={{ color: theme.accent }}>&#9671;</span>
+        <span className="h-px w-12" style={{ backgroundColor: hexToRgba(theme.accent, 0.55) }} />
+      </div>
+    );
+  }
+  if (layout === 'poster') {
+    return (
+      <div className={`mx-auto mt-5 h-1 w-14 rounded-full ${className}`} style={{ backgroundColor: theme.accent }} />
+    );
+  }
+  if (layout === 'split') {
+    return (
+      <div className={`mx-auto mt-5 h-px w-20 ${className}`} style={{ backgroundColor: hexToRgba(theme.accent, 0.7) }} />
+    );
+  }
   // botanical — small leafy sprig
   return (
     <div className={`mx-auto mt-5 flex items-center justify-center gap-2 ${className}`}>
@@ -417,6 +436,218 @@ function HeroLuxe({ theme, config, wedding, names, coupleName, heroDate, locatio
   );
 }
 
+// Reusable anchor-link menu ("button menu") used by nav-driven layouts. Links
+// only render for sections the couple has actually enabled.
+function HeroNav({ theme, config, wedding, publicEvents, monogram, tone = 'onLight' }) {
+  const onDark = tone === 'dark';
+  const linkColor = onDark ? 'rgba(255,255,255,0.82)' : theme.muted;
+  const links = [
+    config.websiteStory?.enabled && config.websiteStory?.text && { href: '#story', label: 'Our Story' },
+    publicEvents.length > 0 && { href: '#events', label: 'Events' },
+    config.websiteRegistry?.enabled && config.websiteRegistry.items.length > 0 && { href: '#registry', label: 'Registry' },
+  ].filter(Boolean);
+  return (
+    <div
+      className="mx-auto flex max-w-6xl items-center justify-between gap-4 border-b pb-5"
+      style={{ borderColor: onDark ? 'rgba(255,255,255,0.18)' : hexToRgba(theme.text, 0.14) }}
+    >
+      <span
+        className="text-lg font-semibold tracking-[0.14em]"
+        style={{ fontFamily: theme.fontFamily, color: onDark ? '#ffffff' : theme.primary }}
+      >
+        {monogram}
+      </span>
+      <nav className="flex items-center gap-5 text-[11px] font-semibold uppercase tracking-[0.28em]">
+        {links.map((link) => (
+          <a key={link.href} href={link.href} className="hidden transition-opacity hover:opacity-70 @sm:inline" style={{ color: linkColor }}>
+            {link.label}
+          </a>
+        ))}
+        {config.websiteRsvp?.enabled && (
+          <Link
+            to={`/rsvp/${wedding?.id}`}
+            className="inline-flex items-center rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] transition-transform hover:-translate-y-0.5"
+            style={onDark ? { backgroundColor: '#ffffff', color: theme.primary } : { backgroundColor: theme.primary, color: '#ffffff' }}
+          >
+            RSVP
+          </Link>
+        )}
+      </nav>
+    </div>
+  );
+}
+
+// classic-rose — a centered invitation with an arched portrait window.
+function HeroArch({ theme, config, wedding, coupleName, initials, heroDate, location, publicEvents }) {
+  const hasPhoto = Boolean(config.websiteHero?.backgroundImage);
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="arch"
+      className="relative isolate overflow-hidden px-6 py-14 @md:px-10 @lg:py-20 @2xl:px-16"
+      style={{
+        color: theme.text,
+        backgroundColor: theme.background,
+        backgroundImage: `radial-gradient(circle at 50% 0%, ${hexToRgba(theme.accent, 0.16)}, transparent 60%)`,
+      }}
+    >
+      <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.5em]" style={{ color: theme.accent }}>
+          Together with their families
+        </p>
+        <div
+          className="relative mt-8 w-64 overflow-hidden border @sm:w-72"
+          style={{
+            borderColor: hexToRgba(theme.accent, 0.5),
+            borderRadius: '9999px 9999px 1.5rem 1.5rem',
+            aspectRatio: '3 / 4',
+            backgroundColor: theme.surface,
+            backgroundImage: hasPhoto
+              ? `url(${config.websiteHero.backgroundImage})`
+              : `linear-gradient(160deg, ${hexToRgba(theme.accent, 0.22)}, ${hexToRgba(theme.primary, 0.14)})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          {!hasPhoto && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-5xl font-semibold" style={{ fontFamily: theme.fontFamily, color: theme.primary }}>{initials}</span>
+            </div>
+          )}
+        </div>
+        <h1 className="mt-9 text-4xl font-semibold leading-tight @sm:text-5xl @xl:text-6xl" style={{ fontFamily: theme.fontFamily }}>
+          {coupleName}
+        </h1>
+        <Divider theme={theme} />
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm" style={{ color: theme.muted }}>
+          <span className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.primary }} />{heroDate || 'Date coming soon'}</span>
+          <span className="hidden h-4 w-px @sm:inline-block" style={{ backgroundColor: hexToRgba(theme.text, 0.2) }} />
+          <span className="inline-flex items-center gap-2"><MapPin size={15} style={{ color: theme.primary }} />{location}</span>
+        </div>
+        {config.websiteHero?.tagline && (
+          <p className="mt-6 max-w-xl text-base leading-8" style={{ color: theme.muted }}>{config.websiteHero.tagline}</p>
+        )}
+        <div className="flex justify-center">
+          <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// marigold-mandap — a bold poster with a top menu and giant date numerals.
+function HeroPoster({ theme, config, wedding, names, coupleName, initials, heroDate, location, publicEvents }) {
+  const rawDate = config.websiteHero?.date || wedding?.weddingDate;
+  const dateObj = rawDate ? new Date(rawDate) : null;
+  const validDate = dateObj && !Number.isNaN(dateObj.getTime());
+  const dd = validDate ? String(dateObj.getDate()).padStart(2, '0') : '00';
+  const mm = validDate ? String(dateObj.getMonth() + 1).padStart(2, '0') : '00';
+  const yyyy = validDate ? dateObj.getFullYear() : '';
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="poster"
+      className="relative isolate overflow-hidden px-6 py-8 @md:px-10 @2xl:px-16"
+      style={{
+        color: theme.text,
+        backgroundColor: theme.background,
+        backgroundImage: `radial-gradient(circle at 88% 6%, ${hexToRgba(theme.accent, 0.28)}, transparent 42%)`,
+      }}
+    >
+      <HeroNav theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} monogram={initials} tone="onLight" />
+      <div className="mx-auto max-w-6xl py-12 @lg:py-16">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.5em]" style={{ color: theme.accent }}>The wedding of</p>
+        <h1 className="mt-6 text-6xl font-normal leading-[0.9] tracking-[-0.01em] @sm:text-7xl @xl:text-[8rem]" style={{ fontFamily: theme.fontFamily }}>
+          {names.first}
+          {names.second && (
+            <>
+              <span className="mx-3" style={{ color: theme.accent }}>&amp;</span>
+              {names.second}
+            </>
+          )}
+        </h1>
+        <div className="mt-10 flex flex-wrap items-end gap-x-8 gap-y-6">
+          <div className="flex items-end gap-3" style={{ color: theme.primary }}>
+            <span className="text-6xl font-semibold leading-none @xl:text-7xl" style={{ fontFamily: theme.fontFamily }}>{dd}</span>
+            <span className="pb-1 text-2xl" style={{ color: theme.accent }}>/</span>
+            <span className="text-6xl font-semibold leading-none @xl:text-7xl" style={{ fontFamily: theme.fontFamily }}>{mm}</span>
+            <span className="pb-1 text-2xl" style={{ color: theme.accent }}>/</span>
+            <span className="text-6xl font-semibold leading-none @xl:text-7xl" style={{ fontFamily: theme.fontFamily }}>{yyyy}</span>
+          </div>
+          <div className="flex flex-col gap-1 border-l pl-6 text-sm" style={{ borderColor: hexToRgba(theme.text, 0.2), color: theme.muted }}>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.3em]" style={{ color: theme.accent }}>Where</span>
+            <span className="inline-flex items-center gap-2 text-base font-medium" style={{ color: theme.text }}><MapPin size={16} style={{ color: theme.primary }} />{location}</span>
+          </div>
+        </div>
+        {config.websiteHero?.tagline && (
+          <p className="mt-8 max-w-xl text-base leading-8" style={{ color: theme.muted }}>{config.websiteHero.tagline}</p>
+        )}
+        <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" />
+      </div>
+    </section>
+  );
+}
+
+// midnight-sangeet — a dark two-column split with a photo/accent panel.
+function HeroSplit({ theme, config, wedding, names, coupleName, initials, heroDate, location, publicEvents }) {
+  const scriptFamily = theme.scriptFontFamily;
+  const hasPhoto = Boolean(config.websiteHero?.backgroundImage);
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="split"
+      className="relative isolate grid overflow-hidden @3xl:grid-cols-2"
+    >
+      {/* left dark panel */}
+      <div
+        className="flex flex-col justify-center px-6 py-16 text-white @md:px-10 @2xl:px-14"
+        style={{ backgroundColor: theme.primary, backgroundImage: theme.heroBackground, backgroundSize: 'cover', backgroundPosition: 'center' }}
+      >
+        <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.4em] text-white/70">
+          <span className="h-px w-8 bg-white/40" />The wedding of
+        </div>
+        {scriptFamily ? (
+          <h1 className="mt-6 leading-none text-white" style={{ fontFamily: scriptFamily, fontSize: 'clamp(3rem, 9vw, 5.5rem)' }}>
+            {names.second ? (<>{names.first} <span style={{ color: theme.accent }}>&amp;</span> {names.second}</>) : coupleName}
+          </h1>
+        ) : (
+          <h1 className="mt-6 text-5xl font-semibold leading-[0.95] @xl:text-6xl" style={{ fontFamily: theme.fontFamily }}>{coupleName}</h1>
+        )}
+        <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/85">
+          <span className="inline-flex items-center gap-2"><CalendarDays size={15} />{heroDate || 'Date coming soon'}</span>
+          <span className="hidden h-4 w-px bg-white/30 @sm:inline-block" />
+          <span className="inline-flex items-center gap-2"><MapPin size={15} />{location}</span>
+        </div>
+        <CountdownTimer targetDate={config.websiteHero?.date || wedding?.weddingDate} theme={theme} variant="inline" />
+        {config.websiteHero?.tagline && (
+          <p className="mt-6 max-w-md text-sm leading-7 text-white/75">{config.websiteHero.tagline}</p>
+        )}
+        <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="light" />
+      </div>
+      {/* right photo / accent panel */}
+      <div
+        className="relative min-h-[280px] @3xl:min-h-full"
+        style={{
+          backgroundColor: theme.surface,
+          backgroundImage: hasPhoto
+            ? `url(${config.websiteHero.backgroundImage})`
+            : `linear-gradient(150deg, ${hexToRgba(theme.accent, 0.35)}, ${hexToRgba(theme.primary, 0.2)})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {!hasPhoto && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="flex h-28 w-28 items-center justify-center rounded-full border-2 text-3xl font-semibold" style={{ borderColor: theme.accent, color: theme.primary, fontFamily: theme.fontFamily, backgroundColor: theme.surface }}>
+              {initials}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function WeddingWebsitePreview({
   wedding,
   config: rawConfig,
@@ -454,6 +685,12 @@ export default function WeddingWebsitePreview({
         return <HeroEditorial {...heroProps} />;
       case 'luxe':
         return <HeroLuxe {...heroProps} />;
+      case 'arch':
+        return <HeroArch {...heroProps} />;
+      case 'poster':
+        return <HeroPoster {...heroProps} />;
+      case 'split':
+        return <HeroSplit {...heroProps} />;
       case 'botanical':
       default:
         return <HeroBotanical {...heroProps} />;
@@ -479,7 +716,7 @@ export default function WeddingWebsitePreview({
 
       <div className="mx-auto max-w-6xl px-6 py-16 @md:px-10 @2xl:px-16">
         {publicEvents.length > 0 && (
-          <section id="events" className="py-6">
+          <section id="events" className="scroll-mt-24 py-6">
             <SectionTitle
               eyebrow="Schedule"
               title="Wedding Weekend"
@@ -578,7 +815,7 @@ export default function WeddingWebsitePreview({
         )}
 
         {config.websiteStory?.enabled && config.websiteStory?.text && (
-          <section className="py-16">
+          <section id="story" className="scroll-mt-24 py-16">
             <SectionTitle
               eyebrow="Our Story"
               title="How It All Began"
@@ -647,7 +884,7 @@ export default function WeddingWebsitePreview({
         )}
 
         {config.websiteRegistry?.enabled && config.websiteRegistry.items.length > 0 && (
-          <section className="py-16">
+          <section id="registry" className="scroll-mt-24 py-16">
             <SectionTitle
               eyebrow="Registry"
               title="Gift Registry"
