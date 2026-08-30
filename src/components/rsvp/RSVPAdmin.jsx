@@ -247,47 +247,37 @@ export default function RSVPAdmin() {
         </div>
       </div>
 
-      {/* Actions row */}
+      {/* Actions row — Export on the left, controls + plan-for on the right */}
       <div className="flex flex-wrap items-center gap-2">
-        {stats.accepted > 0 && (
-          <div
-            className="flex items-center gap-1.5 rounded-lg bg-wine-50 border border-wine-100 px-3 py-1.5 text-xs"
-            title={`Confirmed ${stats.accepted} + ${bufferPct}% planning buffer`}
+        <div className="relative group">
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label="Export RSVP data"
+            aria-expanded={showExport}
+            aria-haspopup="menu"
+            onClick={() => setShowExport((open) => !open)}
           >
-            <span className="text-wine-700 font-semibold">Plan for ~{planHeadcount}</span>
-            <span className="hidden sm:inline text-wine-400">({stats.accepted} confirmed +{bufferPct}%)</span>
+            <Download size={14} /><span className="hidden md:inline">Export</span>
+          </Button>
+          <div
+            role="menu"
+            className={`absolute left-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg transition-all z-20 ${
+              showExport
+                ? 'visible opacity-100'
+                : 'invisible opacity-0 md:group-hover:visible md:group-hover:opacity-100'
+            }`}
+          >
+            <button role="menuitem" onClick={() => { exportResponsesCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+              RSVP log (CSV)
+            </button>
+            <button role="menuitem" onClick={() => { exportDietaryCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
+              Dietary by event (CSV)
+            </button>
           </div>
-        )}
+        </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <div className="relative group">
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label="Export RSVP data"
-              aria-expanded={showExport}
-              aria-haspopup="menu"
-              onClick={() => setShowExport((open) => !open)}
-            >
-              <Download size={14} /><span className="hidden md:inline">Export</span>
-            </Button>
-            <div
-              role="menu"
-              className={`absolute right-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg transition-all z-20 ${
-                showExport
-                  ? 'visible opacity-100'
-                  : 'invisible opacity-0 md:group-hover:visible md:group-hover:opacity-100'
-              }`}
-            >
-              <button role="menuitem" onClick={() => { exportResponsesCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
-                RSVP log (CSV)
-              </button>
-              <button role="menuitem" onClick={() => { exportDietaryCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
-                Dietary by event (CSV)
-              </button>
-            </div>
-          </div>
-
+        <div className="flex flex-wrap items-center gap-2 ml-auto">
           <Button
             variant={isOpen ? 'primary' : 'outline'}
             size="sm"
@@ -304,6 +294,16 @@ export default function RSVPAdmin() {
             <span className="hidden md:inline">Settings</span>
             <span className="md:hidden">Set</span>
           </Button>
+
+          {stats.accepted > 0 && (
+            <div
+              className="flex items-center gap-1.5 rounded-lg bg-wine-50 border border-wine-100 px-3 py-1.5 text-xs"
+              title={`Confirmed ${stats.accepted} + ${bufferPct}% planning buffer`}
+            >
+              <span className="text-wine-700 font-semibold">Plan for ~{planHeadcount}</span>
+              <span className="hidden lg:inline text-wine-400">({stats.accepted} confirmed +{bufferPct}%)</span>
+            </div>
+          )}
         </div>
       </div>
 
