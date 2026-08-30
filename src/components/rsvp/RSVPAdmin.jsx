@@ -247,7 +247,7 @@ export default function RSVPAdmin() {
         </div>
       </div>
 
-      {/* Actions row — Export on the left, controls + plan-for on the right */}
+      {/* Actions row — all controls flow together, plan-for pill at the end */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative group">
           <Button
@@ -277,34 +277,32 @@ export default function RSVPAdmin() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 ml-auto">
-          <Button
-            variant={isOpen ? 'primary' : 'outline'}
-            size="sm"
-            onClick={handleToggleRsvp}
+        <Button
+          variant={isOpen ? 'primary' : 'outline'}
+          size="sm"
+          onClick={handleToggleRsvp}
+        >
+          {isOpen ? 'RSVPs Open' : 'RSVPs Closed'}
+        </Button>
+
+        <Button aria-label="Share RSVP link" variant="outline" size="sm" onClick={() => setShowShare(true)}>
+          <Share2 size={14} /><span className="hidden md:inline">Share Link</span>
+        </Button>
+
+        <Button aria-label="RSVP settings" variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+          <span className="hidden md:inline">Settings</span>
+          <span className="md:hidden">Set</span>
+        </Button>
+
+        {stats.accepted > 0 && (
+          <div
+            className="flex items-center gap-1.5 rounded-lg bg-wine-50 border border-wine-100 px-3 py-1.5 text-xs"
+            title={`Confirmed ${stats.accepted} + ${bufferPct}% planning buffer`}
           >
-            {isOpen ? 'RSVPs Open' : 'RSVPs Closed'}
-          </Button>
-
-          <Button aria-label="Share RSVP link" variant="outline" size="sm" onClick={() => setShowShare(true)}>
-            <Share2 size={14} /><span className="hidden md:inline">Share Link</span>
-          </Button>
-
-          <Button aria-label="RSVP settings" variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-            <span className="hidden md:inline">Settings</span>
-            <span className="md:hidden">Set</span>
-          </Button>
-
-          {stats.accepted > 0 && (
-            <div
-              className="flex items-center gap-1.5 rounded-lg bg-wine-50 border border-wine-100 px-3 py-1.5 text-xs"
-              title={`Confirmed ${stats.accepted} + ${bufferPct}% planning buffer`}
-            >
-              <span className="text-wine-700 font-semibold">Plan for ~{planHeadcount}</span>
-              <span className="hidden lg:inline text-wine-400">({stats.accepted} confirmed +{bufferPct}%)</span>
-            </div>
-          )}
-        </div>
+            <span className="text-wine-700 font-semibold">Plan for ~{planHeadcount}</span>
+            <span className="hidden lg:inline text-wine-400">({stats.accepted} confirmed +{bufferPct}%)</span>
+          </div>
+        )}
       </div>
 
       {/* Filters */}
