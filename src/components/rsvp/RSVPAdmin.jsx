@@ -12,6 +12,7 @@ import {
 } from '../../services/rsvpService';
 import { Button, Modal, Input, Badge, Card } from '../ui';
 import { RSVP_STATUS, DIETARY_OPTIONS } from '../../config/constants';
+import { guestInvitedToEvent } from '../../utils/eventInvites';
 import {
   Copy, ExternalLink, Share2, Check, X, Clock, Users, Mail,
   MessageCircle, Link2, ChevronDown, Filter, Download, Eye, EyeOff,
@@ -40,11 +41,15 @@ export default function RSVPAdmin() {
     return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
   }, [activeWedding]);
 
-  // Compute RSVP stats
+  // Compute RSVP stats. For a specific event, only count guests actually
+  // invited to that event so non-invited guests don't inflate "No Response".
   const stats = useMemo(() => {
-    const result = { total: guests.length, accepted: 0, declined: 0, pending: 0, noResponse: 0, notSeen: 0 };
-    
-    guests.forEach((g) => {
+    const scoped = selectedEvent === 'all'
+      ? guests
+      : guests.filter((g) => guestInvitedToEvent(events.find((e) => e.id === selectedEvent), g.id));
+    const result = { total: scoped.length, accepted: 0, declined: 0, pending: 0, noResponse: 0, notSeen: 0 };
+
+    scoped.forEach((g) => {
       const rsvp = g.rsvpStatus || {};
       if (!g.rsvpViewedAt) result.notSeen++;
       if (selectedEvent === 'all') {
@@ -63,11 +68,16 @@ export default function RSVPAdmin() {
       }
     });
     return result;
-  }, [guests, selectedEvent]);
+  }, [guests, events, selectedEvent]);
 
   // Filter guests
   const filteredGuests = useMemo(() => {
+    const selectedEventObj = selectedEvent === 'all' ? null : events.find((e) => e.id === selectedEvent);
     return guests.filter((g) => {
+      // When viewing a single event, only show guests invited to it — a
+      // non-invited guest has no RSVP to manage there.
+      if (selectedEventObj && !guestInvitedToEvent(selectedEventObj, g.id)) return false;
+
       // Search
       if (search) {
         const name = `${g.firstName} ${g.lastName} ${g.familyName}`.toLowerCase();
@@ -88,7 +98,7 @@ export default function RSVPAdmin() {
 
       return true;
     });
-  }, [guests, search, filterStatus, selectedEvent]);
+  }, [guests, events, search, filterStatus, selectedEvent]);
 
   // Update a guest's RSVP for an event (admin-entered = source "manual")
   const handleSetRsvp = async (guestId, eventId, status) => {
@@ -102,10 +112,14 @@ export default function RSVPAdmin() {
     });
   };
 
-  // Bulk set RSVP for all events (admin-entered = source "manual")
+  // Bulk set RSVP for all INVITED events (admin-entered = source "manual")
   const handleBulkRsvp = async (guestId, status) => {
-    const rsvpStatus = {};
-    events.forEach((evt) => { rsvpStatus[evt.id] = status; });
+    const guest = guests.find((g) => g.id === guestId);
+    if (!guest) return;
+    const rsvpStatus = { ...(guest.rsvpStatus || {}) };
+    events.forEach((evt) => {
+      if (guestInvitedToEvent(evt, guestId)) rsvpStatus[evt.id] = status;
+    });
     await updateGuest(activeWedding.id, guestId, {
       rsvpStatus,
       rsvpMethod: 'manual',
@@ -221,8 +235,8 @@ export default function RSVPAdmin() {
 
   return (
     <div className="space-y-6">
-      {/* Top bar — stats + actions */}
-      <div className="flex flex-wrap items-center gap-2 md:gap-3">
+      {/* Stats row */}
+      <div className="flex flex-wrap items-center gap-2">
         <StatCard label="Total" count={stats.total} color="gray" icon={Users} />
         <StatCard label="Accepted" count={stats.accepted} color="green" icon={Check} />
         <StatCard label="Declined" count={stats.declined} color="red" icon={X} />
@@ -231,63 +245,66 @@ export default function RSVPAdmin() {
           <StatCard label="No Response" count={stats.noResponse} color="gray" icon={Mail} />
           <StatCard label="Not Seen" count={stats.notSeen} color="amber" icon={EyeOff} />
         </div>
+      </div>
 
-        <div className="flex-1" />
-
+      {/* Actions row */}
+      <div className="flex flex-wrap items-center gap-2">
         {stats.accepted > 0 && (
           <div
-            className="hidden lg:flex items-center gap-1.5 rounded-lg bg-wine-50 border border-wine-100 px-3 py-1.5 text-xs"
+            className="flex items-center gap-1.5 rounded-lg bg-wine-50 border border-wine-100 px-3 py-1.5 text-xs"
             title={`Confirmed ${stats.accepted} + ${bufferPct}% planning buffer`}
           >
             <span className="text-wine-700 font-semibold">Plan for ~{planHeadcount}</span>
-            <span className="text-wine-400">({stats.accepted} confirmed +{bufferPct}%)</span>
+            <span className="hidden sm:inline text-wine-400">({stats.accepted} confirmed +{bufferPct}%)</span>
           </div>
         )}
 
-        <div className="relative group">
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label="Export RSVP data"
-            aria-expanded={showExport}
-            aria-haspopup="menu"
-            onClick={() => setShowExport((open) => !open)}
-          >
-            <Download size={14} /> <span className="hidden md:inline">Export</span>
-          </Button>
-          <div
-            role="menu"
-            className={`absolute right-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg transition-all z-20 ${
-              showExport
-                ? 'visible opacity-100'
-                : 'invisible opacity-0 md:group-hover:visible md:group-hover:opacity-100'
-            }`}
-          >
-            <button role="menuitem" onClick={() => { exportResponsesCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
-              RSVP log (CSV)
-            </button>
-            <button role="menuitem" onClick={() => { exportDietaryCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
-              Dietary by event (CSV)
-            </button>
+        <div className="flex items-center gap-2 ml-auto">
+          <div className="relative group">
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label="Export RSVP data"
+              aria-expanded={showExport}
+              aria-haspopup="menu"
+              onClick={() => setShowExport((open) => !open)}
+            >
+              <Download size={14} /><span className="hidden md:inline">Export</span>
+            </Button>
+            <div
+              role="menu"
+              className={`absolute right-0 mt-1 w-52 rounded-lg border border-gray-200 bg-white shadow-lg transition-all z-20 ${
+                showExport
+                  ? 'visible opacity-100'
+                  : 'invisible opacity-0 md:group-hover:visible md:group-hover:opacity-100'
+              }`}
+            >
+              <button role="menuitem" onClick={() => { exportResponsesCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                RSVP log (CSV)
+              </button>
+              <button role="menuitem" onClick={() => { exportDietaryCSV(); setShowExport(false); }} className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-b-lg">
+                Dietary by event (CSV)
+              </button>
+            </div>
           </div>
+
+          <Button
+            variant={isOpen ? 'primary' : 'outline'}
+            size="sm"
+            onClick={handleToggleRsvp}
+          >
+            {isOpen ? 'RSVPs Open' : 'RSVPs Closed'}
+          </Button>
+
+          <Button aria-label="Share RSVP link" variant="outline" size="sm" onClick={() => setShowShare(true)}>
+            <Share2 size={14} /><span className="hidden md:inline">Share Link</span>
+          </Button>
+
+          <Button aria-label="RSVP settings" variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+            <span className="hidden md:inline">Settings</span>
+            <span className="md:hidden">Set</span>
+          </Button>
         </div>
-
-        <Button
-          variant={isOpen ? 'primary' : 'outline'}
-          size="sm"
-          onClick={handleToggleRsvp}
-        >
-          {isOpen ? 'RSVPs Open' : 'RSVPs Closed'}
-        </Button>
-
-        <Button aria-label="Share RSVP link" variant="outline" size="sm" onClick={() => setShowShare(true)}>
-          <Share2 size={14} /> <span className="hidden md:inline">Share Link</span>
-        </Button>
-
-        <Button aria-label="RSVP settings" variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-          <span className="hidden md:inline">Settings</span>
-          <span className="md:hidden">Set</span>
-        </Button>
       </div>
 
       {/* Filters */}
@@ -367,12 +384,20 @@ export default function RSVPAdmin() {
                   </td>
                   {(selectedEvent === 'all' ? events : events.filter((e) => e.id === selectedEvent)).map((evt) => {
                     const status = (guest.rsvpStatus || {})[evt.id];
+                    const invited = guestInvitedToEvent(evt, guest.id);
                     return (
                       <td key={evt.id} className="text-center px-3 py-2.5">
-                        <RsvpToggle
-                          status={status}
-                          onChange={(s) => handleSetRsvp(guest.id, evt.id, s)}
-                        />
+                        {invited ? (
+                          <RsvpToggle
+                            status={status}
+                            onChange={(s) => handleSetRsvp(guest.id, evt.id, s)}
+                          />
+                        ) : (
+                          <div className="relative inline-flex flex-col items-center" title="Not invited to this event">
+                            <RsvpToggle disabled />
+                            <span className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-300">Not invited</span>
+                          </div>
+                        )}
                       </td>
                     );
                   })}
@@ -437,6 +462,18 @@ export default function RSVPAdmin() {
               <div className="flex flex-wrap gap-1.5">
                 {(selectedEvent === 'all' ? events : events.filter((e) => e.id === selectedEvent)).map((evt) => {
                   const status = (guest.rsvpStatus || {})[evt.id];
+                  const invited = guestInvitedToEvent(evt, guest.id);
+                  if (!invited) {
+                    return (
+                      <span
+                        key={evt.id}
+                        className="text-xs px-2.5 py-1 rounded-full font-medium bg-gray-50 text-gray-300 blur-[1px] opacity-60 select-none"
+                        title="Not invited to this event"
+                      >
+                        {evt.name}: Not invited
+                      </span>
+                    );
+                  }
                   return (
                     <button
                       key={evt.id}
@@ -617,12 +654,24 @@ function StatCard({ label, count, color, icon: Icon }) {
   );
 }
 
-function RsvpToggle({ status, onChange }) {
+function RsvpToggle({ status, onChange, disabled = false }) {
   const options = [
     { value: 'accepted', label: '✓', bg: 'bg-green-500 text-white', hover: 'hover:bg-green-100' },
     { value: 'pending', label: '?', bg: 'bg-amber-500 text-white', hover: 'hover:bg-amber-100' },
     { value: 'declined', label: '✗', bg: 'bg-red-500 text-white', hover: 'hover:bg-red-100' },
   ];
+
+  if (disabled) {
+    return (
+      <div className="inline-flex rounded-full border border-gray-200 overflow-hidden opacity-40 blur-[1.5px] pointer-events-none select-none" aria-hidden="true">
+        {options.map((opt) => (
+          <span key={opt.value} className="w-7 h-7 flex items-center justify-center text-xs font-bold bg-white text-gray-300">
+            {opt.label}
+          </span>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="inline-flex rounded-full border border-gray-200 overflow-hidden">
