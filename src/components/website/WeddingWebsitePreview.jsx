@@ -487,8 +487,6 @@ export default function WeddingWebsitePreview({
 
       {renderHero()}
 
-                >
-                  {config.websiteRsvp.buttonText}
       <div className="mx-auto max-w-6xl px-6 py-16 @md:px-10 @2xl:px-16">
         {publicEvents.length > 0 && (
           <section id="events" className="py-6">
