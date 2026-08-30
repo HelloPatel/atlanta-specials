@@ -4,6 +4,7 @@ import { subscribeToGuests } from '../../services/guestService';
 import { subscribeToEvents } from '../../services/eventService';
 import { subscribeToSeating } from '../../services/seatingService';
 import { generatePlaceCardsPDF, generateTableAssignmentPDF, generateGuestListPDF } from './pdfGenerators';
+import { resolveWebsiteTheme, normalizeWebsiteConfig } from '../website/websiteThemes';
 import { Button, Card, useToast } from '../ui';
 import { Printer, Download, CreditCard, List, Grid3X3, Eye } from 'lucide-react';
 
@@ -20,7 +21,9 @@ export default function PrintCenter() {
   const [showTable, setShowTable] = useState(true);
   const [showDietary, setShowDietary] = useState(true);
   const [showFamily, setShowFamily] = useState(false);
-  const [cardStyle, setCardStyle] = useState('elegant');
+
+  // Place cards + other exports follow the chosen wedding website theme.
+  const websiteTheme = activeWedding ? resolveWebsiteTheme(normalizeWebsiteConfig(activeWedding)) : null;
 
   useEffect(() => {
     if (!activeWedding) return;
@@ -52,11 +55,10 @@ export default function PrintCenter() {
     setGenerating('placecards');
     try {
       const doc = generatePlaceCardsPDF(seatedGuests, {
-        eventName: events.find((e) => e.id === selectedEventId)?.name || '',
         showTable,
         showDietary,
         showFamily,
-        cardStyle,
+        theme: websiteTheme,
       });
       doc.save(`place-cards-${selectedEventId || 'all'}.pdf`);
     } catch (err) {
@@ -126,19 +128,14 @@ export default function PrintCenter() {
           </div>
 
           <div className="space-y-2 mb-4">
-            <label className="text-xs font-medium text-gray-600 block">Style</label>
-            <div className="flex gap-1">
-              {['elegant', 'modern', 'minimal'].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setCardStyle(s)}
-                  className={`px-3 py-1 rounded-full text-xs capitalize transition-colors ${
-                    cardStyle === s ? 'bg-wine-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2">
+              <span
+                className="h-4 w-4 rounded-full border border-gray-200"
+                style={{ backgroundColor: websiteTheme?.primary || '#7c2d12' }}
+              />
+              <span className="text-xs text-gray-500">
+                Styled to your <span className="font-medium text-gray-700">{websiteTheme?.name || 'website'}</span> theme
+              </span>
             </div>
 
             <div className="space-y-1.5 pt-1">

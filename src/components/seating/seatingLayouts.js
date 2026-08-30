@@ -66,14 +66,19 @@ export function generateReceptionLayout(totalTables, venueWidth = 1400) {
     label: 'Bride & Groom',
   });
 
-  // Round tables, filled row by row: [left-1, left-2, right-1, right-2].
+  // Round tables: odd numbers fill the LEFT half, even numbers the RIGHT half,
+  // so guests reading table numbers see 1,3,5… on one side and 2,4,6… on the other.
   const colOrder = [leftCols[0], leftCols[1], rightCols[0], rightCols[1]];
+  let oddNum = -1;
+  let evenNum = 0;
   for (let i = 0; i < regularTables; i++) {
     const row = Math.floor(i / 4);
     const col = i % 4;
+    const isLeft = col < 2;
+    const num = isLeft ? (oddNum += 2) : (evenNum += 2);
     tables.push({
-      id: `table-${i + 1}`,
-      name: `Table ${i + 1}`,
+      id: `table-${num}`,
+      name: `Table ${num}`,
       x: colOrder[col],
       y: rowStartY + row * rowSpacing,
       width: 120,
@@ -215,18 +220,18 @@ export const VENUE_LAYOUTS = (() => {
       tables: [
         { name: 'Head Table', shape: 'head-table', capacity: 12, width: 340, height: 60, x: 730, y: 60 },
         ...(() => {
-          const t = []; let n = 0;
-          // Left side — 2 staggered columns × 7 rows (close to dance floor)
+          const t = []; let odd = -1, even = 0;
+          // Left side — ODD-numbered tables, 2 staggered columns × 7 rows
           for (let r = 0; r < 7; r++) {
             const stagger = r % 2 === 1 ? 50 : 0;
-            t.push({ ...round10, name: `Table ${++n}`, x: 80 + stagger, y: 220 + r * S });
-            t.push({ ...round10, name: `Table ${++n}`, x: 280 + stagger, y: 220 + r * S });
+            t.push({ ...round10, name: `Table ${odd += 2}`, x: 80 + stagger, y: 220 + r * S });
+            t.push({ ...round10, name: `Table ${odd += 2}`, x: 280 + stagger, y: 220 + r * S });
           }
-          // Right side — 2 staggered columns × 7 rows
+          // Right side — EVEN-numbered tables, 2 staggered columns × 7 rows
           for (let r = 0; r < 7; r++) {
             const stagger = r % 2 === 1 ? -50 : 0;
-            t.push({ ...round10, name: `Table ${++n}`, x: 1300 + stagger, y: 220 + r * S });
-            t.push({ ...round10, name: `Table ${++n}`, x: 1500 + stagger, y: 220 + r * S });
+            t.push({ ...round10, name: `Table ${even += 2}`, x: 1300 + stagger, y: 220 + r * S });
+            t.push({ ...round10, name: `Table ${even += 2}`, x: 1500 + stagger, y: 220 + r * S });
           }
           return t.slice(0, 28);
         })(),
@@ -247,18 +252,18 @@ export const VENUE_LAYOUTS = (() => {
       tables: [
         { name: 'Head Table', shape: 'head-table', capacity: 10, width: 300, height: 60, x: 650, y: 60 },
         ...(() => {
-          const t = []; let n = 0;
-          // Left side staggered (2 cols × 5 rows)
+          const t = []; let odd = -1, even = 0;
+          // Left side — ODD-numbered (2 cols × 5 rows)
           for (let r = 0; r < 5; r++) {
             const stagger = r % 2 === 1 ? 40 : 0;
-            t.push({ ...round8, name: `Table ${++n}`, x: 80 + stagger, y: 220 + r * S });
-            t.push({ ...round8, name: `Table ${++n}`, x: 280 + stagger, y: 220 + r * S });
+            t.push({ ...round8, name: `Table ${odd += 2}`, x: 80 + stagger, y: 220 + r * S });
+            t.push({ ...round8, name: `Table ${odd += 2}`, x: 280 + stagger, y: 220 + r * S });
           }
-          // Right side staggered (2 cols × 5 rows)
+          // Right side — EVEN-numbered (2 cols × 5 rows)
           for (let r = 0; r < 5; r++) {
             const stagger = r % 2 === 1 ? -40 : 0;
-            t.push({ ...round8, name: `Table ${++n}`, x: 1180 + stagger, y: 220 + r * S });
-            t.push({ ...round8, name: `Table ${++n}`, x: 1380 + stagger, y: 220 + r * S });
+            t.push({ ...round8, name: `Table ${even += 2}`, x: 1180 + stagger, y: 220 + r * S });
+            t.push({ ...round8, name: `Table ${even += 2}`, x: 1380 + stagger, y: 220 + r * S });
           }
           return t.slice(0, 20);
         })(),
@@ -300,14 +305,14 @@ export const VENUE_LAYOUTS = (() => {
       icon: Cake,
       tables: [
         { name: 'Sweetheart', shape: 'round', capacity: 2, width: 70, height: 70, x: 650, y: 60 },
-        // Left staggered (5)
+        // Left staggered — ODD numbers (1,3,5,7,9)
         ...Array.from({ length: 5 }, (_, i) => ({
-          ...round8, name: `Table ${i + 1}`,
+          ...round8, name: `Table ${i * 2 + 1}`,
           x: 150 + (i % 2 === 1 ? 40 : 0), y: 220 + i * S,
         })),
-        // Right staggered (5)
+        // Right staggered — EVEN numbers (2,4,6,8,10)
         ...Array.from({ length: 5 }, (_, i) => ({
-          ...round8, name: `Table ${i + 6}`,
+          ...round8, name: `Table ${i * 2 + 2}`,
           x: 1050 - (i % 2 === 1 ? 40 : 0), y: 220 + i * S,
         })),
       ],
@@ -325,23 +330,23 @@ export const VENUE_LAYOUTS = (() => {
         { name: 'Estate Left', shape: 'rectangle', capacity: 14, width: 70, height: 300, x: 550, y: 1200 },
         { name: 'Estate Center', shape: 'rectangle', capacity: 16, width: 360, height: 70, x: 720, y: 1550 },
         { name: 'Estate Right', shape: 'rectangle', capacity: 14, width: 70, height: 300, x: 1180, y: 1200 },
-        // Left side staggered rounds (2 cols × 5 rows = 10)
+        // Left side staggered rounds — ODD numbers (2 cols × 5 rows = 10)
         ...(() => {
-          const t = []; let n = 0;
+          const t = []; let odd = -1;
           for (let r = 0; r < 5; r++) {
             const stagger = r % 2 === 1 ? 40 : 0;
-            t.push({ ...round10, name: `Table ${++n}`, x: 60 + stagger, y: 220 + r * S });
-            t.push({ ...round10, name: `Table ${++n}`, x: 260 + stagger, y: 220 + r * S });
+            t.push({ ...round10, name: `Table ${odd += 2}`, x: 60 + stagger, y: 220 + r * S });
+            t.push({ ...round10, name: `Table ${odd += 2}`, x: 260 + stagger, y: 220 + r * S });
           }
           return t;
         })(),
-        // Right side staggered rounds (2 cols × 5 rows = 10)
+        // Right side staggered rounds — EVEN numbers (2 cols × 5 rows = 10)
         ...(() => {
-          const t = []; let n = 10;
+          const t = []; let even = 0;
           for (let r = 0; r < 5; r++) {
             const stagger = r % 2 === 1 ? -40 : 0;
-            t.push({ ...round10, name: `Table ${++n}`, x: 1400 + stagger, y: 220 + r * S });
-            t.push({ ...round10, name: `Table ${++n}`, x: 1600 + stagger, y: 220 + r * S });
+            t.push({ ...round10, name: `Table ${even += 2}`, x: 1400 + stagger, y: 220 + r * S });
+            t.push({ ...round10, name: `Table ${even += 2}`, x: 1600 + stagger, y: 220 + r * S });
           }
           return t;
         })(),

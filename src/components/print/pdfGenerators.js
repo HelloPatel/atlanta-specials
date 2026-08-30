@@ -1,114 +1,131 @@
 import { jsPDF } from 'jspdf';
 
+// Convert a #rrggbb hex string to an [r, g, b] array for jsPDF color setters.
+// Falls back to a soft charcoal for malformed input.
+function hexToRgb(hex, fallback = [40, 40, 40]) {
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex || '')) return fallback;
+  const n = hex.slice(1);
+  return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)];
+}
+
+// Map a website theme's display font to one of jsPDF's built-in faces. All of
+// the wedding display fonts are serifs, so serif → 'times', otherwise helvetica.
+function themeFonts(theme) {
+  const family = (theme?.fontFamily || '').toLowerCase();
+  const serif = family.includes('serif') || family.includes('georgia') || !family;
+  return { name: serif ? 'times' : 'helvetica', body: 'helvetica' };
+}
+
 // ─── Place Cards PDF ────────────────────────────────────────────────────────
-// Generates printable place cards (tent-fold style) on letter/A4 paper
-// Layout: 2 columns × 5 rows = 10 cards per page
+// Tent-fold place cards: fold the sheet along the dashed center crease so the
+// card stands like a ∧. The lower half prints right-side-up (front face) and the
+// upper half prints upside-down so it reads correctly once folded over the back.
+// Layout: 2 columns × 5 rows = 10 cards per page. Colors + fonts follow the
+// wedding website theme when one is supplied.
 
 export function generatePlaceCardsPDF(guests, options = {}) {
   const {
-    eventName = '',
     showTable = true,
     showDietary = true,
     showFamily = false,
-    cardStyle = 'elegant', // 'elegant' | 'modern' | 'minimal'
     paperSize = 'letter',  // 'letter' | 'a4'
+    theme = null,          // resolved website theme (websiteThemes.resolveWebsiteTheme)
   } = options;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: paperSize });
 
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const margin = 10;
+  const margin = 12;
   const cols = 2;
   const rows = 5;
-  const cardW = (pageW - margin * 2 - 5) / cols;
-  const cardH = (pageH - margin * 2 - 4 * 2) / rows;
-  const gap = 2;
+  const gap = 4;
+  const cardW = (pageW - margin * 2 - gap * (cols - 1)) / cols;
+  const cardH = (pageH - margin * 2 - gap * (rows - 1)) / rows;
 
-  const styles = {
-    elegant: { nameSize: 14, subSize: 8, nameFontStyle: 'bold', borderColor: [180, 130, 100] },
-    modern: { nameSize: 13, subSize: 8, nameFontStyle: 'bold', borderColor: [100, 100, 100] },
-    minimal: { nameSize: 12, subSize: 7, nameFontStyle: 'normal', borderColor: [200, 200, 200] },
-  };
-  const style = styles[cardStyle] || styles.elegant;
+  const fonts = themeFonts(theme);
+  const nameColor = hexToRgb(theme?.primary || theme?.text, [45, 45, 45]);
+  const subColor = hexToRgb(theme?.muted, [120, 120, 120]);
+  const borderColor = hexToRgb(theme?.accent, [190, 160, 130]);
+  const nameSize = 15;
+  const subSize = 8.5;
 
-  let cardIndex = 0;
-
-  guests.forEach((guest) => {
-    if (cardIndex > 0 && cardIndex % (cols * rows) === 0) {
-      doc.addPage();
+  const buildSub = (guest) => {
+    const parts = [];
+    if (showTable && guest.tableName) parts.push(`Table ${guest.tableName}`);
+    if (showDietary && guest.dietary && guest.dietary !== 'non-veg') {
+      const labels = { vegetarian: 'Vegetarian', vegan: 'Vegan', jain: 'Jain' };
+      parts.push(labels[guest.dietary] || guest.dietary);
     }
+    if (showFamily && guest.familyName) parts.push(guest.familyName);
+    return parts.join('   ·   ');
+  };
 
-    const posInPage = cardIndex % (cols * rows);
+  // Approx. vertical nudge (mm) to visually center a single line of cap-height
+  // text on its anchor. 1pt ≈ 0.3528mm; cap height ≈ 0.7em, half of that centers.
+  const nameNudge = nameSize * 0.3528 * 0.35;
+  const subNudge = subSize * 0.3528 * 0.35;
+
+  guests.forEach((guest, i) => {
+    if (i > 0 && i % (cols * rows) === 0) doc.addPage();
+
+    const posInPage = i % (cols * rows);
     const col = posInPage % cols;
     const row = Math.floor(posInPage / cols);
     const x = margin + col * (cardW + gap);
     const y = margin + row * (cardH + gap);
 
-    // Card border
-    doc.setDrawColor(...style.borderColor);
-    doc.setLineWidth(0.3);
-    doc.roundedRect(x, y, cardW, cardH, 2, 2);
+    const centerX = x + cardW / 2;
+    const yMid = y + cardH / 2;
+    const fullName = `${guest.firstName || ''} ${guest.lastName || ''}`.trim();
+    const sub = buildSub(guest);
 
-    // Fold line (dashed)
-    doc.setLineDashPattern([1, 1], 0);
-    doc.setDrawColor(200, 200, 200);
-    doc.line(x + 3, y + cardH / 2, x + cardW - 3, y + cardH / 2);
+    // Card border
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(x, y, cardW, cardH, 2.5, 2.5);
+
+    // Center fold crease (dashed, subtle)
+    doc.setLineDashPattern([1.2, 1.2], 0);
+    doc.setDrawColor(210, 210, 210);
+    doc.setLineWidth(0.2);
+    doc.line(x + 4, yMid, x + cardW - 4, yMid);
     doc.setLineDashPattern([], 0);
 
-    // Guest name (centered on top half)
-    const centerX = x + cardW / 2;
-    const topCenterY = y + cardH / 4;
+    // ── Bottom half: front face, right-side up ──
+    const frontNameY = y + cardH * 0.70;
+    doc.setFont(fonts.name, 'bold');
+    doc.setFontSize(nameSize);
+    doc.setTextColor(...nameColor);
+    doc.text(fullName, centerX, frontNameY + nameNudge, { align: 'center' });
 
-    doc.setFont('helvetica', style.nameFontStyle);
-    doc.setFontSize(style.nameSize);
-    doc.setTextColor(40, 40, 40);
-    doc.text(`${guest.firstName} ${guest.lastName}`, centerX, topCenterY, { align: 'center' });
-
-    // Subtitle line(s)
-    let subY = topCenterY + 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(style.subSize);
-    doc.setTextColor(120, 120, 120);
-
-    const subParts = [];
-    if (showTable && guest.tableName) subParts.push(`Table: ${guest.tableName}`);
-    if (showDietary && guest.dietary && guest.dietary !== 'non-veg') {
-      const labels = { vegetarian: 'Veg', vegan: 'Vegan', jain: 'Jain' };
-      subParts.push(labels[guest.dietary] || guest.dietary);
+    if (sub) {
+      doc.setFont(fonts.body, 'normal');
+      doc.setFontSize(subSize);
+      doc.setTextColor(...subColor);
+      doc.text(sub, centerX, frontNameY + 6 + subNudge, { align: 'center' });
     }
-    if (showFamily && guest.familyName) subParts.push(guest.familyName);
+    // Small accent rule under the front name
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.3);
+    doc.line(centerX - 10, frontNameY - 6, centerX + 10, frontNameY - 6);
 
-    if (subParts.length > 0) {
-      doc.text(subParts.join('  ·  '), centerX, subY, { align: 'center' });
+    // ── Top half: back face, upside down (angle 180) ──
+    const backNameY = y + cardH * 0.30;
+    doc.setFont(fonts.name, 'bold');
+    doc.setFontSize(nameSize);
+    doc.setTextColor(...nameColor);
+    doc.text(fullName, centerX, backNameY - nameNudge, { align: 'center', angle: 180 });
+
+    if (sub) {
+      doc.setFont(fonts.body, 'normal');
+      doc.setFontSize(subSize);
+      doc.setTextColor(...subColor);
+      doc.text(sub, centerX, backNameY - 6 - subNudge, { align: 'center', angle: 180 });
     }
-
-    // Bottom half — same name upside down (tent fold)
-    doc.saveGraphicsState();
-    const bottomCenterY = y + cardH * 0.75;
-    doc.setFont('helvetica', style.nameFontStyle);
-    doc.setFontSize(style.nameSize);
-    doc.setTextColor(40, 40, 40);
-
-    // Rotate 180° around the bottom-half center point
-    const angle = 180;
-    doc.text(`${guest.firstName} ${guest.lastName}`, centerX, bottomCenterY, {
-      align: 'center',
-      angle,
-    });
-
-    if (subParts.length > 0) {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(style.subSize);
-      doc.setTextColor(120, 120, 120);
-      doc.text(subParts.join('  ·  '), centerX, bottomCenterY - 5, {
-        align: 'center',
-        angle,
-      });
-    }
-    doc.restoreGraphicsState();
-
-    cardIndex++;
+    doc.setDrawColor(...borderColor);
+    doc.setLineWidth(0.3);
+    doc.line(centerX - 10, backNameY + 6, centerX + 10, backNameY + 6);
   });
 
   return doc;
