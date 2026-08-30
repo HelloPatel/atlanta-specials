@@ -348,7 +348,7 @@ function appendTableAssignments(doc, tables, guests, options = {}, addFirstPage 
 // Full alphabetical guest list with RSVP status per event
 
 export function generateGuestListPDF(guests, events, options = {}) {
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 12;
@@ -364,16 +364,16 @@ export function generateGuestListPDF(guests, events, options = {}) {
   doc.text(`${guests.length} guests · ${events.length} events · ${new Date().toLocaleDateString()}`, margin, y + 10);
   y += 16;
 
-  // Header row
+  // Header row — column widths tuned to fit letter *portrait* width (~192mm usable)
   const colWidths = {
-    num: 8,
-    name: 45,
-    family: 30,
-    side: 15,
-    dietary: 20,
-    phone: 30,
+    num: 7,
+    name: 42,
+    family: 26,
+    side: 10,
+    dietary: 14,
+    phone: 26,
   };
-  const eventColW = Math.min(25, (pageW - margin * 2 - Object.values(colWidths).reduce((a, b) => a + b, 0)) / Math.max(events.length, 1));
+  const eventColW = Math.min(18, (pageW - margin * 2 - Object.values(colWidths).reduce((a, b) => a + b, 0)) / Math.max(events.length, 1));
 
   doc.setFillColor(240, 240, 240);
   doc.rect(margin, y, pageW - margin * 2, 7, 'F');
@@ -389,7 +389,7 @@ export function generateGuestListPDF(guests, events, options = {}) {
   doc.text('Diet', hx, y + 5); hx += colWidths.dietary;
   doc.text('Phone', hx, y + 5); hx += colWidths.phone;
   events.forEach((evt) => {
-    doc.text(evt.name.substring(0, 12), hx, y + 5);
+    doc.text((evt.name || '').substring(0, 8), hx, y + 5);
     hx += eventColW;
   });
   y += 9;

@@ -210,7 +210,7 @@ export default function PrintCenter() {
           </div>
 
           <p className="text-xs text-gray-500 mb-4">
-            Landscape PDF with all guests sorted alphabetically. Includes family,
+            Letter-size PDF with all guests sorted alphabetically. Includes family,
             side, dietary, phone, and RSVP status per event. Great for check-in at the door.
           </p>
 
