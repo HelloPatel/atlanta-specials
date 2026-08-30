@@ -48,13 +48,18 @@ export default function Sidebar({ onNavigate, mobile = false }) {
         mobile ? 'w-[min(20rem,88vw)]' : collapsed ? 'w-16' : 'w-60'
       }`}
     >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
+      {/* Logo → home (dashboard) */}
+      <NavLink
+        to="/dashboard"
+        onClick={onNavigate}
+        aria-label={`${APP_NAME} home`}
+        className="flex items-center gap-3 px-4 py-5 border-b border-gray-100 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-wine-600"
+      >
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-wine-700 to-wine-900 text-white font-display font-bold text-sm shadow-sm">
           P
         </div>
         {!collapsed && <span className="text-lg font-display font-bold text-gray-900 tracking-tight">{APP_NAME}</span>}
-      </div>
+      </NavLink>
 
       {/* Wedding name */}
       {!collapsed && activeWedding && (
