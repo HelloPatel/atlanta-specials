@@ -25,7 +25,7 @@ const SHAPE_DEFAULTS = {
   custom: { width: 150, height: 100, capacity: 10 },
 };
 
-export default function TableComponent({ table, guests, warnings = [], selected = false, onUpdate, onRemove, onDrag, onRemoveGuest, onOpenDetail }) {
+export default function TableComponent({ table, guests, warnings = [], selected = false, onUpdate, onRemove, onDrag, onRemoveGuest, onOpenDetail, zoom = 1 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const dragStart = useRef(null);
@@ -46,20 +46,21 @@ export default function TableComponent({ table, guests, warnings = [], selected 
     e.stopPropagation();
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-    const startPos = { x: clientX, y: clientY };
+    // Capture pointer origin AND table origin once, then drive the table from the
+    // ABSOLUTE cursor offset. This keeps the grab point locked under the cursor even
+    // when collision clamps the table, so cursor and table never desync.
+    const origin = { px: clientX, py: clientY, tx: table.x || 0, ty: table.y || 0 };
+    const z = zoom || 1;
     let moved = false;
 
     const handleMove = (me) => {
       const cx = me.touches ? me.touches[0].clientX : me.clientX;
       const cy = me.touches ? me.touches[0].clientY : me.clientY;
-      const dx = cx - startPos.x;
-      const dy = cy - startPos.y;
-      if (!moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+      if (!moved && Math.abs(cx - origin.px) < 4 && Math.abs(cy - origin.py) < 4) return;
       moved = true;
-      const prevX = dragStart.current?.x || startPos.x;
-      const prevY = dragStart.current?.y || startPos.y;
-      dragStart.current = { x: cx, y: cy };
-      onDrag(cx - prevX, cy - prevY);
+      const nextX = origin.tx + (cx - origin.px) / z;
+      const nextY = origin.ty + (cy - origin.py) / z;
+      onDrag(nextX, nextY);
     };
 
     const handleUp = (ue) => {
@@ -74,12 +75,12 @@ export default function TableComponent({ table, guests, warnings = [], selected 
       }
     };
 
-    dragStart.current = startPos;
+    dragStart.current = origin;
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', handleUp);
     window.addEventListener('touchmove', handleMove, { passive: false });
     window.addEventListener('touchend', handleUp);
-  }, [onDrag]);
+  }, [onDrag, zoom, table.x, table.y]);
 
   const startEdit = () => {
     setEditForm({

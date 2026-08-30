@@ -681,22 +681,22 @@ export default function SeatingCanvas() {
     window.removeEventListener('mouseup', handlePanEnd);
   }, [handlePanMove, handlePanEnd]);
 
-  // Table position drag via grip handle — collision-aware (no overlap allowed)
-  const handleTableDrag = useCallback((tableId, deltaX, deltaY) => {
+  // Table position drag via grip handle — absolute positioning + collision-aware
+  // (no overlap allowed). Absolute coords keep the grabbed point locked under the
+  // cursor even when a collision clamps the table, so they never desync.
+  const handleTableMove = useCallback((tableId, absX, absY) => {
     setTables((prev) => {
       const moving = prev.find((t) => t.id === tableId);
       if (!moving) return prev;
-      const proposedX = (moving.x || 0) + deltaX / zoom;
-      const proposedY = (moving.y || 0) + deltaY / zoom;
       const obstacles = [
         ...prev.filter((t) => t.id !== tableId).map((t) => itemBox(t, 'table')),
         ...zones.map((z) => itemBox(z, 'zone')),
       ];
-      const { x, y } = resolveNoOverlap('table', moving.width, moving.height, proposedX, proposedY, obstacles);
+      const { x, y } = resolveNoOverlap('table', moving.width, moving.height, absX, absY, obstacles);
       return prev.map((t) => (t.id === tableId ? { ...t, x, y } : t));
     });
     setHasChanges(true);
-  }, [zoom, zones]);
+  }, [zones]);
 
   // Zone position drag — absolute positioning + collision-aware (no overlap)
   const handleZoneMove = useCallback((zoneId, absX, absY) => {
@@ -1000,7 +1000,8 @@ export default function SeatingCanvas() {
                     selected={detailTableId === table.id}
                     onUpdate={(updates) => updateTable(table.id, updates)}
                     onRemove={() => removeTable(table.id)}
-                    onDrag={(dx, dy) => handleTableDrag(table.id, dx, dy)}
+                    onDrag={(x, y) => handleTableMove(table.id, x, y)}
+                    zoom={zoom}
                     onOpenDetail={() => setDetailTableId(table.id)}
                     onRemoveGuest={(guestId) => {
                       setTables((prev) => prev.map((t) =>
