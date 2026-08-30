@@ -19,6 +19,7 @@ import { generateReceptionLayout, generateStaggeredLayout, VENUE_LAYOUTS } from 
 import { loadFloorPlan, FLOOR_PLAN_ACCEPT } from './floorPlanImport';
 import { itemBox, resolveNoOverlap } from './seatingCollision';
 import { isIndividualSeat } from './seatingSeat';
+import { guestInvitedToEvent } from '../../utils/eventInvites';
 import TableDetailModal from './TableDetailModal';
 import {
   createQuickTableConfigs,
@@ -64,6 +65,7 @@ export default function SeatingCanvas() {
   const [showPresets, setShowPresets] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [customTable, setCustomTable] = useState({ name: '', shape: 'round', capacity: 10, width: 120, height: 120 });
   const [venueImage, setVenueImage] = useState(null);
   const [venueOpacity, setVenueOpacity] = useState(0.3);
@@ -81,6 +83,7 @@ export default function SeatingCanvas() {
   const panState = useRef(null);
   const [isPanning, setIsPanning] = useState(false);
   const qrPrintRef = useRef(null);
+  const exportMenuRef = useRef(null);
   const shouldFitRef = useRef(false);
   const fittedEventRef = useRef(null);
   const pendingScrollRef = useRef(null);
@@ -129,23 +132,37 @@ export default function SeatingCanvas() {
     return ids;
   }, [tables]);
 
+  const selectedEvent = useMemo(
+    () => events.find((event) => event.id === selectedEventId) || null,
+    [events, selectedEventId],
+  );
+
+  // Only guests invited to the selected event belong on this event's seating
+  // chart. Keeps seating connected to the event's invite list (inviteAll /
+  // guestIds), the same source of truth used by RSVP, the website, and counts.
+  const eventGuests = useMemo(() => {
+    if (!selectedEvent) return guests;
+    return guests.filter((g) => guestInvitedToEvent(selectedEvent, g.id));
+  }, [guests, selectedEvent]);
+
   const unassignedGuests = useMemo(() => {
-    return guests.filter((g) => {
+    return eventGuests.filter((g) => {
       if (assignedGuestIds.has(g.id)) return false;
       if (filterSide !== 'all' && g.side !== filterSide) return false;
       if (filterFamily !== 'all' && g.familyName !== filterFamily) return false;
       return true;
     });
-  }, [guests, assignedGuestIds, filterSide, filterFamily]);
+  }, [eventGuests, assignedGuestIds, filterSide, filterFamily]);
+
+  // Guests actually seated for this event (assigned AND invited to it).
+  const seatedEventCount = useMemo(
+    () => eventGuests.reduce((n, g) => n + (assignedGuestIds.has(g.id) ? 1 : 0), 0),
+    [eventGuests, assignedGuestIds],
+  );
 
   const families = useMemo(() => {
-    return [...new Set(guests.map((g) => g.familyName).filter(Boolean))].sort();
-  }, [guests]);
-
-  const selectedEvent = useMemo(
-    () => events.find((event) => event.id === selectedEventId) || null,
-    [events, selectedEventId],
-  );
+    return [...new Set(eventGuests.map((g) => g.familyName).filter(Boolean))].sort();
+  }, [eventGuests]);
 
   const finderLink = useMemo(() => {
     if (typeof window === 'undefined' || !activeWedding?.id || !selectedEventId) return '';
@@ -188,6 +205,18 @@ export default function SeatingCanvas() {
       // Clipboard API unavailable — ignore.
     }
   }, [finderLink]);
+
+  // Close the Export dropdown when clicking outside of it.
+  useEffect(() => {
+    if (!showExportMenu) return undefined;
+    const handleClick = (e) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showExportMenu]);
 
   const handlePrintQr = useCallback(() => {
     if (!finderLink || !qrPrintRef.current) return;
@@ -843,17 +872,44 @@ export default function SeatingCanvas() {
               </Button>
             )}
 
-            <Button variant="outline" size="sm" onClick={() => setShowQrModal(true)} disabled={!selectedEventId}>
-              <QrCode size={14} /> QR Code
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={handleExportSeating} disabled={tables.length === 0}>
-              <FileSpreadsheet size={14} /> Export
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={handleDownloadPdf} disabled={tables.length === 0 || isDownloadingPdf}>
-              <Download size={14} /> {isDownloadingPdf ? 'Creating PDF' : 'Download PDF'}
-            </Button>
+            <div className="relative" ref={exportMenuRef}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowExportMenu((v) => !v)}
+                disabled={tables.length === 0 && !selectedEventId}
+              >
+                <Download size={14} /> Export
+              </Button>
+              {showExportMenu && (
+                <div className="absolute right-0 z-30 mt-1 w-56 rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => { setShowExportMenu(false); handleExportSeating(); }}
+                    disabled={tables.length === 0}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <FileSpreadsheet size={14} /> Export spreadsheet
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowExportMenu(false); handleDownloadPdf(); }}
+                    disabled={tables.length === 0 || isDownloadingPdf}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Download size={14} /> {isDownloadingPdf ? 'Creating PDF…' : 'Download PDF'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowExportMenu(false); setShowQrModal(true); }}
+                    disabled={!selectedEventId}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <QrCode size={14} /> QR code
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Floor plan opacity + remove — upload lives under the Import button */}
             {venueImage && (
@@ -999,8 +1055,8 @@ export default function SeatingCanvas() {
           <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
             <span>{tables.length} tables</span>
             {zones.length > 0 && <span>{zones.length} zones</span>}
-            <span>{assignedGuestIds.size} / {guests.length} guests seated</span>
-            <span>{guests.length - assignedGuestIds.size} unassigned</span>
+            <span>{seatedEventCount} / {eventGuests.length} guests seated</span>
+            <span>{Math.max(0, eventGuests.length - seatedEventCount)} unassigned</span>
             <span>{tables.reduce((s, t) => s + t.capacity, 0)} total capacity</span>
             {rules.length > 0 && <span>{rules.length} rules</span>}
             {ruleEvaluation.violationCount > 0 && <span className="text-amber-600">{ruleEvaluation.violationCount} warnings</span>}

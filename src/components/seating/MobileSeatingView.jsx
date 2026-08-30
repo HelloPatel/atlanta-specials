@@ -9,6 +9,7 @@ import { useToast } from '../ui/Toast';
 import { evaluateSeatingRules } from './seatingRules';
 import { autoSuggestSeating } from './seatingAutoSuggest';
 import { isIndividualSeat } from './seatingSeat';
+import { guestInvitedToEvent } from '../../utils/eventInvites';
 import {
   assignGuestWithoutDragging,
   getMobileLayoutBounds,
@@ -114,9 +115,25 @@ export default function MobileSeatingView() {
     return ids;
   }, [tables]);
 
+  const selectedEvent = useMemo(
+    () => events.find((e) => e.id === selectedEventId) || null,
+    [events, selectedEventId],
+  );
+
+  // Only guests invited to the selected event belong on its seating chart.
+  const eventGuests = useMemo(() => {
+    if (!selectedEvent) return guests;
+    return guests.filter((g) => guestInvitedToEvent(selectedEvent, g.id));
+  }, [guests, selectedEvent]);
+
   const unassignedGuests = useMemo(
-    () => guests.filter((g) => !assignedGuestIds.has(g.id)),
-    [guests, assignedGuestIds],
+    () => eventGuests.filter((g) => !assignedGuestIds.has(g.id)),
+    [eventGuests, assignedGuestIds],
+  );
+
+  const seatedEventCount = useMemo(
+    () => eventGuests.reduce((n, g) => n + (assignedGuestIds.has(g.id) ? 1 : 0), 0),
+    [eventGuests, assignedGuestIds],
   );
 
   const ruleEvaluation = useMemo(
@@ -150,13 +167,13 @@ export default function MobileSeatingView() {
 
   const filteredGuests = useMemo(() => {
     const query = guestSearch.trim().toLowerCase();
-    if (!query) return guests;
-    return guests.filter((guest) =>
+    if (!query) return eventGuests;
+    return eventGuests.filter((guest) =>
       `${guest.firstName || ''} ${guest.lastName || ''} ${guest.familyName || ''}`
         .toLowerCase()
         .includes(query),
     );
-  }, [guestSearch, guests]);
+  }, [guestSearch, eventGuests]);
 
   const fitLayout = useCallback(() => {
     const availableWidth = (typeof window !== 'undefined' ? window.innerWidth : 380) - 24;
@@ -288,7 +305,7 @@ export default function MobileSeatingView() {
 
   const applyLayoutGenerator = useCallback((layoutType) => {
     if (!canEdit || !confirmReplace()) return;
-    const guestCount = guests.filter((g) => g.rsvpStatus?.[selectedEventId] !== 'declined').length;
+    const guestCount = eventGuests.filter((g) => g.rsvpStatus?.[selectedEventId] !== 'declined').length;
     const seatsPerTable = layoutType === 'reception' ? 8 : 10;
     const tableCount = Math.max(6, Math.ceil((guestCount || 80) / seatsPerTable) + 1);
     try {
@@ -302,7 +319,7 @@ export default function MobileSeatingView() {
     } catch (err) {
       toast.error('Failed to apply layout: ' + err.message);
     }
-  }, [canEdit, confirmReplace, guests, replaceLayout, selectedEventId, toast]);
+  }, [canEdit, confirmReplace, eventGuests, replaceLayout, selectedEventId, toast]);
 
   const openEditTable = useCallback(() => {
     if (!selectedTable || !canEdit) return;
@@ -422,7 +439,7 @@ export default function MobileSeatingView() {
         </div>
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
           <SummaryStat value={tables.length} label="tables" />
-          <SummaryStat value={`${assignedGuestIds.size}/${guests.length}`} label="seated" />
+          <SummaryStat value={`${seatedEventCount}/${eventGuests.length}`} label="seated" />
           <SummaryStat value={unassignedGuests.length} label="unassigned" highlight={unassignedGuests.length > 0} />
         </div>
       </div>
