@@ -136,12 +136,17 @@ export default function SeatingCanvas() {
     [events, selectedEventId],
   );
 
-  // Only guests invited to the selected event belong on this event's seating
-  // chart. Keeps seating connected to the event's invite list (inviteAll /
-  // guestIds), the same source of truth used by RSVP, the website, and counts.
+  // Only guests who RSVP'd YES to the selected event belong on this event's
+  // seating chart — they must be invited (inviteAll / guestIds) AND have
+  // accepted. This keeps seating connected to RSVP, the same source of truth
+  // used by the RSVP dashboard, the website, and headcount planning.
   const eventGuests = useMemo(() => {
     if (!selectedEvent) return guests;
-    return guests.filter((g) => guestInvitedToEvent(selectedEvent, g.id));
+    return guests.filter(
+      (g) =>
+        guestInvitedToEvent(selectedEvent, g.id) &&
+        g.rsvpStatus?.[selectedEvent.id] === 'accepted',
+    );
   }, [guests, selectedEvent]);
 
   const unassignedGuests = useMemo(() => {

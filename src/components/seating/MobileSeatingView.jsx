@@ -120,10 +120,15 @@ export default function MobileSeatingView() {
     [events, selectedEventId],
   );
 
-  // Only guests invited to the selected event belong on its seating chart.
+  // Only guests who RSVP'd YES to the selected event belong on its seating
+  // chart — invited AND accepted.
   const eventGuests = useMemo(() => {
     if (!selectedEvent) return guests;
-    return guests.filter((g) => guestInvitedToEvent(selectedEvent, g.id));
+    return guests.filter(
+      (g) =>
+        guestInvitedToEvent(selectedEvent, g.id) &&
+        g.rsvpStatus?.[selectedEvent.id] === 'accepted',
+    );
   }, [guests, selectedEvent]);
 
   const unassignedGuests = useMemo(
@@ -305,7 +310,7 @@ export default function MobileSeatingView() {
 
   const applyLayoutGenerator = useCallback((layoutType) => {
     if (!canEdit || !confirmReplace()) return;
-    const guestCount = eventGuests.filter((g) => g.rsvpStatus?.[selectedEventId] !== 'declined').length;
+    const guestCount = eventGuests.length;
     const seatsPerTable = layoutType === 'reception' ? 8 : 10;
     const tableCount = Math.max(6, Math.ceil((guestCount || 80) / seatsPerTable) + 1);
     try {

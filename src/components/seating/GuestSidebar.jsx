@@ -42,8 +42,7 @@ export default function GuestSidebar({
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-semibold text-gray-900">Unassigned Guests</h3>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-400">{guests.length} left</span>
-            {onQuickAdd && (
+            <span className="text-xs text-gray-400">{guests.length} left</span>            {onQuickAdd && (
               <button
                 onClick={() => setShowQuickAdd(!showQuickAdd)}
                 className="p-1 rounded-md hover:bg-gray-100 text-gray-500 hover:text-wine-600 transition-colors"
@@ -54,7 +53,9 @@ export default function GuestSidebar({
             )}
           </div>
         </div>
-
+        <p className="text-[11px] leading-tight text-gray-400 mb-2">
+          Only guests who RSVP'd yes to this event appear here.
+        </p>
         {/* Quick add form */}
         {showQuickAdd && onQuickAdd && (
           <div className="mb-3 flex gap-1.5">
