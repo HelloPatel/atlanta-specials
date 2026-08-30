@@ -25,7 +25,7 @@ const SHAPE_DEFAULTS = {
   custom: { width: 150, height: 100, capacity: 10 },
 };
 
-export default function TableComponent({ table, guests, warnings = [], selected = false, onUpdate, onRemove, onDrag, onRemoveGuest, onOpenDetail, zoom = 1 }) {
+export default function TableComponent({ table, guests, warnings = [], selected = false, onUpdate, onRemove, onDrag, onRemoveGuest, onOpenDetail, onContextMenu, zoom = 1 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const dragStart = useRef(null);
@@ -42,6 +42,9 @@ export default function TableComponent({ table, guests, warnings = [], selected 
   const handleGripMouseDown = useCallback((e) => {
     // Handle both mouse and touch
     const isTouch = e.type === 'touchstart';
+    // Ignore secondary (right/middle) mouse buttons so right-click opens the
+    // context menu instead of starting a drag.
+    if (!isTouch && e.button !== undefined && e.button !== 0) return;
     if (isTouch) e.preventDefault();
     e.stopPropagation();
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
@@ -161,6 +164,12 @@ export default function TableComponent({ table, guests, warnings = [], selected 
         transform: table.rotation ? `rotate(${table.rotation}deg)` : undefined,
       }}
       className="group"
+      onContextMenu={(e) => {
+        if (isEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onContextMenu?.(e, table);
+      }}
     >
       {/* Table shape */}
       <div

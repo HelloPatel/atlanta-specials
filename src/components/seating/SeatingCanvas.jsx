@@ -8,7 +8,7 @@ import { subscribeToEvents } from '../../services/eventService';
 import { publishSeating, subscribeToSeating, saveSeating } from '../../services/seatingService';
 import { Button, Modal } from '../ui';
 import { useToast } from '../ui/Toast';
-import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2, Download, Music, Mic, Wine, Gift, Cake, Camera, DoorOpen, CircleDot } from 'lucide-react';
+import { Plus, ZoomIn, ZoomOut, RotateCcw, Save, Upload, Image, FileSpreadsheet, QrCode, AlertTriangle, Copy, Check, ShieldAlert, Grid3X3, Circle, Square, Minus, Wand2, Download, Music, Mic, Wine, Gift, Cake, Camera, DoorOpen, CircleDot, Trash2 } from 'lucide-react';
 import { TABLE_DEFAULTS, TABLE_PRESETS } from '../../config/constants';
 import TableComponent from './Table';
 import GuestSidebar from './GuestSidebar';
@@ -78,6 +78,8 @@ export default function SeatingCanvas() {
   const [copiedFinderLink, setCopiedFinderLink] = useState(false);
   const [undoStack, setUndoStack] = useState([]);
   const [detailTableId, setDetailTableId] = useState(null);
+  // Desktop right-click context menu: { x, y, kind: 'table'|'zone', id }
+  const [contextMenu, setContextMenu] = useState(null);
   const canvasScrollRef = useRef(null);
   const panWrapperRef = useRef(null);
   const panState = useRef(null);
@@ -381,6 +383,21 @@ export default function SeatingCanvas() {
     return () => window.removeEventListener('keydown', handler);
   }, [hasChanges, handleSave, undoStack]);
 
+  // Close the right-click context menu on Escape, scroll, or window resize.
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    const onKey = (e) => { if (e.key === 'Escape') setContextMenu(null); };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', close, true);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', close, true);
+    };
+  }, [contextMenu]);
+
   // Lay out tables in a tidy two-column grid: odd-numbered tables run down the
   // left side, even-numbered down the right (a common banquet convention). This
   // lets a newly added table slot in gracefully next to the others instead of
@@ -490,6 +507,20 @@ export default function SeatingCanvas() {
     setHasChanges(true);
   };
 
+  const duplicateZone = (zoneId) => {
+    setZones((prev) => {
+      const src = prev.find((z) => z.id === zoneId);
+      if (!src) return prev;
+      return [...prev, {
+        ...src,
+        id: uid(),
+        x: (src.x || 0) + 40,
+        y: (src.y || 0) + 40,
+      }];
+    });
+    setHasChanges(true);
+  };
+
   const updateZone = (zoneId, updates) => {
     setZones((prev) => prev.map((z) => z.id === zoneId ? { ...z, ...updates } : z));
     setHasChanges(true);
@@ -593,6 +624,25 @@ export default function SeatingCanvas() {
   // Remove table
   const removeTable = (tableId) => {
     setTables((prev) => prev.filter((t) => t.id !== tableId));
+    setHasChanges(true);
+  };
+
+  // Duplicate a table — copies shape/size/capacity, clears assigned guests,
+  // and offsets the copy slightly so it's visible on top of the original.
+  const duplicateTable = (tableId) => {
+    setTables((prev) => {
+      const src = prev.find((t) => t.id === tableId);
+      if (!src) return prev;
+      const copyName = /\(copy\)$/i.test(src.name || '') ? src.name : `${src.name || 'Table'} (copy)`;
+      return [...prev, {
+        ...src,
+        id: uid(),
+        name: copyName,
+        x: (src.x || 0) + 40,
+        y: (src.y || 0) + 40,
+        assignedGuests: [],
+      }];
+    });
     setHasChanges(true);
   };
 
@@ -978,6 +1028,7 @@ export default function SeatingCanvas() {
                     onUpdate={(updates) => updateZone(zone.id, updates)}
                     onMove={(x, y) => handleZoneMove(zone.id, x, y)}
                     onRemove={() => removeZone(zone.id)}
+                    onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, kind: 'zone', id: zone.id })}
                     zoom={zoom} />
                 ))}
 
@@ -994,6 +1045,7 @@ export default function SeatingCanvas() {
                     onDrag={(x, y) => handleTableMove(table.id, x, y)}
                     zoom={zoom}
                     onOpenDetail={() => setDetailTableId(table.id)}
+                    onContextMenu={(e) => setContextMenu({ x: e.clientX, y: e.clientY, kind: 'table', id: table.id })}
                     onRemoveGuest={(guestId) => {
                       setTables((prev) => prev.map((t) =>
                         t.id === table.id
@@ -1221,6 +1273,52 @@ export default function SeatingCanvas() {
         onClose={() => setDetailTableId(null)}
         onMoveGuest={moveGuestToTable}
       />
+
+      {/* Desktop right-click context menu (copy / remove the selected element) */}
+      {contextMenu && (
+        <>
+          {/* Full-screen catcher: any click (or right-click) closes the menu */}
+          <div
+            className="fixed inset-0 z-[90]"
+            onMouseDown={() => setContextMenu(null)}
+            onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }}
+          />
+          <div
+            className="fixed z-[91] w-44 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-xl"
+            style={{
+              left: Math.min(contextMenu.x, (typeof window !== 'undefined' ? window.innerWidth : 9999) - 184),
+              top: Math.min(contextMenu.y, (typeof window !== 'undefined' ? window.innerHeight : 9999) - 96),
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 pb-1 pt-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+              {contextMenu.kind === 'zone' ? 'Element' : 'Table'}
+            </div>
+            <button
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              onClick={() => {
+                if (contextMenu.kind === 'zone') duplicateZone(contextMenu.id);
+                else duplicateTable(contextMenu.id);
+                setContextMenu(null);
+              }}
+            >
+              <Copy size={14} className="text-gray-500" />
+              Duplicate
+            </button>
+            <button
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              onClick={() => {
+                if (contextMenu.kind === 'zone') removeZone(contextMenu.id);
+                else removeTable(contextMenu.id);
+                setContextMenu(null);
+              }}
+            >
+              <Trash2 size={14} className="text-red-500" />
+              Remove
+            </button>
+          </div>
+        </>
+      )}
 
       <Modal open={showQrModal} onClose={() => setShowQrModal(false)} title="Table Finder QR Code" size="lg">
         <div className="space-y-4">
@@ -1506,13 +1604,14 @@ function Grid3XIcon() {
 
 // ─── Zone element (non-seatable, draggable) ─────────────────────────────────
 
-function ZoneElement({ zone, onUpdate, onMove, onRemove, zoom }) {
+function ZoneElement({ zone, onUpdate, onMove, onRemove, onContextMenu, zoom }) {
   const dragStart = useRef(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(zone.label);
 
   const handleGripDown = useCallback((e) => {
     const isTouch = e.type === 'touchstart';
+    if (!isTouch && e.button !== undefined && e.button !== 0) return;
     if (isTouch) e.preventDefault();
     e.stopPropagation();
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
@@ -1556,6 +1655,12 @@ function ZoneElement({ zone, onUpdate, onMove, onRemove, zoom }) {
         height: zone.height,
       }}
       className="group"
+      onContextMenu={(e) => {
+        if (isEditing) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onContextMenu?.(e, zone);
+      }}
     >
       <div
         style={{ backgroundColor: zone.color || '#f3f4f6' }}
