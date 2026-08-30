@@ -51,9 +51,16 @@ export async function publishSeating(weddingId, eventId, data) {
 }
 
 export function subscribeToSeating(weddingId, eventId, callback) {
-  return onSnapshot(seatingDocRef(weddingId, eventId), (snap) => {
-    callback(snap.exists() ? snap.data() : { tables: [], rules: [], zones: [] });
-  });
+  return onSnapshot(
+    seatingDocRef(weddingId, eventId),
+    (snap) => {
+      callback(snap.exists() ? snap.data() : { tables: [], rules: [], zones: [] });
+    },
+    (error) => {
+      console.error('[seatingService] subscribeToSeating failed:', error);
+      callback({ tables: [], rules: [], zones: [] });
+    }
+  );
 }
 
 function normalizeSearchValue(value) {

@@ -48,9 +48,16 @@ export async function publishRsvpSettings(weddingId, settings) {
 }
 
 export function subscribeToRsvpSettings(weddingId, callback) {
-  return onSnapshot(rsvpSettingsRef(weddingId), (snap) => {
-    callback(snap.exists() ? snap.data() : null);
-  });
+  return onSnapshot(
+    rsvpSettingsRef(weddingId),
+    (snap) => {
+      callback(snap.exists() ? snap.data() : null);
+    },
+    (error) => {
+      console.error('[rsvpService] subscribeToRsvpSettings failed:', error);
+      callback(null);
+    }
+  );
 }
 
 // ─── RSVP Responses (public submissions) ────────────────────────────────────
@@ -83,10 +90,17 @@ export async function submitRsvpResponse(weddingId, response) {
 }
 
 export function subscribeToResponses(weddingId, callback) {
-  return onSnapshot(responsesRef(weddingId), (snap) => {
-    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(list);
-  });
+  return onSnapshot(
+    responsesRef(weddingId),
+    (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      callback(list);
+    },
+    (error) => {
+      console.error('[rsvpService] subscribeToResponses failed:', error);
+      callback([]);
+    }
+  );
 }
 
 // ─── Public RSVP page data (read without auth) ─────────────────────────────

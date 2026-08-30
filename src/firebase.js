@@ -20,10 +20,17 @@ if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
 } else if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
-    isTokenAutoRefreshEnabled: true,
-  });
+  // App Check is a best-effort hardening layer. If reCAPTCHA fails to load or
+  // initialize (network block, ad blocker, misconfigured key), it must never
+  // prevent the app from booting — swallow the error and continue.
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (error) {
+    console.error('Failed to initialize App Check (continuing without it):', error);
+  }
 }
 
 export { auth, db };

@@ -125,10 +125,17 @@ export async function deleteGuestsBatch(weddingId, guestIds) {
 }
 
 export function subscribeToGuests(weddingId, callback) {
-  return onSnapshot(guestsRef(weddingId), (snap) => {
-    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(list);
-  });
+  return onSnapshot(
+    guestsRef(weddingId),
+    (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      callback(list);
+    },
+    (error) => {
+      console.error('[guestService] subscribeToGuests failed:', error);
+      callback([]);
+    }
+  );
 }
 
 // ─── Bulk import ────────────────────────────────────────────────────────────
@@ -250,8 +257,15 @@ export async function deleteFamily(weddingId, familyId) {
 }
 
 export function subscribeToFamilies(weddingId, callback) {
-  return onSnapshot(familiesRef(weddingId), (snap) => {
-    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(list);
-  });
+  return onSnapshot(
+    familiesRef(weddingId),
+    (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      callback(list);
+    },
+    (error) => {
+      console.error('[guestService] subscribeToFamilies failed:', error);
+      callback([]);
+    }
+  );
 }

@@ -119,10 +119,17 @@ export async function removeCollaborator(weddingId, collabId) {
 // ─── Subscribe to collaborators ─────────────────────────────────────────────
 
 export function subscribeToCollaborators(weddingId, callback) {
-  return onSnapshot(collabRef(weddingId), (snap) => {
-    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(list);
-  });
+  return onSnapshot(
+    collabRef(weddingId),
+    (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      callback(list);
+    },
+    (error) => {
+      console.error('[collaborationService] subscribeToCollaborators failed:', error);
+      callback([]);
+    }
+  );
 }
 
 // ─── Get user's role for a wedding ──────────────────────────────────────────

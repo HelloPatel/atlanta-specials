@@ -121,10 +121,17 @@ export async function deleteWedding(weddingId) {
 
 export function subscribeToWeddings(userId, callback) {
   const q = query(weddingsRef, where('ownerId', '==', userId));
-  return onSnapshot(q, (snap) => {
-    const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    callback(list);
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      callback(list);
+    },
+    (error) => {
+      console.error('[weddingService] subscribeToWeddings failed:', error);
+      callback([]);
+    }
+  );
 }
 
 // Resolve a slug (e.g. "rushi-and-priya") to a wedding document ID

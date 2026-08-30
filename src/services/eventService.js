@@ -92,12 +92,19 @@ export async function deleteEvent(weddingId, eventId) {
 }
 
 export function subscribeToEvents(weddingId, callback) {
-  return onSnapshot(eventsRef(weddingId), (snap) => {
-    const list = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (a.order || 0) - (b.order || 0));
-    callback(list);
-  });
+  return onSnapshot(
+    eventsRef(weddingId),
+    (snap) => {
+      const list = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+      callback(list);
+    },
+    (error) => {
+      console.error('[eventService] subscribeToEvents failed:', error);
+      callback([]);
+    }
+  );
 }
 
 export function subscribeToPublicEvents(weddingId, callback) {

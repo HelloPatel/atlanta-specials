@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
+import { lazyWithRetry } from './utils/lazyWithRetry';
 import { AuthProvider } from './contexts/AuthContext';
 import { WeddingProvider } from './contexts/WeddingContext';
 import { ToastProvider } from './components/ui';
@@ -14,31 +15,32 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import NotFound from './pages/NotFound';
 
-// Lazy-loaded pages (code-split for faster initial load)
-const PublicRSVP = lazy(() => import('./pages/PublicRSVP'));
-const PublicWeddingWebsite = lazy(() => import('./pages/PublicWeddingWebsite'));
-const TableFinder = lazy(() => import('./pages/TableFinder'));
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const GuestManager = lazy(() => import('./pages/GuestManager'));
-const EventManager = lazy(() => import('./pages/EventManager'));
-const SeatingChart = lazy(() => import('./pages/SeatingChart'));
-const RSVPManager = lazy(() => import('./pages/RSVPManager'));
-const PhotoGroupManager = lazy(() => import('./pages/PhotoGroupManager'));
-const BetsManager = lazy(() => import('./pages/BetsManager'));
-const WeddingWebsite = lazy(() => import('./pages/WeddingWebsite'));
-const PrintExport = lazy(() => import('./pages/PrintExport'));
-const SeedData = lazy(() => import('./pages/SeedData'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const CookieNotice = lazy(() => import('./pages/CookieNotice'));
-const CopyrightPolicy = lazy(() => import('./pages/CopyrightPolicy'));
-const AccessibilityStatement = lazy(() => import('./pages/AccessibilityStatement'));
+// Lazy-loaded pages (code-split for faster initial load). lazyWithRetry keeps a
+// stale chunk after a new deploy from showing a hard "failed to load" error.
+const PublicRSVP = lazyWithRetry(() => import('./pages/PublicRSVP'));
+const PublicWeddingWebsite = lazyWithRetry(() => import('./pages/PublicWeddingWebsite'));
+const TableFinder = lazyWithRetry(() => import('./pages/TableFinder'));
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
+const GuestManager = lazyWithRetry(() => import('./pages/GuestManager'));
+const EventManager = lazyWithRetry(() => import('./pages/EventManager'));
+const SeatingChart = lazyWithRetry(() => import('./pages/SeatingChart'));
+const RSVPManager = lazyWithRetry(() => import('./pages/RSVPManager'));
+const PhotoGroupManager = lazyWithRetry(() => import('./pages/PhotoGroupManager'));
+const BetsManager = lazyWithRetry(() => import('./pages/BetsManager'));
+const WeddingWebsite = lazyWithRetry(() => import('./pages/WeddingWebsite'));
+const PrintExport = lazyWithRetry(() => import('./pages/PrintExport'));
+const SeedData = lazyWithRetry(() => import('./pages/SeedData'));
+const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService'));
+const CookieNotice = lazyWithRetry(() => import('./pages/CookieNotice'));
+const CopyrightPolicy = lazyWithRetry(() => import('./pages/CopyrightPolicy'));
+const AccessibilityStatement = lazyWithRetry(() => import('./pages/AccessibilityStatement'));
 
 // Lazy public sub-views
-const PublicPhotoGroupQueue = lazy(() => import('./components/photos/PhotoGroupManager').then(m => ({ default: m.PublicPhotoGroupQueue })));
-const PhotoGroupDisplayView = lazy(() => import('./components/photos/PhotoGroupManager').then(m => ({ default: m.PhotoGroupDisplayView })));
-const PublicBetsManager = lazy(() => import('./components/bets/BetsManager').then(m => ({ default: m.PublicBetsManager })));
-const BetsLeaderboardView = lazy(() => import('./components/bets/BetsManager').then(m => ({ default: m.BetsLeaderboardView })));
+const PublicPhotoGroupQueue = lazyWithRetry(() => import('./components/photos/PhotoGroupManager').then(m => ({ default: m.PublicPhotoGroupQueue })));
+const PhotoGroupDisplayView = lazyWithRetry(() => import('./components/photos/PhotoGroupManager').then(m => ({ default: m.PhotoGroupDisplayView })));
+const PublicBetsManager = lazyWithRetry(() => import('./components/bets/BetsManager').then(m => ({ default: m.PublicBetsManager })));
+const BetsLeaderboardView = lazyWithRetry(() => import('./components/bets/BetsManager').then(m => ({ default: m.BetsLeaderboardView })));
 
 function PageLoader() {
   return (
