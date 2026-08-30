@@ -775,8 +775,6 @@ export default function SeatingCanvas() {
               {events.map((evt) => <option key={evt.id} value={evt.id}>{evt.name}</option>)}
             </select>
 
-            <div className="flex-1" />
-
             <Button variant="outline" size="sm" onClick={() => setZoom((z) => Math.min(z + 0.1, 2))}>
               <ZoomIn size={14} />
             </Button>
@@ -857,27 +855,7 @@ export default function SeatingCanvas() {
               <Download size={14} /> {isDownloadingPdf ? 'Creating PDF' : 'Download PDF'}
             </Button>
 
-            {/* Venue floor plan (image or PDF, auto-compressed) */}
-            <label className="cursor-pointer">
-              <input type="file" accept={FLOOR_PLAN_ACCEPT} className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  e.target.value = '';
-                  if (!file) return;
-                  try {
-                    const { dataUrl } = await loadFloorPlan(file);
-                    setVenueImage(dataUrl);
-                    setHasChanges(true);
-                  } catch (err) {
-                    toast.error('Could not load floor plan: ' + err.message);
-                  }
-                }}
-              />
-              <span className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
-                <Image size={14} /> {venueImage ? 'Change' : 'Floor Plan'}
-              </span>
-            </label>
-
+            {/* Floor plan opacity + remove — upload lives under the Import button */}
             {venueImage && (
               <>
                 <input type="range" min="5" max="80" value={venueOpacity * 100}
@@ -1139,7 +1117,23 @@ export default function SeatingCanvas() {
 
       {/* Import Layout modal */}
       <Modal open={showImport} onClose={() => setShowImport(false)} title="Import Seating Layout" size="md">
-        <ImportLayoutPanel onImport={addTablesBatch} onClose={() => setShowImport(false)} existingCount={tables.length} />
+        <ImportLayoutPanel
+          onImport={addTablesBatch}
+          onClose={() => setShowImport(false)}
+          existingCount={tables.length}
+          hasVenueImage={!!venueImage}
+          onUploadFloorPlan={async (file) => {
+            try {
+              const { dataUrl } = await loadFloorPlan(file);
+              setVenueImage(dataUrl);
+              setHasChanges(true);
+              setShowImport(false);
+              toast.success('Floor plan added as background.');
+            } catch (err) {
+              toast.error('Could not load floor plan: ' + err.message);
+            }
+          }}
+        />
       </Modal>
 
       {/* Venue Layout Presets modal */}
@@ -1216,8 +1210,8 @@ export default function SeatingCanvas() {
   );
 }
 
-function ImportLayoutPanel({ onImport, onClose, existingCount }) {
-  const [mode, setMode] = useState('quick'); // 'quick' | 'excel' | 'text'
+function ImportLayoutPanel({ onImport, onClose, existingCount, hasVenueImage, onUploadFloorPlan }) {
+  const [mode, setMode] = useState('quick'); // 'quick' | 'excel' | 'text' | 'floorplan'
   const [quickCount, setQuickCount] = useState(10);
   const [quickShape, setQuickShape] = useState('round');
   const [quickCapacity, setQuickCapacity] = useState(10);
@@ -1279,6 +1273,7 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
           { id: 'quick', label: 'Quick Add', icon: Plus },
           { id: 'text', label: 'Paste List', icon: FileSpreadsheet },
           { id: 'excel', label: 'Excel File', icon: Upload },
+          { id: 'floorplan', label: 'Floor Plan', icon: Image },
         ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -1372,6 +1367,33 @@ function ImportLayoutPanel({ onImport, onClose, existingCount }) {
               Import {preview.length} Item{preview.length === 1 ? '' : 's'}
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Floor plan background (image or PDF, auto-compressed) */}
+      {mode === 'floorplan' && (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Upload your venue's floor plan as a background image. Then drag tables on top to match the real room.
+          </p>
+          <p className="text-xs text-gray-400">
+            Accepts images (PNG, JPG) or a PDF. Large files are compressed automatically. Adjust opacity from the toolbar after adding.
+          </p>
+          <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 p-6 cursor-pointer hover:bg-gray-50 transition-colors">
+            <Image size={24} className="text-gray-400" />
+            <span className="text-sm text-gray-500">{hasVenueImage ? 'Change floor plan' : 'Drop file or click to upload'}</span>
+            <span className="text-xs text-gray-400">Images or PDF</span>
+            <input
+              type="file"
+              accept={FLOOR_PLAN_ACCEPT}
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = '';
+                if (file) onUploadFloorPlan(file);
+              }}
+            />
+          </label>
         </div>
       )}
 

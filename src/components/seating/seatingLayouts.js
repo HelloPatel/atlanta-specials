@@ -1,4 +1,4 @@
-import { Grid3X3, CircleDot, Square, Cake, Gift } from 'lucide-react';
+import { Grid3X3, CircleDot, Square, Cake, Gift, Sparkles } from 'lucide-react';
 
 /**
  * Seating layout generators and venue presets.
@@ -351,6 +351,54 @@ export const VENUE_LAYOUTS = (() => {
         { type: 'stage', label: 'Stage / DJ', width: 360, height: 100, x: 720, y: 1680, color: '#e0e7ff' },
         { type: 'dancefloor', label: 'Dance Floor', width: 420, height: 380, x: 690, y: 420, color: '#fef3c7' },
         { type: 'bar', label: 'Bar', width: 180, height: 60, x: 60, y: 1550, color: '#dbeafe' },
+      ],
+    },
+    {
+      name: 'Ceremony: Mandap with Arc Seating',
+      description: 'Individual chairs fanned in arcs around a central aisle, all facing the mandap',
+      icon: Sparkles,
+      tables: (() => {
+        // Individual chairs (capacity 1) arranged in concentric arcs centred on
+        // the mandap so every seat has a clear view. A central aisle splits the
+        // fan; outer rows are wider and hold more chairs.
+        const chairs = [];
+        const Fx = 1200;          // focal point (mandap centre) x
+        const Fy = 300;           // focal point y — chairs sit below, facing up
+        const chairSize = 34;
+        const rowCount = 6;
+        const R0 = 300;           // radius of the front row from the focal point
+        const rowGap = 62;        // radial spacing between rows
+        const halfSpan = (78 * Math.PI) / 180;  // fan half-width
+        const aisleHalf = (7 * Math.PI) / 180;  // central walkway half-angle
+        const seatArc = 56;       // target arc distance between chairs
+        let n = 0;
+        for (let r = 0; r < rowCount; r++) {
+          const R = R0 + r * rowGap;
+          const count = Math.max(6, Math.round((2 * halfSpan * R) / seatArc));
+          for (let i = 0; i < count; i++) {
+            const theta = count === 1 ? 0 : -halfSpan + (i * (2 * halfSpan)) / (count - 1);
+            if (Math.abs(theta) < aisleHalf) continue; // leave the aisle open
+            const cx = Fx + R * Math.sin(theta);
+            const cy = Fy + R * Math.cos(theta);
+            chairs.push({
+              name: `S${++n}`,
+              shape: 'square',
+              capacity: 1,
+              width: chairSize,
+              height: chairSize,
+              // convert desired chair centre → stored top-left (shape offset 40/30)
+              x: cx - 40 - chairSize / 2,
+              y: cy - 30 - chairSize / 2,
+              rotation: Math.round((theta * 180) / Math.PI), // fan toward the mandap
+            });
+          }
+        }
+        return chairs;
+      })(),
+      zones: [
+        { type: 'stage', label: 'Mandap', width: 300, height: 220, x: 1050, y: 60, color: '#fee2e2' },
+        { type: 'custom', label: 'Aisle', width: 70, height: 620, x: 1165, y: 320, color: '#f1f5f9' },
+        { type: 'entrance', label: 'Entrance', width: 140, height: 50, x: 1130, y: 980, color: '#f1f5f9' },
       ],
     },
   ];

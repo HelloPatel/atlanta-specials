@@ -751,11 +751,11 @@ function AdminPhotoGroupManager({ wedding }) {
         <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" variant="outline" onClick={() => window.open(queueLink, '_blank')} disabled={!wedding?.id}>
             <Users size={16} />
-            <span className="hidden sm:inline">Guest</span> queue
+            <span><span className="hidden sm:inline">Guest </span>queue</span>
           </Button>
           <Button size="sm" variant="outline" onClick={() => window.open(displayLink, '_blank')} disabled={!wedding?.id}>
             <MonitorPlay size={16} />
-            <span className="hidden sm:inline">Display</span> view
+            <span><span className="hidden sm:inline">Display </span>view</span>
           </Button>
           <Button size="sm" variant="outline" onClick={() => setBuildOpen(true)} disabled={!canEdit}>
             <Sparkles size={16} />
