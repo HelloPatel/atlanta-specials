@@ -393,6 +393,132 @@ p {
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
+/* ============================================================
+   React Bits (zero-dependency) — tasteful, on-brand animations
+   ============================================================ */
+
+/* ShinyText — a soft highlight sweeps across the text on a loop */
+@keyframes rb-shine {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+.rb-shiny {
+  --rb-base: #ab204d;
+  --rb-shine: #f4aabb;
+  --rb-shine-speed: 4.5s;
+  background: linear-gradient(
+    110deg,
+    var(--rb-base) 0%,
+    var(--rb-base) 40%,
+    var(--rb-shine) 50%,
+    var(--rb-base) 60%,
+    var(--rb-base) 100%
+  );
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: rb-shine var(--rb-shine-speed) linear infinite;
+}
+
+/* SpotlightCard — a wine-tinted radial glow follows the cursor on hover.
+   Rendered as a pointer-events-none overlay so it never blocks clicks. */
+.rb-spotlight {
+  position: relative;
+  isolation: isolate;
+}
+.rb-spotlight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    var(--rb-spot-radius, 220px) circle at var(--rb-x, 50%) var(--rb-y, 50%),
+    var(--rb-spot, rgba(171, 32, 77, 0.14)),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+  z-index: 3;
+}
+.rb-spotlight:hover::after {
+  opacity: 1;
+}
+
+/* StarBorder — a glowing point travels along the top and bottom edges */
+.rb-star-border {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+.rb-star-border__glow {
+  position: absolute;
+  width: 300%;
+  height: 50%;
+  opacity: 0.65;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.rb-star-border__bottom {
+  bottom: -11px;
+  right: -250%;
+  animation: rb-star-move-b linear infinite alternate;
+}
+.rb-star-border__top {
+  top: -11px;
+  left: -250%;
+  animation: rb-star-move-t linear infinite alternate;
+}
+.rb-star-border__inner {
+  position: relative;
+  z-index: 1;
+}
+@keyframes rb-star-move-b {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+@keyframes rb-star-move-t {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+/* ClickSpark — small sparks fly outward from the click point */
+.rb-spark {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: rb-spark-fly ease-out forwards;
+  z-index: 20;
+}
+@keyframes rb-spark-fly {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--rb-dx)), calc(-50% + var(--rb-dy)));
+  }
+}
+
+/* Respect users who ask for less motion — freeze the looping decorations */
+@media (prefers-reduced-motion: reduce) {
+  .rb-shiny {
+    animation: none;
+    -webkit-text-fill-color: var(--rb-base);
+    color: var(--rb-base);
+  }
+  .rb-star-border__glow {
+    animation: none;
+  }
+}
+
 /* Prevent iOS Safari from auto-zooming the viewport when focusing a form
    control. Mobile Safari zooms in whenever an input's font-size is below 16px,
    which caused a jarring "zoom" on the login screen. Enforce a 16px minimum on

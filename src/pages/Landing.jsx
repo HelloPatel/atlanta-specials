@@ -6,6 +6,18 @@ import FeatureTiles from '../components/ui/FeatureTiles';
 import LegalFooter from '../components/legal/LegalFooter';
 import { APP_NAME } from '../config/constants';
 import { Users, Calendar, Grid3X3, Mail, Camera, Trophy, ArrowRight, Check, Sparkles, Play } from 'lucide-react';
+import {
+  CountUp,
+  SplitText,
+  ShinyText,
+  SpotlightCard,
+  StarBorder,
+  Magnet,
+  ClickSpark,
+  Reveal,
+  RevealStagger,
+  RevealItem,
+} from '../components/ui/reactbits';
 
 function useReveal() {  const ref = useRef(null);
   useEffect(() => {
@@ -114,32 +126,37 @@ export default function Landing() {
       {/* Hero */}
       <section className="relative isolate overflow-hidden">
         <HeroVideoBackdrop />
-        <div className="text-center px-6 pt-28 sm:pt-36 pb-16 sm:pb-28 max-w-5xl mx-auto">
-          <p className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-wine-600 tracking-[0.15em] uppercase mb-4 sm:mb-5 px-3 py-1.5 rounded-full bg-wine-50/80 border border-wine-100/60">
+        <RevealStagger className="text-center px-6 pt-28 sm:pt-36 pb-16 sm:pb-28 max-w-5xl mx-auto" stagger={0.14}>
+          <RevealItem as="p" className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-semibold text-wine-600 tracking-[0.15em] uppercase mb-4 sm:mb-5 px-3 py-1.5 rounded-full bg-wine-50/80 border border-wine-100/60">
             <Sparkles size={12} /> For 200 to 1000+ guest weddings
-          </p>
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.08] mb-5 sm:mb-7 text-balance">
-            One place for your entire<br className="hidden sm:block" />{' '}
-            <span className="text-wine-700 relative">
-              Indian wedding
+          </RevealItem>
+          <RevealItem as="h1" className="text-3xl sm:text-5xl md:text-6xl font-display font-bold text-gray-900 leading-[1.08] mb-5 sm:mb-7 text-balance">
+            <SplitText text="One place for your entire" stagger={0.05} />
+            <br className="hidden sm:block" />{' '}
+            <span className="relative inline-block">
+              <ShinyText text="Indian wedding" baseColor="#ab204d" shineColor="#f4aabb" speed={5} />
               <svg className="absolute -bottom-1 left-0 w-full h-3 text-wine-200/60" viewBox="0 0 200 12" preserveAspectRatio="none">
                 <path d="M0 8 Q50 0 100 8 T200 8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </span>
-          </h1>
-          <p className="text-sm sm:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
+          </RevealItem>
+          <RevealItem as="p" className="text-sm sm:text-lg text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed text-pretty">
             Guest lists, seating charts, RSVPs, multiple events, different invite lists. All handled. No more WhatsApp chaos.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <Link to="/register" className="group inline-flex items-center gap-2 px-7 py-3.5 text-base font-semibold text-white bg-wine-700 hover:bg-wine-800 rounded-2xl shadow-glow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring w-full sm:w-auto justify-center">
-              Start Planning Free 
-              <span className="inline-flex items-center justify-center size-6 rounded-full bg-white/15 group-hover:translate-x-0.5 transition-transform duration-300 ease-spring">
-                <ArrowRight size={14} />
-              </span>
-            </Link>
+          </RevealItem>
+          <RevealItem className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <ClickSpark as="div" sparkColor="#ab204d" className="w-full sm:w-auto">
+              <Magnet strength={0.25} className="w-full sm:w-auto">
+                <Link to="/register" className="group inline-flex items-center gap-2 px-7 py-3.5 text-base font-semibold text-white bg-wine-700 hover:bg-wine-800 rounded-2xl shadow-glow hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring w-full sm:w-auto justify-center">
+                  Start Planning Free
+                  <span className="inline-flex items-center justify-center size-6 rounded-full bg-white/15 group-hover:translate-x-0.5 transition-transform duration-300 ease-spring">
+                    <ArrowRight size={14} />
+                  </span>
+                </Link>
+              </Magnet>
+            </ClickSpark>
             <p className="text-xs text-gray-400">Takes 2 minutes. No credit card.</p>
-          </div>
-        </div>
+          </RevealItem>
+        </RevealStagger>
       </section>
 
       {/* Social proof bar */}
@@ -155,15 +172,21 @@ export default function Landing() {
       {/* Stats bar */}
       <div className="max-w-4xl mx-auto px-6 py-6 sm:py-10 grid grid-cols-4 gap-3 sm:gap-6 text-center">
         <div>
-          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">6+</p>
+          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">
+            <CountUp to={6} suffix="+" duration={1.4} />
+          </p>
           <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Events</p>
         </div>
         <div>
-          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">1000+</p>
+          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">
+            <CountUp to={1000} suffix="+" separator="," duration={1.8} />
+          </p>
           <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Guests</p>
         </div>
         <div>
-          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">60s</p>
+          <p className="text-xl sm:text-3xl font-display font-bold text-wine-700 tabular-nums">
+            <CountUp to={60} suffix="s" duration={1.6} />
+          </p>
           <p className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Import</p>
         </div>
         <div>
@@ -178,9 +201,9 @@ export default function Landing() {
           <h2 className="text-lg sm:text-2xl font-display font-bold text-gray-900 mb-2">See it in action</h2>
           <p className="text-sm text-gray-500">Watch how 500+ guests get organized in minutes</p>
         </div>
-        <div className="rounded-[1.25rem] p-1.5 bg-gray-900/5 border border-gray-200/60">
+        <SpotlightCard className="rounded-[1.25rem] p-1.5 bg-gray-900/5 border border-gray-200/60" spotlightColor="rgba(171, 32, 77, 0.18)">
           <HeroDemo />
-        </div>
+        </SpotlightCard>
       </div>
 
       {/* Features */}
@@ -337,19 +360,23 @@ export default function Landing() {
           className="absolute inset-0"
           style={{ background: 'radial-gradient(50% 60% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 70%)' }}
         ></div>
-        <div className="relative max-w-2xl mx-auto">
+        <Reveal className="relative max-w-2xl mx-auto" y={28} amount={0.4}>
           <div className="inline-flex items-center justify-center size-12 rounded-2xl bg-white/10 backdrop-blur-sm mb-5 sm:mb-6 shadow-sm">
             <Sparkles className="text-phera-400" size={22} />
           </div>
           <h2 className="text-2xl sm:text-4xl font-display font-bold text-white mb-3 sm:mb-4 text-balance">Your wedding, organized in one place</h2>
           <p className="text-wine-200/80 mb-8 sm:mb-10 text-base sm:text-lg leading-relaxed">Free. Unlimited. Takes 2 minutes to set up.</p>
-          <Link to="/register" className="group inline-flex items-center gap-3 px-7 py-3.5 rounded-2xl bg-white text-wine-800 font-semibold hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring shadow-lg">
-            Get Started
-            <span className="inline-flex items-center justify-center size-7 rounded-full bg-wine-100 group-hover:bg-wine-200 group-hover:translate-x-0.5 transition-all duration-300 ease-spring">
-              <ArrowRight size={14} className="text-wine-700" />
-            </span>
-          </Link>
-        </div>
+          <ClickSpark as="div" sparkColor="#ec7a97">
+            <StarBorder color="#ec7a97" speed="5s" className="rounded-2xl">
+              <Link to="/register" className="group inline-flex items-center gap-3 px-7 py-3.5 rounded-2xl bg-white text-wine-800 font-semibold hover:bg-gray-50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring shadow-lg">
+                Get Started
+                <span className="inline-flex items-center justify-center size-7 rounded-full bg-wine-100 group-hover:bg-wine-200 group-hover:translate-x-0.5 transition-all duration-300 ease-spring">
+                  <ArrowRight size={14} className="text-wine-700" />
+                </span>
+              </Link>
+            </StarBorder>
+          </ClickSpark>
+        </Reveal>
       </section>
 
       {/* Footer */}
@@ -372,7 +399,12 @@ function FeatureCard({ icon: Icon, title, description }) {
 
 function ScenarioCard({ number, title, problem, solution }) {
   return (
-    <div className="reveal rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted transition-all duration-300">
+    <div className="reveal rb-spotlight rounded-xl sm:rounded-2xl border border-gray-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-lifted transition-all duration-300"
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        e.currentTarget.style.setProperty('--rb-x', `${e.clientX - r.left}px`);
+        e.currentTarget.style.setProperty('--rb-y', `${e.clientY - r.top}px`);
+      }}>
       <span className="inline-flex size-7 sm:size-8 items-center justify-center rounded-full bg-wine-50 text-[10px] sm:text-xs font-bold text-wine-600">{number}</span>
       <h3 className="text-sm sm:text-base font-semibold text-gray-900 mt-2 sm:mt-3 mb-3 sm:mb-4">{title}</h3>
       <div className="mb-3 sm:mb-4">
