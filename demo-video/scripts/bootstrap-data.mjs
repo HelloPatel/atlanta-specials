@@ -3,6 +3,7 @@
 // signed in as the demo owner so security rules pass.
 //   node demo-video/scripts/bootstrap-data.mjs
 import { initializeApp } from "firebase/app";
+import { mkdirSync, writeFileSync } from "node:fs";
 import {
   getAuth, connectAuthEmulator, signInWithEmailAndPassword,
 } from "firebase/auth";
@@ -78,6 +79,14 @@ async function main() {
   if (wsnap.empty) throw new Error("no wedding for demo user — run bootstrap-auth first");
   const weddingId = wsnap.docs[0].id;
   console.log("\u2713 wedding", weddingId);
+  // Persist the freshly-seeded weddingId so record.mjs can target the public
+  // guest-view route (/rsvp/:id) — emulator ids change every reseed.
+  try {
+    const outDir = new URL("../out/", import.meta.url);
+    mkdirSync(outDir, { recursive: true });
+    writeFileSync(new URL("wedding-id.txt", outDir), weddingId);
+    console.log("\u2713 wrote out/wedding-id.txt");
+  } catch (e) { console.log("  (could not write wedding-id.txt:", e.message, ")"); }
 
   const gsnap = await getDocs(collection(db, "weddings", weddingId, "guests"));
   const guests = gsnap.docs.map((d) => ({ id: d.id, ...d.data() }));

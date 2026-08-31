@@ -10,7 +10,7 @@
 // Usage (from repo root, emulators + vite must be up):
 //   node demo-video/scripts/record.mjs [scene ...]
 import { chromium } from "playwright";
-import { existsSync, mkdirSync, renameSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, readdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,6 +21,12 @@ const FIXTURES = join(ROOT, "fixtures");
 const IMPORT_CSV = join(FIXTURES, "import-guests.csv");
 const AUTH = join(REPO, ".playwright", "auth.json");
 const APP = process.env.DEMO_URL ?? "http://localhost:5173";
+// The public guest-view beat needs a real, seeded weddingId. Emulator data is
+// ephemeral, so bootstrap-data.mjs writes the freshly-seeded id here each run.
+const WEDDING_ID = (process.env.DEMO_WEDDING_ID
+  ?? (existsSync(join(ROOT, "out", "wedding-id.txt"))
+    ? readFileSync(join(ROOT, "out", "wedding-id.txt"), "utf8")
+    : "")).trim();
 // Record at the composition's native resolution, 1:1 — matches the landscape render.
 const SIZE = { width: 1920, height: 1080 };
 
@@ -70,6 +76,21 @@ const OVERLAY_INIT = `
     return root;
   };
   const el = (tag, css) => { const n = document.createElement(tag); n.style.cssText = css; return n; };
+
+  // Navigation "curtain": an eager, opaque full-viewport wash injected at
+  // document-start so it masks the white reload paint on every page.goto. The
+  // Director fades it out once the destination has mounted — turning the hard
+  // reload flash between beats into a soft ivory crossfade.
+  const curtainEnsure = () => {
+    let c = document.getElementById("__demo_curtain");
+    if (c) return c;
+    if (!document.body) return null;                   // body not parsed yet — caller retries
+    c = document.createElement("div");
+    c.id = "__demo_curtain";
+    c.style.cssText = "position:fixed;inset:0;z-index:2147483645;pointer-events:none;opacity:1;transition:opacity .55s ease;background:radial-gradient(130% 130% at 50% 30%, #fbf7f6 0%, #f4e8e7 52%, #ecd9dd 100%)";
+    document.body.appendChild(c);
+    return c;
+  };
 
   const api = {
     say(text) {
@@ -131,10 +152,22 @@ const OVERLAY_INIT = `
       setTimeout(() => rp.remove(), 650);
     },
     clear() { this.ring(null); this.badge(null); },
+    /** Show (opaque) or hide (transparent) the navigation curtain. */
+    curtain(show) {
+      const c = curtainEnsure();
+      if (c) c.style.opacity = show ? "1" : "0";
+      // Once revealing, drop the document-start ivory wash so it can't tint content.
+      if (!show) { try { document.documentElement.style.background = ""; } catch (e) {} }
+    },
   };
   window.__demo = api;
-  if (document.readyState === "loading") addEventListener("DOMContentLoaded", ensure);
-  else ensure();
+  // Mask the white reload paint WITHOUT corrupting the parse: paint <html> ivory via a
+  // style *property* (no node appended at document-start), then build the real opaque
+  // curtain node once <body> exists so reveal() can crossfade it out.
+  try { document.documentElement.style.background = "radial-gradient(130% 130% at 50% 30%, #fbf7f6 0%, #f4e8e7 52%, #ecd9dd 100%)"; } catch (e) {}
+  const curtainBoot = () => { curtainEnsure(); ensure(); };
+  if (document.readyState === "loading") addEventListener("DOMContentLoaded", curtainBoot);
+  else curtainBoot();
 })();
 `;
 
@@ -160,6 +193,32 @@ class Director {
   /** Clear ring + badge highlights. */
   async clear() {
     await this.page.evaluate(() => window.__demo?.clear()).catch(() => {});
+  }
+  async cover() {
+    await this.page.evaluate(() => window.__demo?.curtain(true)).catch(() => {});
+  }
+  async reveal() {
+    await this.page.evaluate(() => window.__demo?.curtain(false)).catch(() => {});
+  }
+  /** Masked navigation between beats. Fades an opaque curtain over the current
+   *  page, hard-navigates, waits for the destination heading to paint UNDER the
+   *  curtain, then fades the curtain out — so the white document-reload flash is
+   *  never on screen. Preserves the existing goto-per-beat pattern, just hidden. */
+  async go(path, { heading = null, wait = null, revealDelay = 340 } = {}) {
+    await this.say("");
+    await this.clear();
+    await this.cover();
+    await sleep(360);                                   // dim outgoing page to ivory
+    await this.page.goto(`${APP}${path}`, { waitUntil: "domcontentloaded" });
+    // the fresh document's curtain is already opaque; hold it while React mounts.
+    if (heading) {
+      await this.page.getByRole("heading", heading).first().waitFor({ timeout: 20000 }).catch(() => {});
+    } else if (wait) {
+      await this.page.locator(wait).first().waitFor({ timeout: 20000 }).catch(() => {});
+    }
+    await sleep(revealDelay);                           // let content settle behind it
+    await this.reveal();
+    await sleep(560);                                   // curtain fade-out duration
   }
   async _box(selector) {
     const el = this.page.locator(selector).first();
@@ -285,9 +344,8 @@ class Director {
 
 const feature = {
   async dashboard(d, page, { lead = "One home base for the entire wedding" } = {}) {
-    await page.goto(`${APP}/dashboard`);
-    await page.getByRole("heading", { name: "Priya & Arjun" }).waitFor({ timeout: 20000 });
-    await sleep(700);
+    await d.go("/dashboard", { heading: { name: "Priya & Arjun" } });
+    await sleep(300);
     await d.say(lead, 1500);
     await d.focus('button:has-text("Guests")', { label: "Total guests", side: "bottom", hold: 700 });
     await d.focus('button:has-text("Seated")', { hold: 550 });
@@ -301,9 +359,8 @@ const feature = {
   },
 
   async guests(d, page, { lead = "Every guest, organized in one place" } = {}) {
-    await page.goto(`${APP}/guests`);
-    await page.getByRole("heading", { name: "Guest List" }).waitFor({ timeout: 20000 });
-    await sleep(700);
+    await d.go("/guests", { heading: { name: "Guest List" } });
+    await sleep(300);
     await d.say(lead, 1400);
     await d.glideTo(SIZE.width / 2, SIZE.height * 0.5, 650);
     await sleep(500);
@@ -315,9 +372,8 @@ const feature = {
   },
 
   async events(d, page, { lead = "A timeline for every ceremony" } = {}) {
-    await page.goto(`${APP}/events`);
-    await page.getByRole("heading", { name: "Events", exact: true }).waitFor({ timeout: 20000 });
-    await sleep(700);
+    await d.go("/events", { heading: { name: "Events", exact: true } });
+    await sleep(300);
     await d.say(lead, 1300);
     const scopes = { Haldi: "Close family only", Mehndi: "Its own invite list", Sangeet: "Everyone's invited" };
     for (const name of ["Haldi", "Mehndi", "Sangeet"]) {
@@ -330,28 +386,26 @@ const feature = {
   },
 
   async seating(d, page, { lead = "Drag-and-drop seating charts" } = {}) {
-    await page.goto(`${APP}/seating`);
-    await page.getByRole("heading", { name: "Seating Chart" }).waitFor({ timeout: 20000 });
-    await sleep(600);
+    await d.go("/seating", { heading: { name: "Seating Chart" } });
+    await sleep(300);
     await d.say(lead, 900);
     await d.selectByLabel('select[aria-label="Select event"]', "Reception");
     await page.locator('text=Head Table').first().waitFor({ timeout: 15000 }).catch(() => {});
-    await sleep(700);
+    await sleep(800);
     await d.say("Visual tables, laid out like the venue", 300);
     for (const t of ["Head Table", "Table 3", "Table 6"]) {
-      await d.focus(`text=${t}`, { ms: 620, hold: 650 }).catch(() => {});
+      await d.focus(`text=${t}`, { ms: 680, hold: 820 }).catch(() => {});
     }
     await d.clear();
-    await d.say("Drag any guest to a seat", 300);
+    await d.say("Drag any guest to a seat", 500);
     await d.dragGuest('[aria-roledescription="draggable"]', 'text=Table 4').catch(() => {});
     await d.callout('text=Table 4', "Seated instantly", { side: "right", hold: 1700 }).catch(() => {});
     await d.clear();
   },
 
   async import(d, page, { lead = "Import your whole list in seconds" } = {}) {
-    await page.goto(`${APP}/guests`);
-    await page.getByRole("heading", { name: "Guest List" }).waitFor({ timeout: 20000 });
-    await sleep(700);
+    await d.go("/guests", { heading: { name: "Guest List" } });
+    await sleep(300);
     await d.say(lead, 900);
     await d.click('button:has-text("Import")');
     await page.getByRole("heading", { name: "Import Guests" }).waitFor({ timeout: 10000 }).catch(() => {});
@@ -387,9 +441,8 @@ const feature = {
   },
 
   async photos(d, page, { lead = "A shot list your photographer will love" } = {}) {
-    await page.goto(`${APP}/photos`);
-    await page.getByRole("heading", { name: "Photo Groups" }).waitFor({ timeout: 20000 });
-    await sleep(700);
+    await d.go("/photos", { heading: { name: "Photo Groups" } });
+    await sleep(300);
     await d.say(lead, 1300);
     await d.focus('text=Current group', { label: "On deck now", side: "right", hold: 1400 }).catch(() => {});
     await d.clear();
@@ -401,9 +454,8 @@ const feature = {
   },
 
   async games(d, page, { lead = "Keep guests engaged with live games" } = {}) {
-    await page.goto(`${APP}/bets`);
-    await page.getByRole("heading", { name: "Bets & Games" }).waitFor({ timeout: 20000 });
-    await sleep(700);
+    await d.go("/bets", { heading: { name: "Bets & Games" } });
+    await sleep(300);
     await d.say(lead, 1300);
     await d.glideTo(SIZE.width * 0.5, SIZE.height * 0.34, 600);
     await sleep(700);
@@ -413,6 +465,24 @@ const feature = {
     await d.focus('text=Top players', { label: "Live leaderboard", side: "right", hold: 1900 }).catch(() => {});
     await d.clear();
   },
+
+  // The guest-facing public RSVP — proves the couple's work becomes a real page
+  // guests use, on any device. Needs a seeded, published weddingId (WEDDING_ID).
+  async guestView(d, page, { lead = "And this is what your guests see" } = {}) {
+    if (!WEDDING_ID) { console.log("  (guestView skipped — no DEMO_WEDDING_ID / out/wedding-id.txt)"); return; }
+    await d.go(`/rsvp/${WEDDING_ID}`, { wait: 'input[placeholder="Enter your first or last name"]' });
+    await sleep(400);
+    await d.say(lead, 1600);
+    await d.glideTo(SIZE.width / 2, SIZE.height * 0.46, 650);
+    await sleep(400);
+    await d.say("They find their family in one search", 500);
+    await d.type('input[placeholder="Enter your first or last name"]', "Mehta", { perChar: 95 }).catch(() => {});
+    await sleep(500);
+    await d.click('button:has-text("Search")').catch(() => {});
+    await sleep(900);
+    await d.callout('text=/Mehta Family|Mehta/i', "One tap to RSVP — per event", { side: "right", hold: 2100 }).catch(() => {});
+    await d.clear();
+  },
 };
 
 const scenes = {
@@ -420,14 +490,13 @@ const scenes = {
    *  and highlighted end to end. Ends back on the dashboard for a clean loop. */
   async hero(d, page) {
     await feature.dashboard(d, page, { lead: "Plan the whole wedding in one place" });
-    await feature.guests(d, page, { lead: "Every guest, RSVP, and detail — organized" });
+    await feature.import(d, page, { lead: "Start by importing your whole guest list" });
     await feature.events(d, page, { lead: "A timeline for every ceremony" });
     await feature.seating(d, page, { lead: "Seat everyone with drag-and-drop" });
     await feature.photos(d, page, { lead: "Never miss a must-have photo" });
-    await feature.games(d, page, { lead: "Keep every guest engaged" });
+    await feature.guestView(d, page, { lead: "And this is what your guests see" });
     // full circle — land back on the dashboard countdown
-    await page.goto(`${APP}/dashboard`);
-    await page.getByRole("heading", { name: "Priya & Arjun" }).waitFor({ timeout: 20000 });
+    await d.go("/dashboard", { heading: { name: "Priya & Arjun" } });
     await d.say("Phera — everything for the big day", 300);
     await d.glideTo(SIZE.width / 2, SIZE.height * 0.32, 700);
     await sleep(2200);
@@ -439,6 +508,7 @@ const scenes = {
   async import(d, page) { await feature.import(d, page); },
   async photos(d, page) { await feature.photos(d, page); },
   async games(d, page) { await feature.games(d, page); },
+  async guestView(d, page) { await feature.guestView(d, page); },
 };
 
 // ───────────────────────────── main ─────────────────────────────
