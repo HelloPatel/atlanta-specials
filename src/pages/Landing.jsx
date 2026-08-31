@@ -295,35 +295,19 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Comparison table */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-4xl mx-auto">
-        <div className="text-center mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">Why couples switch from Zola and WithJoy</h2>
+      {/* Built for big Indian weddings */}
+      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">Built for a big Indian wedding</h2>
+          <p className="text-sm text-gray-500">Most planners assume one event and 150 guests. Yours isn't that.</p>
         </div>
-        <div className="overflow-x-auto rounded-xl sm:rounded-2xl border border-gray-200/80 shadow-card">
-          <table className="w-full text-xs sm:text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="text-left py-2.5 sm:py-3 px-3 sm:px-4 font-semibold text-gray-700">Feature</th>
-                <th className="py-2.5 sm:py-3 px-2 sm:px-4 font-display font-bold text-wine-700">Phera</th>
-                <th className="py-2.5 sm:py-3 px-2 sm:px-4 font-semibold text-gray-500">Zola</th>
-                <th className="py-2.5 sm:py-3 px-2 sm:px-4 font-semibold text-gray-500">WithJoy</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              <ComparisonRow feature="Multi-event (Mehndi, Sangeet, etc.)" phera={true} zola={false} withjoy="Partial" />
-              <ComparisonRow feature="Different guest list per event" phera={true} zola={false} withjoy={false} />
-              <ComparisonRow feature="500+ guest import" phera={true} zola={true} withjoy={true} />
-              <ComparisonRow feature="Family-group RSVPs" phera={true} zola={false} withjoy={false} />
-              <ComparisonRow feature="Variable table sizes (10-12+)" phera={true} zola={false} withjoy="Partial" />
-              <ComparisonRow feature="Auto-suggest seating" phera={true} zola={false} withjoy={false} />
-              <ComparisonRow feature="Keep-apart / keep-together rules" phera={true} zola={false} withjoy={false} />
-              <ComparisonRow feature="QR code table finder" phera={true} zola={false} withjoy={false} />
-              <ComparisonRow feature="Place card PDF export" phera={true} zola={false} withjoy={false} />
-              <ComparisonRow feature="WhatsApp-friendly RSVP" phera={true} zola={false} withjoy={false} />
-              <ComparisonRow feature="Photo group shot list" phera={true} zola={false} withjoy={false} />
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
+          <FeatureCard icon={Calendar} title="Every event, its own list" description="Mehndi, Sangeet, Haldi, Ceremony, Reception \u2014 each with a different invite list and RSVP count." />
+          <FeatureCard icon={Users} title="500 to 1000 guests" description="Import your whole list from Excel in about a minute. Duplicates and families detected automatically." />
+          <FeatureCard icon={Mail} title="RSVPs grouped by family" description="Track a whole family together instead of chasing one cousin at a time to pin down a head count." />
+          <FeatureCard icon={Grid3X3} title="Tables in any size" description="10, 12, or more per table. Auto-suggest seating and keep families together or apart." />
+          <FeatureCard icon={Camera} title="A live photo queue" description="Guests see when their group is up, so nobody stands around waiting while their food goes cold." />
+          <FeatureCard icon={Sparkles} title="Free, forever" description="Unlimited guests, events, tables, and RSVPs. No hidden upgrades and no paywalls." />
         </div>
       </section>
 
@@ -335,8 +319,8 @@ export default function Landing() {
           </h2>
           <div className="space-y-3">
             <FAQItem
-              question="How is this different from Zola or WithJoy?"
-              answer="They support one event with about 150 guests and fixed table sizes. Phera handles 6+ events with different invite lists, 500 to 1000 guests, family-group RSVPs, and custom table sizes."
+              question="How is this different from other wedding planners?"
+              answer="Most tools support one event with about 150 guests and fixed table sizes. Phera handles 6+ events with different invite lists, 500 to 1000 guests, family-group RSVPs, and custom table sizes."
             />
             <FAQItem
               question="Can I import my existing guest list?"
@@ -455,22 +439,6 @@ function FAQItem({ question, answer }) {
   );
 }
 
-
-function ComparisonRow({ feature, phera, zola, withjoy }) {
-  const renderCell = (value) => {
-    if (value === true) return <span className="text-green-600 font-bold">✓</span>;
-    if (value === false) return <span className="text-gray-300">✗</span>;
-    return <span className="text-amber-600 text-[10px] sm:text-xs font-medium">{value}</span>;
-  };
-  return (
-    <tr className="hover:bg-gray-50/50">
-      <td className="py-2 sm:py-2.5 px-3 sm:px-4 text-gray-700">{feature}</td>
-      <td className="py-2 sm:py-2.5 px-2 sm:px-4 text-center">{renderCell(phera)}</td>
-      <td className="py-2 sm:py-2.5 px-2 sm:px-4 text-center">{renderCell(zola)}</td>
-      <td className="py-2 sm:py-2.5 px-2 sm:px-4 text-center">{renderCell(withjoy)}</td>
-    </tr>
-  );
-}
 
 function RevealGrid({ className, children }) {
   const ref = useReveal();
