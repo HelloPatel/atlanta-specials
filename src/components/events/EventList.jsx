@@ -154,7 +154,7 @@ export default function EventList() {
 
                   <div className="md:pl-8">
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex min-w-0 items-start gap-3">
                         <div className={`w-10 h-10 flex-shrink-0 rounded-lg flex items-center justify-center ${color.bg}`}>
                           <span className={`text-lg font-display font-bold ${color.accent}`}>{idx + 1}</span>
                         </div>
@@ -167,17 +167,17 @@ export default function EventList() {
                               const declined = invited.filter((g) => (g.rsvpStatus || {})[event.id] === 'declined').length;
                               const pending = invited.length - accepted - declined;
                               return (
-                                <span className="inline-flex items-center gap-1.5 text-xs">
-                                  <span className="text-green-600 font-medium">{accepted} yes</span>
+                                <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
+                                  <span className="whitespace-nowrap text-green-600 font-medium">{accepted} yes</span>
                                   <span className="text-gray-300">·</span>
-                                  <span className="text-red-500 font-medium">{declined} no</span>
+                                  <span className="whitespace-nowrap text-red-500 font-medium">{declined} no</span>
                                   <span className="text-gray-300">·</span>
-                                  <span className="text-gray-400">{pending} not yet</span>
+                                  <span className="whitespace-nowrap text-gray-400">{pending} not yet</span>
                                 </span>
                               );
                             })()}
                             {event.dressCode && (
-                              <span className="inline-flex items-center gap-1 text-xs text-wine-700">
+                              <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs text-wine-700">
                                 <Sparkles size={11} /> {event.dressCode}
                               </span>
                             )}
@@ -186,19 +186,19 @@ export default function EventList() {
                       </div>
                       <div className="flex flex-shrink-0 gap-0.5">
                         {idx > 0 && (
-                          <button aria-label={`Move ${event.name} earlier`} onClick={() => handleReorder(idx, -1)} className="flex size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                          <button aria-label={`Move ${event.name} earlier`} onClick={() => handleReorder(idx, -1)} className="flex size-8 md:size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                             <ChevronUp size={15} />
                           </button>
                         )}
                         {idx < events.length - 1 && (
-                          <button aria-label={`Move ${event.name} later`} onClick={() => handleReorder(idx, 1)} className="flex size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                          <button aria-label={`Move ${event.name} later`} onClick={() => handleReorder(idx, 1)} className="flex size-8 md:size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                             <ChevronDown size={15} />
                           </button>
                         )}
-                        <button aria-label={`Edit ${event.name}`} onClick={() => setEditing(event)} className="flex size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+                        <button aria-label={`Edit ${event.name}`} onClick={() => setEditing(event)} className="flex size-8 md:size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
                           <Edit3 size={15} />
                         </button>
-                        <button aria-label={`Delete ${event.name}`} onClick={() => handleDelete(event.id)} className="flex size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                        <button aria-label={`Delete ${event.name}`} onClick={() => handleDelete(event.id)} className="flex size-8 md:size-9 items-center justify-center rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors">
                           <Trash2 size={15} />
                         </button>
                       </div>
