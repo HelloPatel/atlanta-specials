@@ -21,6 +21,7 @@ export const COLLECTIONS = {
   PUBLIC_SEATING: 'publicSeating',
   PHOTO_GROUPS: 'photoGroups',
   BETS: 'bets',
+  BUDGET: 'budget',
 };
 
 // Indian wedding event templates
