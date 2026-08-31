@@ -64,6 +64,8 @@ export default {
         'shimmer': 'shimmer 2s linear infinite',
         'pulse-soft': 'pulseSoft 3s ease-in-out infinite',
         'sheet-up': 'sheetUp 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
+        'assistant-in': 'assistantIn 0.34s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'message-in': 'messageIn 0.4s cubic-bezier(0.32, 0.72, 0, 1) both',
       },
       keyframes: {
         fadeIn: {
@@ -105,6 +107,14 @@ export default {
         },
         sheetUp: {
           '0%': { opacity: '0', transform: 'translateY(100%)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        assistantIn: {
+          '0%': { opacity: '0', transform: 'translateY(16px) scale(0.92)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        messageIn: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },

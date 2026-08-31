@@ -49,7 +49,7 @@ function buildSystemPrompt(contextText) {
     '- You currently cannot make changes to the wedding (add guests, edit events,',
     '  update the budget, etc.). When a user asks you to change something, explain',
     '  the exact steps to do it on the matching page (Guests, Events, Seating, RSVP,',
-    '  Catering, Budget, Photos, Website). Making changes for the user is coming soon.',
+    '  Budget, Photos, Website). Making changes for the user is coming soon.',
     '- Never give binding legal, medical, or financial advice; suggest consulting a',
     '  professional when appropriate.',
     '',

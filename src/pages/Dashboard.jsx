@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useWedding } from '../contexts/WeddingContext';
-import { Button, Card, Modal, Input, SkeletonDashboard } from '../components/ui';
+import { Button, Card, Modal, Input, SkeletonDashboard, AnimatedNumber } from '../components/ui';
 import { Plus, Users, Calendar, Grid3X3, Mail } from 'lucide-react';
 import { subscribeToGuests, syncPublicGuestDirectory } from '../services/guestService';
 import { subscribeToEvents, syncPublicEvents } from '../services/eventService';
@@ -98,17 +98,19 @@ export default function Dashboard() {
         </div>
         {daysUntilWedding !== null && daysUntilWedding > 0 && (
           <div className="text-right">
-            <p className="text-2xl sm:text-3xl font-display font-bold text-wine-700">{daysUntilWedding}</p>
+            <p className="text-2xl sm:text-3xl font-display font-bold text-wine-700">
+              <AnimatedNumber value={daysUntilWedding} />
+            </p>
             <p className="text-[10px] sm:text-xs text-gray-500">days to go</p>
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
-        <QuickStat icon={Users} label="Guests" value={guestCount} to="/guests" />
-        <QuickStat icon={Calendar} label="Events" value={eventCount} to="/events" />
-        <QuickStat icon={Grid3X3} label="Seated" value={seatedCount} to="/seating" />
-        <QuickStat icon={Mail} label="RSVP Rate" value={`${rsvpRate}%`} to="/rsvp" />
+        <QuickStat icon={Users} label="Guests" value={guestCount} to="/guests" index={0} />
+        <QuickStat icon={Calendar} label="Events" value={eventCount} to="/events" index={1} />
+        <QuickStat icon={Grid3X3} label="Seated" value={seatedCount} to="/seating" index={2} />
+        <QuickStat icon={Mail} label="RSVP Rate" value={rsvpRate} suffix="%" to="/rsvp" index={3} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -283,18 +285,21 @@ export default function Dashboard() {
   );
 }
 
-function QuickStat({ icon: Icon, label, value, to }) {
+function QuickStat({ icon: Icon, label, value, to, suffix = '', index = 0 }) {
   const navigate = useNavigate();
   return (
     <button
       onClick={() => navigate(to)}
-      className="group flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card hover:shadow-lifted hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200 text-left"
+      style={{ animationDelay: `${index * 70}ms` }}
+      className="group flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card hover:shadow-lifted hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200 text-left animate-slide-up"
     >
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 group-hover:from-wine-100 group-hover:to-phera-100 transition-colors">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 group-hover:from-wine-100 group-hover:to-phera-100 group-hover:scale-105 transition-all duration-200">
         <Icon size={20} className="text-wine-700" />
       </div>
       <div>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <p className="text-2xl font-bold text-gray-900">
+          <AnimatedNumber value={value} suffix={suffix} />
+        </p>
         <p className="text-xs text-gray-500">{label}</p>
       </div>
     </button>

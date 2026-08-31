@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import Sidebar, { NAV_ITEMS } from './Sidebar';
 import CommandPalette from './CommandPalette';
+import AssistantWidget from '../assistant/AssistantWidget';
 import { Menu, LayoutDashboard, Users, Grid3X3, Mail, MoreHorizontal, X } from 'lucide-react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { APP_NAME } from '../../config/constants';
@@ -86,7 +87,7 @@ export default function AppShell() {
         tabIndex={-1}
         className="flex-1 overflow-x-hidden overflow-y-auto pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] outline-none md:pt-0 md:pb-0"
       >
-        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-5 md:px-6 md:py-8">
+        <div key={pathname} className="mx-auto max-w-7xl px-4 py-5 sm:px-5 md:px-6 md:py-8 animate-fade-in">
           <Outlet />
         </div>
       </main>
@@ -107,6 +108,9 @@ export default function AppShell() {
           </button>
         </div>
       </nav>
+
+      {/* Floating AI assistant */}
+      <AssistantWidget />
     </div>
   );
 }
