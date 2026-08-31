@@ -14,7 +14,7 @@ const WeddingContext = createContext(null);
 // means every feature, or an array of feature keys.
 const ALL_FEATURES = [
   'dashboard', 'guests', 'events', 'seating',
-  'rsvp', 'catering', 'print', 'photos', 'bets', 'website',
+  'rsvp', 'catering', 'budget', 'print', 'photos', 'bets', 'website',
 ];
 
 const ROLE_ACCESS = {
