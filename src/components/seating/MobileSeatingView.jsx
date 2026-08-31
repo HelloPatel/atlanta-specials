@@ -77,6 +77,7 @@ export default function MobileSeatingView() {
   const [selectedTableId, setSelectedTableId] = useState(null);
   const [movingTableId, setMovingTableId] = useState(null);
   const canvasRef = useRef(null);
+  const tapRef = useRef({ id: null, time: 0, timer: null });
   const [mobileZoom, setMobileZoom] = useState(0.35);
   const [viewMode, setViewMode] = useState('layout');
   const [guestSearch, setGuestSearch] = useState('');
@@ -368,9 +369,44 @@ export default function MobileSeatingView() {
   const startMovingTable = useCallback(() => {
     if (!selectedTable || !canEdit) return;
     setMovingTableId(selectedTable.id);
+    setSelectedTableId(null);
   }, [canEdit, selectedTable]);
 
   const cancelMove = useCallback(() => setMovingTableId(null), []);
+
+  // Tap gesture state machine for tables:
+  //   single tap  → enter move mode (next canvas tap places the table)
+  //   double tap  → open the table menu
+  // Viewers (no edit rights) always just open the read-only menu.
+  const handleTableTap = useCallback((table) => {
+    // While placing a table, let the tap fall through to the canvas (handleCanvasTap).
+    if (movingTableId) return;
+    if (!canEdit) { setSelectedTableId(table.id); return; }
+
+    const now = Date.now();
+    const state = tapRef.current;
+    const isDouble = state.id === table.id && now - state.time < 320;
+
+    if (state.timer) { clearTimeout(state.timer); state.timer = null; }
+
+    if (isDouble) {
+      tapRef.current = { id: null, time: 0, timer: null };
+      setSelectedTableId(table.id);
+      return;
+    }
+
+    tapRef.current = {
+      id: table.id,
+      time: now,
+      timer: setTimeout(() => {
+        tapRef.current = { id: null, time: 0, timer: null };
+        setSelectedTableId(null);
+        setMovingTableId(table.id);
+      }, 320),
+    };
+  }, [movingTableId, canEdit]);
+
+  useEffect(() => () => { if (tapRef.current.timer) clearTimeout(tapRef.current.timer); }, []);
 
   const handleCanvasTap = useCallback((event) => {
     if (!movingTableId || !canvasRef.current) return;
@@ -469,7 +505,7 @@ export default function MobileSeatingView() {
               </button>
             </div>
           ) : (
-            <span className="ml-auto text-right text-[11px] leading-tight text-gray-400">Tap a table<br />Positions locked</span>
+            <span className="ml-auto text-right text-[11px] leading-tight text-gray-400">Tap to move<br />Double-tap for options</span>
           )}
         </div>
       )}
@@ -602,7 +638,7 @@ export default function MobileSeatingView() {
               return (
                 <div
                   key={table.id}
-                  onClick={() => { if (!movingTableId) setSelectedTableId(isSelected ? null : table.id); }}
+                  onClick={() => handleTableTap(table)}
                   style={{
                     position: 'absolute',
                     left: table.x,
