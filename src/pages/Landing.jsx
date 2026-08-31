@@ -5,7 +5,7 @@ import HeroDemo from '../components/ui/HeroDemo';
 import FeatureTiles from '../components/ui/FeatureTiles';
 import LegalFooter from '../components/legal/LegalFooter';
 import { APP_NAME } from '../config/constants';
-import { Users, Calendar, Grid3X3, Mail, Camera, ArrowRight, Sparkles, Play } from 'lucide-react';
+import { Users, ArrowRight, Sparkles, Globe, Search, Printer, MapPin } from 'lucide-react';
 import {
   CountUp,
   SplitText,
@@ -245,6 +245,53 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Beyond the guest list — the features nobody else markets */}
+      <section className="section-blush">
+        <div className="px-4 sm:px-6 py-14 sm:py-24 max-w-5xl mx-auto">
+          <div className="text-center mb-10 sm:mb-16">
+            <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-wine-700 uppercase tracking-[0.15em] bg-white/70 px-3 py-1.5 rounded-full mb-4 border border-wine-200/40">More than a guest list</span>
+            <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">Everything your guests actually touch</h2>
+            <p className="text-sm text-gray-500 max-w-lg mx-auto">One link ties it together — a wedding website, self-serve seating, printed place cards, and the family helping you plan.</p>
+          </div>
+          <RevealGrid className="space-y-5 sm:space-y-7">
+            <ShowcaseRow
+              icon={Globe}
+              eyebrow="Wedding website"
+              title="A themed website you share in one link"
+              description="Story, gallery, travel and hotels, registry, and RSVP — all on a public page guests open on their phone. Pick a theme, drop in your details, share the link."
+              chips={['6 themes', 'Registry', 'Travel & hotels', 'Mobile-ready']}
+              visual={<WebsiteMock />}
+            />
+            <ShowcaseRow
+              reverse
+              icon={Search}
+              eyebrow="Table Finder"
+              title="Guests find their own seat"
+              description="No crowd around a printed board. Guests open the link, type their name, and instantly see their table for that event."
+              chips={['Search by name', 'Per event', 'No login']}
+              visual={<TableFinderMock />}
+            />
+            <ShowcaseRow
+              icon={Printer}
+              eyebrow="Print center"
+              title="Place cards and charts, print-ready"
+              description="Generate PDF place cards with table, dietary, and family — plus escort charts and guest lists, all styled to match your website theme."
+              chips={['Place cards', 'Escort chart', 'Guest list PDF']}
+              visual={<PlaceCardMock />}
+            />
+            <ShowcaseRow
+              reverse
+              icon={Users}
+              eyebrow="Plan together"
+              title="Bring in family and co-planners"
+              description="Invite a co-planner as a full editor, or give parents a view-only login so they can see everything without changing a thing."
+              chips={['Editor access', 'View-only', 'Live updates']}
+              visual={<CollabMock />}
+            />
+          </RevealGrid>
+        </div>
+      </section>
+
       {/* Free forever banner */}
       <section className="px-4 sm:px-6 py-16 sm:py-24 max-w-4xl mx-auto text-center">
         <div className="rounded-[1.5rem] sm:rounded-[2rem] bg-gradient-to-b from-wine-50/40 to-transparent p-1.5 sm:p-2 border border-wine-100/40">
@@ -261,22 +308,6 @@ export default function Landing() {
             <p className="mt-4 text-xs text-gray-400">No catch. No paywalls. Just plan your wedding.</p>
           </div>
         </div>
-      </section>
-
-      {/* Built for big Indian weddings */}
-      <section className="px-4 sm:px-6 py-12 sm:py-20 max-w-5xl mx-auto">
-        <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">Built for a big Indian wedding</h2>
-          <p className="text-sm text-gray-500">Most planners assume one event and 150 guests. Yours isn't that.</p>
-        </div>
-        <RevealGrid className="grid grid-cols-2 sm:grid-cols-4 auto-rows-[128px] sm:auto-rows-[150px] gap-3 sm:gap-4">
-          <BentoTile className="col-span-2 row-span-2" icon={Calendar} title="Every event, its own guest list" description="Mehndi, Sangeet, Haldi, Ceremony, Reception \u2014 each with a different invite list and RSVP count." dark large />
-          <BentoTile icon={Users} title="500 to 1000 guests" description="Imported from Excel in about a minute." />
-          <BentoTile icon={Mail} title="Family RSVPs" description="Tracked as one group, not one cousin at a time." />
-          <BentoTile icon={Grid3X3} title="Tables in any size" description="10, 12, or more \u2014 auto-suggest seating." />
-          <BentoTile icon={Camera} title="Live photo queue" description="Guests see when their group is up." />
-          <BentoTile className="col-span-2 sm:col-span-4" icon={Sparkles} title="Free, forever" description="Unlimited guests, events, tables, and RSVPs. No hidden upgrades, no paywalls." accent />
-        </RevealGrid>
       </section>
 
       {/* FAQ */}
@@ -346,32 +377,6 @@ function Stat({ value, label }) {
   );
 }
 
-function BentoTile({ icon: Icon, title, description, className = '', dark, large, accent }) {
-  return (
-    <div
-      className={`reveal group relative overflow-hidden rounded-2xl border p-4 sm:p-5 flex flex-col justify-between transition-all duration-500 ease-spring hover:-translate-y-0.5 hover:shadow-lifted ${
-        dark
-          ? 'border-wine-800/40 bg-gradient-to-br from-wine-700 to-wine-900 shadow-glow'
-          : accent
-          ? 'border-wine-200/60 bg-gradient-to-br from-wine-50 to-phera-50/60 shadow-card'
-          : 'border-gray-200/70 bg-white shadow-card'
-      } ${className}`}
-    >
-      <span
-        className={`inline-flex size-9 sm:size-10 items-center justify-center rounded-xl shadow-sm ${
-          dark ? 'bg-white/15 text-white' : 'bg-gradient-to-br from-wine-50 to-phera-50 text-wine-700'
-        }`}
-      >
-        <Icon size={large ? 22 : 18} />
-      </span>
-      <div>
-        <h3 className={`font-semibold mb-1 ${large ? 'text-base sm:text-xl' : 'text-sm sm:text-[15px]'} ${dark ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
-        <p className={`leading-relaxed ${large ? 'text-xs sm:text-sm' : 'text-[11px] sm:text-xs'} ${dark ? 'text-wine-100/80' : 'text-gray-500'}`}>{description}</p>
-      </div>
-    </div>
-  );
-}
-
 function Step({ n, title, description }) {
   return (
     <div className="reveal relative text-center">
@@ -436,6 +441,125 @@ function RevealGrid({ className, children }) {
   return (
     <div ref={ref} className={className}>
       {children}
+    </div>
+  );
+}
+
+function ShowcaseRow({ icon: Icon, eyebrow, title, description, chips = [], visual, reverse }) {
+  return (
+    <div className="reveal grid md:grid-cols-2 gap-6 sm:gap-10 items-center rounded-[1.5rem] border border-white/70 bg-white/60 p-5 sm:p-8 shadow-card backdrop-blur-sm">
+      <div className={reverse ? 'md:order-2' : ''}>
+        <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-wine-600">
+          <span className="inline-flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-wine-50 to-phera-50 text-wine-700">
+            <Icon size={15} />
+          </span>
+          {eyebrow}
+        </span>
+        <h3 className="mt-3 text-lg sm:text-2xl font-display font-bold text-gray-900 text-balance">{title}</h3>
+        <p className="mt-2.5 text-sm text-gray-500 leading-relaxed">{description}</p>
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {chips.map((c) => (
+            <span key={c} className="inline-flex items-center rounded-full border border-wine-100 bg-wine-50/60 px-2.5 py-1 text-[11px] font-medium text-wine-700">{c}</span>
+          ))}
+        </div>
+      </div>
+      <div className={reverse ? 'md:order-1' : ''}>{visual}</div>
+    </div>
+  );
+}
+
+function WebsiteMock() {
+  const themes = [
+    { name: 'Classic Rose', c: '#e35d78' },
+    { name: 'Royal Gold', c: '#c99a3b' },
+    { name: 'Garden Green', c: '#5f9e6e' },
+    { name: 'Marigold Mandap', c: '#e8933a' },
+    { name: 'Midnight Sangeet', c: '#4b3f72' },
+    { name: 'Modern Minimal', c: '#3f3f46' },
+  ];
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-lifted">
+      <div className="flex items-center gap-1.5 border-b border-gray-100 bg-gray-50/80 px-3 py-2">
+        <span className="size-2 rounded-full bg-red-300" />
+        <span className="size-2 rounded-full bg-yellow-300" />
+        <span className="size-2 rounded-full bg-green-300" />
+        <span className="ml-2 flex-1 truncate rounded-md bg-white px-2 py-1 text-[10px] text-gray-400 ring-1 ring-gray-100">priya-and-arjun.phera.app</span>
+      </div>
+      <div className="flex h-28 flex-col items-center justify-center bg-gradient-to-br from-wine-100 via-phera-50 to-ivory-100 sm:h-32">
+        <p className="font-display text-[9px] uppercase tracking-[0.3em] text-wine-500/80">Together with their families</p>
+        <p className="font-display text-lg font-bold text-wine-800 sm:text-2xl">Priya &amp; Arjun</p>
+        <p className="mt-1 text-[10px] text-wine-600/70">Nov 2025 · Atlanta</p>
+      </div>
+      <div className="flex items-center justify-between px-3 py-2.5">
+        <div className="flex gap-1.5">
+          {themes.map((t) => (
+            <span key={t.name} title={t.name} className="size-4 rounded-full ring-1 ring-black/5" style={{ backgroundColor: t.c }} />
+          ))}
+        </div>
+        <span className="text-[10px] font-medium text-gray-400">6 themes</span>
+      </div>
+    </div>
+  );
+}
+
+function TableFinderMock() {
+  return (
+    <div className="rounded-2xl border border-gray-200/70 bg-white p-4 shadow-lifted sm:p-5">
+      <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50/70 px-3 py-2.5">
+        <Search size={15} className="text-gray-400" />
+        <span className="text-sm text-gray-700">Priya Sharma</span>
+        <span className="ml-0.5 inline-block h-4 w-px animate-pulse bg-wine-500" />
+      </div>
+      <div className="mt-3 flex items-center gap-3 rounded-xl border border-wine-100 bg-gradient-to-br from-wine-50 to-phera-50/50 px-3.5 py-3">
+        <span className="flex size-9 items-center justify-center rounded-xl bg-wine-600 text-white shadow-sm">
+          <MapPin size={16} />
+        </span>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-wine-500/80">Reception</p>
+          <p className="text-sm font-semibold text-gray-900">You're at Table 8</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PlaceCardMock() {
+  return (
+    <div className="relative rounded-2xl border border-gray-200/70 bg-gradient-to-br from-ivory-50 to-white p-5 shadow-lifted sm:p-6">
+      <div className="absolute inset-x-8 -top-2 h-8 rounded-t-xl border border-gray-200/60 bg-white/70" aria-hidden="true" />
+      <div className="relative rounded-xl border border-wine-100 bg-white px-5 py-5 text-center shadow-sm">
+        <p className="font-display text-[9px] uppercase tracking-[0.3em] text-wine-400">Table 12</p>
+        <p className="mt-1 font-display text-xl font-bold text-gray-900">Anaya Patel</p>
+        <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-gray-400">
+          <span className="inline-flex items-center gap-1"><span className="size-1.5 rounded-full bg-green-500" />Veg</span>
+          <span className="text-gray-300">·</span>
+          <span>Patel family</span>
+        </div>
+      </div>
+      <div className="mt-3 flex justify-center">
+        <span className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-medium text-white">
+          <Printer size={11} /> Export PDF
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function CollabMock() {
+  const people = [
+    { initial: 'Y', name: 'You', role: 'Owner', tone: 'bg-wine-600' },
+    { initial: 'P', name: 'Priya', role: 'Editor', tone: 'bg-phera-500' },
+    { initial: 'M', name: 'Mom', role: 'View-only', tone: 'bg-gray-400' },
+  ];
+  return (
+    <div className="space-y-2.5 rounded-2xl border border-gray-200/70 bg-white p-4 shadow-lifted sm:p-5">
+      {people.map((p) => (
+        <div key={p.name} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-2.5">
+          <span className={`flex size-8 items-center justify-center rounded-full text-xs font-bold text-white ${p.tone}`}>{p.initial}</span>
+          <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${p.role === 'View-only' ? 'bg-gray-100 text-gray-500' : 'bg-wine-50 text-wine-700'}`}>{p.role}</span>
+        </div>
+      ))}
     </div>
   );
 }
