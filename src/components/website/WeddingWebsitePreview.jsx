@@ -648,6 +648,496 @@ function HeroSplit({ theme, config, wedding, names, coupleName, initials, heroDa
   );
 }
 
+// Injects scoped keyframes for the premium hero layouts. Every animation is
+// transform/opacity-only and gated behind prefers-reduced-motion: no-preference
+// so reduced-motion visitors see the fully-composed final state with no motion.
+function HeroKeyframes() {
+  return (
+    <style>{`
+      .phera-rise{opacity:1}
+      .phera-marquee-track{display:inline-flex;white-space:nowrap;will-change:transform}
+      @media (prefers-reduced-motion: no-preference){
+        .phera-rise{opacity:0;animation:phera-rise .8s cubic-bezier(.22,1,.36,1) forwards}
+        @keyframes phera-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+        .phera-d1{animation-delay:.08s}.phera-d2{animation-delay:.16s}.phera-d3{animation-delay:.24s}.phera-d4{animation-delay:.34s}.phera-d5{animation-delay:.44s}.phera-d6{animation-delay:.56s}
+        .phera-marquee-track{animation:phera-marquee 28s linear infinite}
+        @keyframes phera-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+        .phera-float{animation:phera-float 8s ease-in-out infinite}
+        .phera-float-slow{animation:phera-float 13s ease-in-out infinite}
+        @keyframes phera-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+        .phera-spin-slow{animation:phera-spin 46s linear infinite}
+        @keyframes phera-spin{to{transform:rotate(360deg)}}
+        .phera-aurora{animation:phera-aurora 18s ease-in-out infinite}
+        @keyframes phera-aurora{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(6%,-4%) scale(1.12)}66%{transform:translate(-5%,5%) scale(.94)}}
+        .phera-shimmer{background-size:200% auto;animation:phera-shimmer 7s linear infinite}
+        @keyframes phera-shimmer{to{background-position:200% center}}
+      }
+    `}</style>
+  );
+}
+
+// Squared call-to-action pair for the typographic / cinematic heroes where the
+// default rounded pills would clash. Same RSVP + View Events behavior.
+function SquareActions({ config, wedding, publicEvents, primaryBg, primaryText, outline }) {
+  return (
+    <div className="mt-8 flex flex-col gap-3 @sm:flex-row @sm:flex-wrap">
+      {config.websiteRsvp?.enabled && (
+        <Link
+          to={`/rsvp/${wedding?.id}`}
+          className="inline-flex items-center justify-center px-7 py-3 text-xs font-bold uppercase tracking-[0.22em] shadow-lg transition-transform hover:-translate-y-0.5"
+          style={{ backgroundColor: primaryBg, color: primaryText }}
+        >
+          {config.websiteRsvp.buttonText}
+        </Link>
+      )}
+      {publicEvents.length > 0 && (
+        <a
+          href="#events"
+          className="inline-flex items-center justify-center px-7 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-transform hover:-translate-y-0.5"
+          style={{ border: `1px solid ${outline}`, color: outline }}
+        >
+          View Events
+        </a>
+      )}
+    </div>
+  );
+}
+
+// 1) Boarding-pass hero — destination-wedding ticket with FROM/TO and a stub.
+function HeroTicket({ theme, config, wedding, names, initials, heroDate, location, publicEvents }) {
+  const rawDate = config.websiteHero?.date || wedding?.weddingDate;
+  const tagline = config.websiteHero?.tagline;
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="ticket"
+      className="relative isolate overflow-hidden px-5 py-14 @md:px-10 @lg:py-20"
+      style={{ background: theme.heroBackground, color: '#ffffff' }}
+    >
+      <div className="mx-auto max-w-4xl text-center">
+        <p className="phera-rise text-[11px] font-semibold uppercase tracking-[0.5em] text-white/80">
+          Now boarding — you&apos;re invited
+        </p>
+      </div>
+      <div className="phera-rise phera-d2 mx-auto mt-8 max-w-4xl">
+        <div
+          className="grid overflow-hidden rounded-3xl shadow-2xl @lg:grid-cols-[1.7fr_1fr]"
+          style={{ backgroundColor: theme.surface, color: theme.text }}
+        >
+          <div className="p-7 @md:p-9">
+            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ color: theme.muted }}>
+              <span className="inline-flex items-center gap-1.5"><Plane size={13} style={{ color: theme.accent }} />Boarding Pass</span>
+              <span className="hidden @sm:inline">Two hearts · One journey</span>
+            </div>
+            <div className="mt-6 flex items-end justify-between gap-4">
+              <div className="text-left">
+                <p className="text-[10px] uppercase tracking-[0.3em]" style={{ color: theme.muted }}>From</p>
+                <p className="text-lg font-semibold" style={{ fontFamily: theme.fontFamily }}>{names.first}</p>
+              </div>
+              <Plane size={22} className="mb-1" style={{ color: theme.accent }} />
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-[0.3em]" style={{ color: theme.muted }}>To</p>
+                <p className="text-lg font-semibold" style={{ fontFamily: theme.fontFamily }}>{names.second || 'Forever'}</p>
+              </div>
+            </div>
+            <h1 className="mt-6 text-4xl font-semibold leading-tight @sm:text-5xl" style={{ fontFamily: theme.fontFamily, color: theme.primary }}>
+              {names.second ? `${names.first} & ${names.second}` : names.first}
+            </h1>
+            {tagline && <p className="mt-3 text-sm leading-6" style={{ color: theme.muted }}>{tagline}</p>}
+            <div className="mt-6 grid grid-cols-3 gap-3 text-left">
+              {[
+                { label: 'Date', value: heroDate || 'TBA' },
+                { label: 'Gate', value: location },
+                { label: 'Class', value: 'Celebration' },
+              ].map((cell) => (
+                <div key={cell.label}>
+                  <p className="text-[10px] uppercase tracking-[0.25em]" style={{ color: theme.muted }}>{cell.label}</p>
+                  <p className="text-sm font-semibold" style={{ color: theme.text }}>{cell.value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div
+            className="relative flex flex-col items-center justify-center gap-4 border-t border-dashed p-7 @lg:border-l @lg:border-t-0"
+            style={{ borderColor: hexToRgba(theme.muted, 0.4), backgroundColor: hexToRgba(theme.accent, 0.08) }}
+          >
+            <div className="flex h-16 w-16 items-center justify-center rounded-full text-lg font-semibold text-white shadow-inner" style={{ backgroundColor: theme.primary, fontFamily: theme.fontFamily }}>
+              {initials}
+            </div>
+            <div className="text-center">
+              <p className="text-[10px] uppercase tracking-[0.3em]" style={{ color: theme.muted }}>Seat</p>
+              <p className="text-xl font-semibold" style={{ color: theme.primary, fontFamily: theme.fontFamily }}>2 · Together</p>
+            </div>
+            <div className="flex items-end gap-[3px]" aria-hidden="true">
+              {[7, 3, 5, 2, 6, 3, 8, 2, 4, 6, 3, 7, 2, 5].map((h, i) => (
+                <span key={i} className="w-[3px]" style={{ height: `${h * 4}px`, backgroundColor: hexToRgba(theme.text, 0.75) }} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="phera-rise phera-d4 mt-8 flex flex-col items-center">
+        <CountdownTimer targetDate={rawDate} theme={theme} variant="inline" />
+        <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="light" />
+      </div>
+    </section>
+  );
+}
+
+// 2) Kinetic marquee hero — electric after-dark with a scrolling name band.
+function HeroMarquee({ theme, config, wedding, names, coupleName, heroDate, location, publicEvents }) {
+  const rawDate = config.websiteHero?.date || wedding?.weddingDate;
+  const tagline = config.websiteHero?.tagline;
+  const bannerText = `${coupleName}  ✦  ${heroDate || 'Save the date'}  ✦  ${tagline || 'Celebrate with us'}  ✦  `;
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="marquee"
+      className="relative isolate overflow-hidden px-6 py-16 @md:px-10 @lg:py-24"
+      style={{ background: theme.heroBackground, color: '#ffffff' }}
+    >
+      <div className="pointer-events-none absolute -left-24 top-4 h-72 w-72 rounded-full blur-3xl phera-float" style={{ backgroundColor: hexToRgba(theme.accent, 0.35) }} aria-hidden="true" />
+      <div className="pointer-events-none absolute -right-16 bottom-0 h-80 w-80 rounded-full blur-3xl phera-float-slow" style={{ backgroundColor: hexToRgba(theme.muted, 0.45) }} aria-hidden="true" />
+      <div className="relative mx-auto max-w-4xl text-center">
+        <p className="phera-rise inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.4em] text-white/85 backdrop-blur">
+          The night is ours
+        </p>
+        <h1 className="phera-rise phera-d1 mt-8 text-6xl font-extrabold leading-[0.92] tracking-[-0.02em] @sm:text-7xl @xl:text-8xl" style={{ fontFamily: theme.fontFamily }}>
+          <span style={{ color: '#ffffff' }}>{names.first}</span>
+          {names.second && (
+            <>
+              <span className="mx-3" style={{ color: theme.accent }}>&amp;</span>
+              <span style={{ color: '#ffffff' }}>{names.second}</span>
+            </>
+          )}
+        </h1>
+        {tagline && <p className="phera-rise phera-d2 mx-auto mt-6 max-w-xl text-base leading-8 text-white/75">{tagline}</p>}
+      </div>
+      <div className="relative mt-10 overflow-hidden border-y py-3" style={{ borderColor: hexToRgba(theme.accent, 0.35) }} aria-hidden="true">
+        <div className="phera-marquee-track">
+          {[0, 1].map((dup) => (
+            <span key={dup} className="text-2xl font-bold uppercase tracking-[0.15em] @sm:text-3xl" style={{ fontFamily: theme.fontFamily, color: hexToRgba('#ffffff', 0.9) }}>
+              {bannerText}{bannerText}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="relative mx-auto mt-10 flex max-w-4xl flex-col items-center">
+        <div className="inline-flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-sm text-white/85 backdrop-blur">
+          <span className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.accent }} />{heroDate || 'Date coming soon'}</span>
+          <span className="inline-flex items-center gap-2"><MapPin size={15} style={{ color: theme.accent }} />{location}</span>
+        </div>
+        <CountdownTimer targetDate={rawDate} theme={theme} variant="feature" />
+        <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="light" />
+      </div>
+    </section>
+  );
+}
+
+// 3) Vintage postcard hero — postage stamp, postmark and handwritten names.
+function HeroStamp({ theme, config, wedding, names, initials, heroDate, location, publicEvents }) {
+  const tagline = config.websiteHero?.tagline;
+  const scriptFamily = theme.scriptFontFamily || theme.fontFamily;
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="stamp"
+      className="relative isolate overflow-hidden px-5 py-14 @md:px-10 @lg:py-20"
+      style={{ background: theme.heroBackground, color: theme.text }}
+    >
+      <div className="phera-rise mx-auto max-w-4xl -rotate-1">
+        <div
+          className="relative grid gap-6 rounded-sm border p-6 shadow-xl @md:grid-cols-[1.4fr_1fr] @md:p-9"
+          style={{ backgroundColor: theme.surface, borderColor: hexToRgba(theme.muted, 0.35) }}
+        >
+          <div className="relative">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35em]" style={{ color: theme.primary }}>Greetings from our wedding</p>
+            <h1 className="mt-4 text-5xl leading-none @sm:text-6xl" style={{ fontFamily: scriptFamily, color: theme.primary }}>
+              {names.second ? `${names.first} & ${names.second}` : names.first}
+            </h1>
+            {tagline && <p className="mt-5 max-w-sm text-sm leading-7" style={{ fontFamily: theme.bodyFontFamily, color: theme.muted }}>{tagline}</p>}
+            <div className="mt-6 space-y-1 text-sm" style={{ fontFamily: theme.bodyFontFamily, color: theme.text }}>
+              <p className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.accent }} />{heroDate || 'Date to come'}</p><br />
+              <p className="inline-flex items-center gap-2"><MapPin size={15} style={{ color: theme.accent }} />{location}</p>
+            </div>
+          </div>
+          <div className="relative flex flex-col items-center justify-between gap-6 border-t pt-6 @md:border-l @md:border-t-0 @md:pl-6 @md:pt-0" style={{ borderColor: hexToRgba(theme.muted, 0.3) }}>
+            <div
+              className="flex h-24 w-20 flex-col items-center justify-center gap-1 border-2 border-dashed"
+              style={{ borderColor: hexToRgba(theme.primary, 0.5), backgroundColor: hexToRgba(theme.accent, 0.08) }}
+            >
+              <span className="text-2xl font-semibold" style={{ fontFamily: theme.fontFamily, color: theme.primary }}>{initials}</span>
+              <span className="text-[9px] uppercase tracking-[0.2em]" style={{ color: theme.muted }}>Forever</span>
+            </div>
+            <div
+              className="flex h-24 w-24 items-center justify-center rounded-full border-2 text-center phera-float-slow"
+              style={{ borderColor: hexToRgba(theme.primary, 0.5), color: theme.primary }}
+            >
+              <span className="px-2 text-[9px] font-semibold uppercase leading-tight tracking-[0.15em]">{location} · Est. Love</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="phera-rise phera-d3 mt-8 flex justify-center">
+        <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" />
+      </div>
+    </section>
+  );
+}
+
+// 4) Brutalist Swiss-grid hero — oversized uppercase type, hairlines, one accent.
+function HeroGrid({ theme, config, wedding, names, heroDate, location, publicEvents }) {
+  const tagline = config.websiteHero?.tagline;
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="grid"
+      className="relative isolate overflow-hidden px-6 py-12 @md:px-10 @lg:py-16"
+      style={{ backgroundColor: theme.background, color: theme.text }}
+    >
+      <div className="mx-auto max-w-6xl">
+        <div className="flex items-center justify-between border-t-2 pb-3 pt-3 text-[11px] font-bold uppercase tracking-[0.3em]" style={{ borderColor: theme.text }}>
+          <span>01 — The Wedding Of</span>
+          <span style={{ color: theme.accent }}>◆</span>
+          <span className="hidden @sm:inline">{heroDate || 'Date TBA'}</span>
+        </div>
+        <div className="phera-rise border-b py-8" style={{ borderColor: hexToRgba(theme.text, 0.2) }}>
+          <h1 className="text-[16vw] font-black uppercase leading-[0.82] tracking-[-0.03em] @lg:text-[9rem]" style={{ fontFamily: theme.fontFamily }}>
+            {names.first}
+          </h1>
+          {names.second && (
+            <h1 className="text-[16vw] font-black uppercase leading-[0.82] tracking-[-0.03em] @lg:text-[9rem]" style={{ fontFamily: theme.fontFamily }}>
+              <span style={{ color: theme.accent }}>&amp;</span> {names.second}
+            </h1>
+          )}
+        </div>
+        <div className="grid gap-px @md:grid-cols-3" style={{ backgroundColor: hexToRgba(theme.text, 0.15) }}>
+          {[
+            { n: '02', label: 'Date', value: heroDate || 'TBA' },
+            { n: '03', label: 'Location', value: location },
+            { n: '04', label: 'Dress Code', value: tagline || 'Celebration Best' },
+          ].map((cell) => (
+            <div key={cell.n} className="p-5" style={{ backgroundColor: theme.background }}>
+              <p className="text-[11px] font-bold uppercase tracking-[0.3em]" style={{ color: theme.accent }}>{cell.n} / {cell.label}</p>
+              <p className="mt-2 text-lg font-semibold" style={{ fontFamily: theme.bodyFontFamily }}>{cell.value}</p>
+            </div>
+          ))}
+        </div>
+        <SquareActions config={config} wedding={wedding} publicEvents={publicEvents} primaryBg={theme.text} primaryText={theme.background} outline={theme.text} />
+      </div>
+    </section>
+  );
+}
+
+// 5) Aurora glass hero — drifting gradient blobs behind a frosted card.
+function HeroAurora({ theme, config, wedding, names, heroDate, location, publicEvents }) {
+  const rawDate = config.websiteHero?.date || wedding?.weddingDate;
+  const tagline = config.websiteHero?.tagline;
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="aurora"
+      className="relative isolate overflow-hidden px-6 py-16 @md:px-10 @lg:py-24"
+      style={{ backgroundColor: theme.background, color: theme.text }}
+    >
+      <div className="pointer-events-none absolute -left-20 -top-16 h-80 w-80 rounded-full blur-3xl phera-aurora" style={{ backgroundColor: hexToRgba(theme.primary, 0.4) }} aria-hidden="true" />
+      <div className="pointer-events-none absolute right-[-10%] top-10 h-96 w-96 rounded-full blur-3xl phera-aurora" style={{ backgroundColor: hexToRgba(theme.accent, 0.38), animationDelay: '-6s' }} aria-hidden="true" />
+      <div className="pointer-events-none absolute bottom-[-20%] left-1/3 h-80 w-80 rounded-full blur-3xl phera-aurora" style={{ backgroundColor: hexToRgba(theme.muted, 0.32), animationDelay: '-11s' }} aria-hidden="true" />
+      <div className="relative mx-auto max-w-3xl">
+        <div
+          className="phera-rise rounded-[2rem] border border-white/50 bg-white/40 px-7 py-12 text-center shadow-[0_24px_80px_rgba(15,23,42,0.15)] backdrop-blur-2xl @md:px-12"
+          style={{ borderColor: hexToRgba('#ffffff', 0.6) }}
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-[0.5em]" style={{ color: theme.primary }}>Save our date</p>
+          <h1 className="mt-6 text-5xl font-bold leading-[0.98] tracking-[-0.01em] @sm:text-6xl @xl:text-7xl" style={{ fontFamily: theme.fontFamily, color: theme.text }}>
+            {names.first}
+            {names.second && (
+              <span className="block" style={{ color: theme.primary }}>&amp; {names.second}</span>
+            )}
+          </h1>
+          {tagline && <p className="mx-auto mt-6 max-w-lg text-base leading-8" style={{ color: theme.muted }}>{tagline}</p>}
+          <div className="mt-8 inline-flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-full border px-6 py-3 text-sm" style={{ borderColor: hexToRgba(theme.primary, 0.25), color: theme.muted }}>
+            <span className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.primary }} />{heroDate || 'Date coming soon'}</span>
+            <span className="inline-flex items-center gap-2"><MapPin size={15} style={{ color: theme.primary }} />{location}</span>
+          </div>
+          <CountdownTimer targetDate={rawDate} theme={theme} variant="inline" />
+          <div className="flex justify-center">
+            <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 6) Heritage crest hero — ceremonial monogram seal with a laurel ring.
+function HeroMonogram({ theme, config, wedding, names, initials, coupleName, heroDate, location, publicEvents }) {
+  const tagline = config.websiteHero?.tagline;
+  const year = (() => {
+    const d = new Date(config.websiteHero?.date || wedding?.weddingDate);
+    return Number.isNaN(d.getTime()) ? '' : d.getFullYear();
+  })();
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="monogram"
+      className="relative isolate overflow-hidden px-6 py-16 text-center @md:px-10 @lg:py-24"
+      style={{ background: theme.heroBackground, color: '#ffffff' }}
+    >
+      <div className="relative mx-auto flex max-w-2xl flex-col items-center">
+        <div className="phera-rise relative flex h-56 w-56 items-center justify-center rounded-full @sm:h-64 @sm:w-64" style={{ border: `2px solid ${hexToRgba(theme.accent, 0.7)}` }}>
+          <div className="absolute inset-3 rounded-full" style={{ border: `1px solid ${hexToRgba('#ffffff', 0.35)}` }} />
+          <div className="flex flex-col items-center">
+            <span className="text-6xl leading-none @sm:text-7xl" style={{ fontFamily: theme.fontFamily, color: '#ffffff' }}>{initials}</span>
+            {year && <span className="mt-2 text-[11px] font-semibold uppercase tracking-[0.4em]" style={{ color: theme.accent }}>Est. {year}</span>}
+          </div>
+        </div>
+        <p className="phera-rise phera-d2 mt-9 text-[11px] font-semibold uppercase tracking-[0.5em]" style={{ color: theme.accent }}>The marriage of</p>
+        <h1 className="phera-rise phera-d2 mt-4 text-4xl leading-tight @sm:text-5xl" style={{ fontFamily: theme.fontFamily }}>
+          {coupleName}
+        </h1>
+        {tagline && <p className="phera-rise phera-d3 mt-5 max-w-lg text-base leading-8 text-white/80" style={{ fontFamily: theme.bodyFontFamily }}>{tagline}</p>}
+        <div className="phera-rise phera-d3 mt-7 flex items-center gap-4 text-sm text-white/85">
+          <span className="h-px w-8" style={{ backgroundColor: hexToRgba(theme.accent, 0.7) }} />
+          <span className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.accent }} />{heroDate || 'Date to come'}</span>
+          <span className="h-px w-8" style={{ backgroundColor: hexToRgba(theme.accent, 0.7) }} />
+        </div>
+        <p className="phera-rise phera-d4 mt-2 inline-flex items-center gap-2 text-sm text-white/70"><MapPin size={14} style={{ color: theme.accent }} />{location}</p>
+        <div className="phera-rise phera-d5">
+          <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="light" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 7) Cinematic filmstrip hero — letterbox bars, feature title and credits.
+function HeroFilmstrip({ theme, config, wedding, names, coupleName, heroDate, location, publicEvents }) {
+  const tagline = config.websiteHero?.tagline;
+  const holes = Array.from({ length: 22 });
+  const Sprockets = () => (
+    <div className="flex justify-between px-3 py-2" aria-hidden="true">
+      {holes.map((_, i) => (
+        <span key={i} className="h-2.5 w-2 rounded-[2px]" style={{ backgroundColor: hexToRgba('#ffffff', 0.18) }} />
+      ))}
+    </div>
+  );
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="filmstrip"
+      className="relative isolate overflow-hidden py-6 text-center"
+      style={{ background: theme.heroBackground, color: '#ffffff' }}
+    >
+      <Sprockets />
+      <div className="relative mx-auto max-w-3xl px-6 py-12 @lg:py-16">
+        <div className="phera-rise inline-flex items-center gap-3">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border phera-spin-slow" style={{ borderColor: hexToRgba(theme.accent, 0.7) }}>
+            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: theme.accent }} />
+          </span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.5em]" style={{ color: theme.accent }}>Now Showing</span>
+        </div>
+        <h1 className="phera-rise phera-d1 mt-7 text-5xl font-bold uppercase leading-[0.9] tracking-[0.02em] @sm:text-6xl @xl:text-7xl" style={{ fontFamily: theme.fontFamily }}>
+          {names.first}
+          {names.second && <span className="block" style={{ color: theme.accent }}>&amp; {names.second}</span>}
+        </h1>
+        <p className="phera-rise phera-d2 mt-5 text-xs font-semibold uppercase tracking-[0.4em] text-white/70">Directed by love · A once-in-a-lifetime feature</p>
+        {tagline && <p className="phera-rise phera-d3 mx-auto mt-6 max-w-xl text-base leading-8 text-white/80" style={{ fontFamily: theme.bodyFontFamily }}>{tagline}</p>}
+        <div className="phera-rise phera-d3 mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/85">
+          <span className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.accent }} />{heroDate || 'Coming soon'}</span>
+          <span className="inline-flex items-center gap-2"><MapPin size={15} style={{ color: theme.accent }} />{location}</span>
+          <span className="rounded border px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.2em]" style={{ borderColor: hexToRgba('#ffffff', 0.4) }}>Rated · L</span>
+        </div>
+        <div className="phera-rise phera-d4 flex justify-center">
+          <SquareActions config={config} wedding={wedding} publicEvents={publicEvents} primaryBg={theme.accent} primaryText="#111111" outline={hexToRgba('#ffffff', 0.6)} />
+        </div>
+      </div>
+      <Sprockets />
+    </section>
+  );
+}
+
+// 8) Retro sunburst hero — 70s groovy type over radiating rays.
+function HeroRetro({ theme, config, wedding, names, coupleName, heroDate, location, publicEvents }) {
+  const tagline = config.websiteHero?.tagline;
+  const rays = `repeating-conic-gradient(from 0deg at 50% 100%, ${hexToRgba(theme.accent, 0.28)} 0deg 8deg, transparent 8deg 16deg)`;
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="retro"
+      className="relative isolate overflow-hidden px-6 py-16 text-center @md:px-10 @lg:py-24"
+      style={{ backgroundColor: theme.background, color: theme.text }}
+    >
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[-40%] phera-spin-slow" style={{ background: rays, opacity: 0.9 }} aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-[-30%] mx-auto h-[70%] w-[70%] rounded-full blur-2xl" style={{ background: `radial-gradient(circle, ${hexToRgba(theme.accent, 0.4)}, transparent 70%)` }} aria-hidden="true" />
+      <div className="relative mx-auto max-w-2xl">
+        <p className="phera-rise inline-flex items-center rounded-full px-5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.35em] text-white shadow" style={{ backgroundColor: theme.accent }}>
+          Let&apos;s get groovy
+        </p>
+        <h1 className="phera-rise phera-d1 mt-8 text-6xl leading-[0.9] @sm:text-7xl @xl:text-8xl" style={{ fontFamily: theme.fontFamily, color: theme.primary }}>
+          {names.first}
+          {names.second && (
+            <span className="block" style={{ color: theme.accent }}>&amp; {names.second}</span>
+          )}
+        </h1>
+        {tagline && <p className="phera-rise phera-d2 mx-auto mt-6 max-w-lg text-base leading-8" style={{ color: theme.muted, fontFamily: theme.bodyFontFamily }}>{tagline}</p>}
+        <div className="phera-rise phera-d3 mt-8 inline-flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-full px-6 py-3 text-sm text-white shadow-lg" style={{ backgroundColor: theme.primary }}>
+          <span className="inline-flex items-center gap-2"><CalendarDays size={15} />{heroDate || 'Date coming soon'}</span>
+          <span className="inline-flex items-center gap-2"><MapPin size={15} />{location}</span>
+        </div>
+        <div className="phera-rise phera-d4 flex justify-center">
+          <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 9) Art Deco hero — symmetrical black-and-gold frame with a geometric sunfan.
+function HeroDeco({ theme, config, wedding, names, coupleName, heroDate, location, publicEvents }) {
+  const tagline = config.websiteHero?.tagline;
+  const fan = `repeating-conic-gradient(from 200deg at 50% 0%, ${hexToRgba(theme.accent, 0.55)} 0deg 2deg, transparent 2deg 12deg)`;
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="deco"
+      className="relative isolate overflow-hidden px-6 py-14 text-center @md:px-10 @lg:py-20"
+      style={{ background: theme.heroBackground, color: '#ffffff' }}
+    >
+      <div className="relative mx-auto max-w-3xl p-6 @md:p-10" style={{ border: `2px solid ${hexToRgba(theme.accent, 0.6)}` }}>
+        <div className="absolute inset-2" style={{ border: `1px solid ${hexToRgba(theme.accent, 0.35)}` }} aria-hidden="true" />
+        <div className="pointer-events-none absolute left-1/2 top-0 h-24 w-48 -translate-x-1/2" style={{ background: fan, maskImage: 'linear-gradient(to bottom, black, transparent)', WebkitMaskImage: 'linear-gradient(to bottom, black, transparent)' }} aria-hidden="true" />
+        <div className="relative">
+          <p className="phera-rise mt-6 text-[11px] font-semibold uppercase tracking-[0.55em]" style={{ color: theme.accent }}>The marriage of</p>
+          <div className="phera-rise phera-d1 my-5 flex items-center justify-center gap-4">
+            <span className="h-px w-12" style={{ backgroundColor: hexToRgba(theme.accent, 0.7) }} />
+            <span className="text-lg" style={{ color: theme.accent }}>◆</span>
+            <span className="h-px w-12" style={{ backgroundColor: hexToRgba(theme.accent, 0.7) }} />
+          </div>
+          <h1 className="phera-rise phera-d1 text-5xl leading-[1.05] tracking-[0.02em] @sm:text-6xl @xl:text-7xl" style={{ fontFamily: theme.fontFamily }}>
+            {names.first}
+            {names.second && (
+              <>
+                <span className="mx-3" style={{ color: theme.accent }}>&amp;</span>
+                <span className="block @sm:inline">{names.second}</span>
+              </>
+            )}
+          </h1>
+          {tagline && <p className="phera-rise phera-d2 mx-auto mt-6 max-w-lg text-base leading-8 text-white/80" style={{ fontFamily: theme.bodyFontFamily }}>{tagline}</p>}
+          <div className="phera-rise phera-d3 mx-auto mt-7 inline-flex items-center gap-3 px-6 py-3 text-sm" style={{ border: `1px solid ${hexToRgba(theme.accent, 0.5)}`, color: '#ffffff' }}>
+            <span className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.accent }} />{heroDate || 'Date to come'}</span>
+            <span style={{ color: theme.accent }}>·</span>
+            <span className="inline-flex items-center gap-2"><MapPin size={15} style={{ color: theme.accent }} />{location}</span>
+          </div>
+          <div className="phera-rise phera-d4 flex justify-center">
+            <SquareActions config={config} wedding={wedding} publicEvents={publicEvents} primaryBg={theme.accent} primaryText={theme.primary} outline={hexToRgba(theme.accent, 0.7)} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function WeddingWebsitePreview({
   wedding,
   config: rawConfig,
@@ -691,6 +1181,24 @@ export default function WeddingWebsitePreview({
         return <HeroPoster {...heroProps} />;
       case 'split':
         return <HeroSplit {...heroProps} />;
+      case 'ticket':
+        return <HeroTicket {...heroProps} />;
+      case 'marquee':
+        return <HeroMarquee {...heroProps} />;
+      case 'stamp':
+        return <HeroStamp {...heroProps} />;
+      case 'grid':
+        return <HeroGrid {...heroProps} />;
+      case 'aurora':
+        return <HeroAurora {...heroProps} />;
+      case 'monogram':
+        return <HeroMonogram {...heroProps} />;
+      case 'filmstrip':
+        return <HeroFilmstrip {...heroProps} />;
+      case 'retro':
+        return <HeroRetro {...heroProps} />;
+      case 'deco':
+        return <HeroDeco {...heroProps} />;
       case 'botanical':
       default:
         return <HeroBotanical {...heroProps} />;
@@ -702,6 +1210,7 @@ export default function WeddingWebsitePreview({
       className="@container overflow-hidden rounded-[2rem] border border-white/60 shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
       style={{ backgroundColor: theme.background, color: theme.text, fontFamily: theme.bodyFontFamily }}
     >
+      <HeroKeyframes />
       {!config.websitePublished && previewMode && (
         <div
           className="flex items-center justify-center gap-2 px-4 py-3 text-center text-sm font-medium"
