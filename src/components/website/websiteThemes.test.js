@@ -10,8 +10,8 @@ import {
 
 describe('websiteThemes', () => {
   describe('WEBSITE_THEMES', () => {
-    it('has exactly 15 themes', () => {
-      expect(Object.keys(WEBSITE_THEMES)).toHaveLength(15);
+    it('has exactly 20 themes', () => {
+      expect(Object.keys(WEBSITE_THEMES)).toHaveLength(20);
     });
 
     it('contains the expected theme keys', () => {
