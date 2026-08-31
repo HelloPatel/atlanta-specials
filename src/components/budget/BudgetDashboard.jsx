@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Wallet, Plus, Pencil, Trash2, Download, Target, TrendingUp, TrendingDown,
   CircleDollarSign, AlertTriangle, Check, Search,
+  Paperclip, FileText, Image as ImageIcon, X, Loader2, ExternalLink,
 } from 'lucide-react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { Button, Input, Modal, Badge, useToast } from '../ui';
@@ -19,6 +20,10 @@ import {
   itemBalance,
   formatCurrency,
 } from '../../services/budgetService';
+import {
+  uploadBudgetAttachment,
+  removeBudgetAttachment,
+} from '../../services/budgetAttachmentService';
 
 const STATUS_VARIANT = {
   planned: 'default',
@@ -499,6 +504,10 @@ export default function BudgetDashboard() {
             <span className="text-gray-500">Balance due for this item: </span>
             <span className="font-semibold text-gray-900">{formatCurrency(itemBalance(form))}</span>
           </div>
+          <AttachmentsSection
+            weddingId={activeWedding?.id}
+            item={editing ? items.find((i) => i.id === editing.id) || editing : null}
+          />
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="outline" onClick={() => setModalOpen(false)}>Cancel</Button>
             <Button type="submit" variant="primary" disabled={saving}>{saving ? 'Saving…' : editing ? 'Save changes' : 'Add item'}</Button>
@@ -520,6 +529,148 @@ export default function BudgetDashboard() {
           </div>
         </form>
       </Modal>
+    </div>
+  );
+}
+
+function formatBytes(bytes) {
+  if (!bytes && bytes !== 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function AttachmentsSection({ weddingId, item }) {
+  const toast = useToast();
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [busyId, setBusyId] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // New items must be saved first — there's no item id to key files to.
+  if (!item?.id) {
+    return (
+      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500">
+        <span className="flex items-center gap-2">
+          <Paperclip size={15} className="text-gray-400" />
+          Save this item first, then reopen it to attach receipts or contracts.
+        </span>
+      </div>
+    );
+  }
+
+  const attachments = item.attachments || [];
+
+  const handleFiles = async (fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    setUploading(true);
+    for (const file of files) {
+      setProgress(0);
+      try {
+        await uploadBudgetAttachment(weddingId, item.id, file, setProgress);
+        toast.success(`Attached ${file.name}`);
+      } catch (err) {
+        toast.error(err?.message || `Could not attach ${file.name}.`);
+      }
+    }
+    setUploading(false);
+    setProgress(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleRemove = async (attachment) => {
+    if (!window.confirm(`Remove "${attachment.name}"?`)) return;
+    setBusyId(attachment.id);
+    try {
+      await removeBudgetAttachment(weddingId, item.id, attachment);
+      toast.success('Attachment removed');
+    } catch (err) {
+      toast.error(err?.message || 'Could not remove the attachment.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const iconFor = (type) =>
+    type?.startsWith('image/') ? ImageIcon : FileText;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <Paperclip size={15} className="text-gray-500" />
+          Files <span className="font-normal text-gray-400">(receipts, contracts, quotes)</span>
+        </label>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm transition hover:border-wine-400 hover:text-wine-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {uploading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          {uploading ? 'Uploading…' : 'Attach file'}
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.gif,.doc,.docx,.xls,.xlsx,.txt,.csv,image/*,application/pdf"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+      </div>
+
+      {uploading && (
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+          <div
+            className="h-full rounded-full bg-wine-500 transition-all duration-200"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
+      {attachments.length === 0 ? (
+        <p className="text-xs text-gray-400">
+          Nothing attached yet. Keep receipts and vendor contracts here so everything for this item lives in one place.
+        </p>
+      ) : (
+        <ul className="space-y-1.5">
+          {attachments.map((att) => {
+            const Icon = iconFor(att.type);
+            return (
+              <li
+                key={att.id}
+                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm animate-fade-in"
+              >
+                <Icon size={16} className="shrink-0 text-wine-500" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-gray-800">{att.name}</p>
+                  {att.size ? <p className="text-xs text-gray-400">{formatBytes(att.size)}</p> : null}
+                </div>
+                <a
+                  href={att.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-wine-600"
+                  title="Open"
+                >
+                  <ExternalLink size={15} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(att)}
+                  disabled={busyId === att.id}
+                  className="rounded-lg p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  title="Remove"
+                >
+                  {busyId === att.id ? <Loader2 size={15} className="animate-spin" /> : <X size={15} />}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

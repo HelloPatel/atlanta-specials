@@ -1,0 +1,44 @@
+rules_version = '2';
+
+// Cloud Storage rules for Phera budget attachments (receipts, contracts, etc.).
+// Access mirrors firestore.rules: only the wedding owner or a collaborator
+// (editor) may read or write files under a wedding. Everything else is denied.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function wedding(weddingId) {
+      return firestore.get(/databases/(default)/documents/weddings/$(weddingId)).data;
+    }
+
+    function isOwner(weddingId) {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/weddings/$(weddingId))
+        && wedding(weddingId).get('ownerId', '') == request.auth.uid;
+    }
+
+    function isCollaborator(weddingId) {
+      return request.auth != null
+        && request.auth.token.email != null
+        && firestore.exists(/databases/(default)/documents/weddings/$(weddingId))
+        && request.auth.token.email in wedding(weddingId).get('collaboratorEmails', []);
+    }
+
+    function isEditor(weddingId) {
+      return isOwner(weddingId) || isCollaborator(weddingId);
+    }
+
+    // Budget line-item attachments.
+    match /weddings/{weddingId}/budget/{itemId}/{fileName} {
+      allow read: if isEditor(weddingId);
+      // Cap uploads at 10 MB to match the client-side limit.
+      allow write: if isEditor(weddingId)
+        && request.resource.size < 10 * 1024 * 1024;
+      allow delete: if isEditor(weddingId);
+    }
+
+    // Deny everything else by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
