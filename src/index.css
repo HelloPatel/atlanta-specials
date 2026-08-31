@@ -422,29 +422,11 @@ p {
   animation: rb-shine var(--rb-shine-speed) linear infinite;
 }
 
-/* SpotlightCard — a wine-tinted radial glow follows the cursor on hover.
-   Rendered as a pointer-events-none overlay so it never blocks clicks. */
+/* SpotlightCard base — the cursor-following radial glow was removed per design
+   preference. The base rule is kept so existing markup/layout is unaffected. */
 .rb-spotlight {
   position: relative;
   isolation: isolate;
-}
-.rb-spotlight::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    var(--rb-spot-radius, 220px) circle at var(--rb-x, 50%) var(--rb-y, 50%),
-    var(--rb-spot, rgba(171, 32, 77, 0.14)),
-    transparent 60%
-  );
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-  z-index: 3;
-}
-.rb-spotlight:hover::after {
-  opacity: 1;
 }
 
 /* StarBorder — a glowing point travels along the top and bottom edges */
