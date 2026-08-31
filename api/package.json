@@ -1,0 +1,12 @@
+{
+  "name": "phera-api",
+  "version": "1.0.0",
+  "description": "Azure Static Web Apps managed functions for Phera (AI wedding assistant).",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "jose": "^5.9.6"
+  }
+}

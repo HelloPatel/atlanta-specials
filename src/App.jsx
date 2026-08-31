@@ -27,6 +27,7 @@ const SeatingChart = lazyWithRetry(() => import('./pages/SeatingChart'));
 const RSVPManager = lazyWithRetry(() => import('./pages/RSVPManager'));
 const CateringManager = lazyWithRetry(() => import('./pages/CateringManager'));
 const BudgetManager = lazyWithRetry(() => import('./pages/BudgetManager'));
+const AssistantManager = lazyWithRetry(() => import('./pages/AssistantManager'));
 const PhotoGroupManager = lazyWithRetry(() => import('./pages/PhotoGroupManager'));
 const BetsManager = lazyWithRetry(() => import('./pages/BetsManager'));
 const WeddingWebsite = lazyWithRetry(() => import('./pages/WeddingWebsite'));
@@ -116,6 +117,7 @@ export default function App() {
             <Route path="/rsvp" element={<FeatureGuard feature="rsvp"><RSVPManager /></FeatureGuard>} />
             <Route path="/catering" element={<FeatureGuard feature="catering"><CateringManager /></FeatureGuard>} />
             <Route path="/budget" element={<FeatureGuard feature="budget"><BudgetManager /></FeatureGuard>} />
+            <Route path="/assistant" element={<FeatureGuard feature="assistant"><AssistantManager /></FeatureGuard>} />
             <Route path="/photos" element={<FeatureGuard feature="photos"><PhotoGroupManager /></FeatureGuard>} />
             <Route path="/bets" element={<FeatureGuard feature="bets"><BetsManager /></FeatureGuard>} />
             <Route path="/website" element={<FeatureGuard feature="website"><WeddingWebsite /></FeatureGuard>} />
