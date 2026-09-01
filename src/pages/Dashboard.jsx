@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useWedding } from '../contexts/WeddingContext';
 import { Button, Card, Modal, Input, SkeletonDashboard, AnimatedNumber } from '../components/ui';
+import { GradientText, TiltCard, BorderBeam } from '../components/ui/reactbits';
 import { Plus, Users, Calendar, Grid3X3, Mail } from 'lucide-react';
 import { subscribeToGuests, syncPublicGuestDirectory } from '../services/guestService';
 import { subscribeToEvents, syncPublicEvents } from '../services/eventService';
@@ -91,13 +92,19 @@ export default function Dashboard() {
     <div className="animate-fade-in">
       <div className="mb-4 sm:mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-display font-bold text-gray-900">
+          <GradientText
+            as="h1"
+            className="text-xl sm:text-2xl font-display font-bold"
+            colors={['#ab204d', '#ed7824', '#ab204d']}
+            speed={10}
+          >
             {activeWedding.coupleName1} & {activeWedding.coupleName2}
-          </h1>
+          </GradientText>
           <p className="text-xs sm:text-sm text-gray-500 mt-1">Your wedding at a glance</p>
         </div>
         {daysUntilWedding !== null && daysUntilWedding > 0 && (
-          <div className="text-right">
+          <div className="relative overflow-hidden rounded-2xl border border-wine-100/80 bg-white/70 backdrop-blur-sm px-4 py-2 text-right shadow-card">
+            <BorderBeam speed={8} />
             <p className="text-2xl sm:text-3xl font-display font-bold text-wine-700">
               <AnimatedNumber value={daysUntilWedding} />
             </p>
@@ -288,21 +295,22 @@ export default function Dashboard() {
 function QuickStat({ icon: Icon, label, value, to, suffix = '', index = 0 }) {
   const navigate = useNavigate();
   return (
-    <button
-      onClick={() => navigate(to)}
-      style={{ animationDelay: `${index * 70}ms` }}
-      className="group flex items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card hover:shadow-lifted hover:-translate-y-0.5 active:scale-[0.97] transition-all duration-200 text-left animate-slide-up"
-    >
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 group-hover:from-wine-100 group-hover:to-phera-100 group-hover:scale-105 transition-all duration-200">
-        <Icon size={20} className="text-wine-700" />
-      </div>
-      <div>
-        <p className="text-2xl font-bold text-gray-900">
-          <AnimatedNumber value={value} suffix={suffix} />
-        </p>
-        <p className="text-xs text-gray-500">{label}</p>
-      </div>
-    </button>
+    <TiltCard max={6} scale={1} className="rounded-xl animate-slide-up" style={{ animationDelay: `${index * 70}ms` }}>
+      <button
+        onClick={() => navigate(to)}
+        className="group flex w-full items-center gap-4 rounded-xl border border-gray-200/80 bg-white p-4 shadow-card hover:shadow-lifted transition-shadow duration-200 text-left"
+      >
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-wine-50 to-phera-50 group-hover:from-wine-100 group-hover:to-phera-100 group-hover:scale-105 transition-all duration-200">
+          <Icon size={20} className="text-wine-700" />
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-gray-900">
+            <AnimatedNumber value={value} suffix={suffix} />
+          </p>
+          <p className="text-xs text-gray-500">{label}</p>
+        </div>
+      </button>
+    </TiltCard>
   );
 }
 

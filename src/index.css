@@ -501,6 +501,138 @@ p {
   }
 }
 
+/* ============================================================
+   Revamp v2 — extended motion library
+   (aurora · gradient text · border beam · marquee · shimmer · tilt)
+   Inspired by reactbits / animate-ui / hover.dev, rebuilt on-brand.
+   ============================================================ */
+
+/* AuroraBackground — slow drifting blobs of warm brand light */
+@keyframes rb-aurora-1 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33%      { transform: translate3d(6%, -5%, 0) scale(1.18); }
+  66%      { transform: translate3d(-5%, 6%, 0) scale(0.94); }
+}
+@keyframes rb-aurora-2 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50%      { transform: translate3d(-8%, 7%, 0) scale(1.22); }
+}
+@keyframes rb-aurora-3 {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(6%, -7%, 0) scale(0.9); }
+}
+.rb-aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  will-change: transform;
+  pointer-events: none;
+}
+.rb-aurora--1 { animation: rb-aurora-1 20s ease-in-out infinite; }
+.rb-aurora--2 { animation: rb-aurora-2 26s ease-in-out infinite; }
+.rb-aurora--3 { animation: rb-aurora-3 32s ease-in-out infinite; }
+
+/* GradientText — a warm gradient flows continuously through the letters */
+@keyframes rb-gradient-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.rb-gradient-text {
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: rb-gradient-flow var(--rb-gt-speed, 6s) ease infinite;
+}
+
+/* ShimmerButton — a soft highlight sweeps across on hover */
+@keyframes rb-shimmer-sweep {
+  0%   { transform: translateX(-130%) skewX(-12deg); }
+  100% { transform: translateX(130%) skewX(-12deg); }
+}
+.rb-shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.rb-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60%;
+  left: -30%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: translateX(-130%) skewX(-12deg);
+  pointer-events: none;
+}
+.rb-shimmer:hover::after {
+  animation: rb-shimmer-sweep 0.85s ease;
+}
+
+/* BorderBeam — a light travels around the element's border */
+@property --rb-beam-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes rb-beam-rotate {
+  to { --rb-beam-angle: 360deg; }
+}
+.rb-beam {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: var(--rb-beam-thickness, 1.5px);
+  background: conic-gradient(
+    from var(--rb-beam-angle) at 50% 50%,
+    transparent 0deg,
+    transparent 300deg,
+    var(--rb-beam-color, #ec7a97) 340deg,
+    #fff 356deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: rb-beam-rotate var(--rb-beam-speed, 6s) linear infinite;
+  pointer-events: none;
+}
+
+/* Marquee — an infinite horizontal ribbon */
+@keyframes rb-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.rb-marquee-mask {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.rb-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: rb-marquee var(--rb-mq-speed, 32s) linear infinite;
+  animation-direction: var(--rb-mq-dir, normal);
+}
+.rb-marquee-mask:hover .rb-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Freeze the looping decorations for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  .rb-aurora--1, .rb-aurora--2, .rb-aurora--3,
+  .rb-gradient-text, .rb-beam, .rb-marquee-track {
+    animation: none;
+  }
+  .rb-gradient-text {
+    -webkit-text-fill-color: currentColor;
+    color: currentColor;
+  }
+}
+
 /* Prevent iOS Safari from auto-zooming the viewport when focusing a form
    control. Mobile Safari zooms in whenever an input's font-size is below 16px,
    which caused a jarring "zoom" on the login screen. Enforce a 16px minimum on
