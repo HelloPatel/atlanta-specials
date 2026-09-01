@@ -600,6 +600,26 @@ const COUPLE = {
   seaside: 'https://cdn.pixabay.com/photo/2024/09/26/04/47/pre-wedding-9074893_1280.jpg',
   forest: 'https://cdn.pixabay.com/photo/2022/01/30/05/50/couple-6979881_1280.jpg',
   garden: 'https://cdn.pixabay.com/photo/2018/09/11/16/13/indian-wedding-3669913_1280.jpg',
+  temple: 'https://cdn.pixabay.com/photo/2021/09/03/06/10/wedding-6595090_1280.jpg',
+  courtyard: 'https://cdn.pixabay.com/photo/2021/04/05/19/55/wedding-6154519_1280.jpg',
+  veil: 'https://cdn.pixabay.com/photo/2021/08/28/08/49/couple-6580418_1280.jpg',
+  sindoor: 'https://cdn.pixabay.com/photo/2019/11/25/15/34/indian-4652313_1280.jpg',
+  embrace: 'https://cdn.pixabay.com/photo/2018/11/29/19/38/couple-3846355_1280.jpg',
+  meadow: 'https://cdn.pixabay.com/photo/2022/02/24/09/24/pre-wedding-photoshoot-7032116_1280.jpg',
+  studio: 'https://cdn.pixabay.com/photo/2022/01/19/14/44/couple-6950039_1280.jpg',
+  classicShot: 'https://cdn.pixabay.com/photo/2016/06/05/16/14/wedding-couple-1437654_1280.jpg',
+  redLehenga: 'https://cdn.pixabay.com/photo/2021/08/03/07/30/bride-6518725_1280.jpg',
+  mandapDay: 'https://cdn.pixabay.com/photo/2023/08/26/06/05/wedding-8214210_1280.jpg',
+  aisle: 'https://cdn.pixabay.com/photo/2023/06/20/04/42/wedding-8076019_1280.jpg',
+  modernPair: 'https://cdn.pixabay.com/photo/2025/02/12/09/18/couple-9400897_1280.jpg',
+  portrait: 'https://cdn.pixabay.com/photo/2020/05/14/17/48/bride-5170729_1280.jpg',
+  cityLights: 'https://cdn.pixabay.com/photo/2024/01/27/09/37/couple-8535582_1280.jpg',
+  ceremony: 'https://cdn.pixabay.com/photo/2022/01/21/12/38/wedding-6954716_1280.jpg',
+  florals: 'https://cdn.pixabay.com/photo/2021/05/30/07/29/wedding-6295093_1280.jpg',
+  baraat: 'https://cdn.pixabay.com/photo/2020/04/07/17/16/indian-wedding-5014197_1280.jpg',
+  sunsetPair: 'https://cdn.pixabay.com/photo/2024/07/13/08/30/couple-8891707_1280.jpg',
+  regalPair: 'https://cdn.pixabay.com/photo/2024/08/21/10/13/indian-8985675_1280.jpg',
+  vows: 'https://cdn.pixabay.com/photo/2020/07/24/14/26/wedding-5434151_1280.jpg',
 };
 const DETAIL = {
   jasmine: 'https://cdn.pixabay.com/photo/2021/08/24/11/32/couple-6570391_1280.jpg',
@@ -615,128 +635,102 @@ const DETAIL = {
 // drops this content into the couple's own config, which they can then edit. The
 // couple's real names and event schedule always come from their wedding data, so
 // only the styling, story, photos, hotels, and registry are seeded here.
-export const WEBSITE_EXAMPLES = [
-  {
-    key: 'palace-gold',
-    name: 'Palace Gold',
-    themeKey: 'royal-gold',
-    tagline: 'A gold and garland celebration, three days in the making.',
-    hero: pixabay(COUPLE.goldenSaree),
-    story:
-      'We fell for each other over long dinners and longer conversations. Now we are gathering everyone we love for haldi, mehndi, and the pheras. Come hungry, come ready to dance.',
-    gallery: [DETAIL.garland, DETAIL.palm, DETAIL.bangles],
-    hotels: [
-      { name: 'Heritage Palace Hotel', address: 'Old City, a short walk to the mandap', link: 'https://example.com/heritage', groupRateCode: 'SHAADI' },
-      { name: 'Riverside Inn', address: 'By the river, free shuttle to every event', link: 'https://example.com/riverside', groupRateCode: '' },
-    ],
-    registry: [
-      { name: 'Honeymoon Fund', url: 'https://example.com/honeymoon' },
-      { name: 'Home Registry', url: 'https://example.com/registry' },
-    ],
-  },
-  {
-    key: 'marigold-morning',
-    name: 'Marigold Morning',
-    themeKey: 'royal-gold',
-    tagline: 'Marigolds, family, and a morning we will never forget.',
-    hero: pixabay(COUPLE.marigoldPair),
-    story:
-      'Two families, one big celebration. We are marking the day with the rituals our grandparents kept and the music our cousins cannot sit still for. We would love for you to be there.',
-    gallery: [pixabay(COUPLE.marigoldBride), DETAIL.garland, DETAIL.jasmine],
-    hotels: [
-      { name: 'Grand Ballroom Hotel', address: 'Downtown, next to the reception', link: 'https://example.com/stay', groupRateCode: 'WEDDING2026' },
-    ],
-    registry: [
-      { name: 'Blessings and Gifts', url: 'https://example.com/blessings' },
-    ],
-  },
-  {
-    key: 'golden-hour',
-    name: 'Golden Hour',
-    themeKey: 'classic-rose',
-    tagline: 'Soft light, warm hearts, and the start of forever.',
-    hero: pixabay(COUPLE.blushGold),
-    story:
-      'We met at a friend\'s Diwali party and have laughed our way through the years since. Now we are ready to celebrate with the people who mean the most to us, over a weekend of color, food, and dancing.',
-    gallery: [DETAIL.rings, DETAIL.bangles, DETAIL.jasmine],
-    hotels: [
-      { name: 'Garden Suites', address: 'Ten minutes from the ceremony', link: 'https://example.com/garden', groupRateCode: 'ROSE26' },
-    ],
-    registry: [
-      { name: 'Our Honeymoon Fund', url: 'https://example.com/honeymoon' },
-    ],
-  },
-  {
-    key: 'garden-vows',
-    name: 'Garden Vows',
-    themeKey: 'classic-rose',
-    tagline: 'A garden gathering of two families becoming one.',
-    hero: pixabay(COUPLE.garden),
-    story:
-      'We love slow mornings, good chai, and being outdoors. So a garden felt right for the day we say our vows. Bring comfortable shoes and stay for the evening under the string lights.',
-    gallery: [DETAIL.jasmine, DETAIL.mehndiRings, DETAIL.rings],
-    hotels: [
-      { name: 'Willow Court Hotel', address: 'Beside the gardens, group block available', link: 'https://example.com/willow', groupRateCode: 'GARDEN' },
-    ],
-    registry: [
-      { name: 'Home Registry', url: 'https://example.com/registry' },
-    ],
-  },
-  {
-    key: 'mustard-fields',
-    name: 'Mustard Fields',
-    themeKey: 'mehndi-henna',
-    tagline: 'Open fields, bright colors, and a whole lot of love.',
-    hero: pixabay(COUPLE.mustardField),
-    story:
-      'Our story started in a small town and grew across cities and seasons. This spring we are heading back to where it began to celebrate with our families. Expect dhol, good food, and plenty of color.',
-    gallery: [DETAIL.palm, DETAIL.bangles, DETAIL.jasmine],
-    hotels: [
-      { name: 'Countryside Retreat', address: 'Fifteen minutes from the venue', link: 'https://example.com/countryside', groupRateCode: 'MEHNDI' },
-    ],
-    registry: [
-      { name: 'Our First Home', url: 'https://example.com/firsthome' },
-    ],
-  },
-  {
-    key: 'by-the-sea',
-    name: 'By the Sea',
-    themeKey: 'coastal-voyage',
-    tagline: 'Salt air, sunset vows, and a weekend by the water.',
-    hero: pixabay(COUPLE.seaside),
-    story:
-      'We always come back to the coast, so this is where we want to say our vows. Pack light, bring your dancing shoes, and get ready for a weekend by the sea.',
-    gallery: [DETAIL.rings, DETAIL.jasmine],
-    hotels: [
-      { name: 'Seaside Resort', address: 'On the beach, group block available', link: 'https://example.com/seaside', groupRateCode: 'BEACHWED' },
-      { name: 'Harbor View Hotel', address: 'Overlooking the marina', link: 'https://example.com/harbor', groupRateCode: '' },
-    ],
-    registry: [
-      { name: 'Adventure Fund', url: 'https://example.com/adventure' },
-    ],
-  },
-  {
-    key: 'quiet-modern',
-    name: 'Quiet Modern',
-    themeKey: 'modern-minimal',
-    tagline: 'Simple, clean, and all about the two of us.',
-    hero: pixabay(COUPLE.forest),
-    story:
-      'We kept the guest list small and the details intentional. Everything you need to know is right here, and nothing you do not. We cannot wait to celebrate with you.',
-    gallery: [DETAIL.rings, DETAIL.bangles],
-    hotels: [
-      { name: 'The Modern Hotel', address: 'Design district, near the reception', link: 'https://example.com/modern', groupRateCode: 'MINIMAL' },
-    ],
-    registry: [
-      { name: 'Registry', url: 'https://example.com/registry' },
-    ],
-  },
+// Reusable hotel and registry blocks so every imported example lands as a full,
+// editable site. Couples swap these for their own details in one click.
+const HOTEL_SETS = [
+  [
+    { name: 'The Grand Ballroom Hotel', address: 'Downtown, next to the reception', link: 'https://example.com/stay', groupRateCode: 'WEDDING' },
+    { name: 'Riverside Inn', address: 'By the river, free shuttle to every event', link: 'https://example.com/riverside', groupRateCode: '' },
+  ],
+  [
+    { name: 'Heritage Palace Hotel', address: 'Old City, a short walk to the mandap', link: 'https://example.com/heritage', groupRateCode: 'SHAADI' },
+  ],
+  [
+    { name: 'Garden Suites', address: 'Ten minutes from the ceremony, group block available', link: 'https://example.com/garden', groupRateCode: 'BLOCK' },
+  ],
 ];
+const REGISTRY_SETS = [
+  [
+    { name: 'Honeymoon Fund', url: 'https://example.com/honeymoon' },
+    { name: 'Home Registry', url: 'https://example.com/registry' },
+  ],
+  [{ name: 'Blessings and Gifts', url: 'https://example.com/blessings' }],
+  [{ name: 'Our First Home', url: 'https://example.com/firsthome' }],
+];
+
+// One flagship example per template (a few have two), so clicking any template
+// shows a fully dressed site to preview and import. Each example is ONE couple;
+// variety comes across templates, never inside a single site. The generator
+// below turns these compact specs into full example objects.
+const EXAMPLE_SPECS = [
+  // Ceremonial & Indian
+  { key: 'marigold-mandap', name: 'Marigold Mandap', couple: 'marigoldPair', tagline: 'Marigolds, dhol, and three days of joy.', gallery: ['garland', 'jasmine', 'bangles'], story: 'Two families, one big celebration. We are keeping the rituals our grandparents held dear and adding the music our cousins cannot sit still for. Come hungry, come ready to dance.' },
+  { key: 'marigold-mandap', name: 'Haldi Morning', couple: 'marigoldBride', tagline: 'A bright haldi and an even brighter forever.', gallery: ['jasmine', 'bangles', 'palm'], story: 'It starts with turmeric, laughter, and a courtyard full of yellow. Join us for the haldi and stay for every song after.' },
+  { key: 'sindoor-silk', name: 'Sindoor and Silk', couple: 'sindoor', tagline: 'Red silk, sacred vows, and a full heart.', gallery: ['garland', 'rings', 'bangles'], story: 'We are marking this day the way our families always have, with red silk, quiet vows, and a feast that runs late into the night.' },
+  { key: 'kumkum-poster', name: 'Kumkum', couple: 'regalPair', tagline: 'Bold color and a big, warm welcome.', gallery: ['garland', 'jasmine', 'palm'], story: 'Loud, bright, and full of family. That is how we love, and that is how we are getting married. We saved you a seat.' },
+  { key: 'mehndi-henna', name: 'Mehndi Night', couple: 'mustardField', tagline: 'Henna, music, and hands full of stories.', gallery: ['mehndiRings', 'bangles', 'jasmine'], story: 'The night before it all begins, we gather for henna and dancing. Bring your appetite and your best dhol moves.' },
+  { key: 'peacock-royal', name: 'Peacock', couple: 'baraat', tagline: 'Jewel tones and a royal procession.', gallery: ['garland', 'bangles', 'rings'], story: 'Blues, greens, and gold, and a baraat you will hear before you see. We cannot wait to celebrate with the people we love.' },
+  { key: 'lotus-blush', name: 'Lotus', couple: 'portrait', tagline: 'Soft petals and a gentle start.', gallery: ['jasmine', 'rings', 'garland'], story: 'A calm morning, close family, and vows we have been writing in our heads for years. Thank you for being part of it.' },
+  // Romantic & Soft
+  { key: 'classic-rose', name: 'Blush Rose', couple: 'blushGold', tagline: 'Soft light, warm hearts, and the start of forever.', gallery: ['rings', 'bangles', 'jasmine'], story: 'We met at a friend\'s Diwali party and have laughed our way through the years since. Now we are ready to celebrate with everyone who means the most to us.' },
+  { key: 'classic-rose', name: 'Garden Vows', couple: 'garden', tagline: 'A garden gathering of two families becoming one.', gallery: ['jasmine', 'mehndiRings', 'rings'], story: 'We love slow mornings, good chai, and being outdoors, so a garden felt right for the day we say our vows. Stay for the evening under the string lights.' },
+  { key: 'watercolor-wash', name: 'Watercolor', couple: 'florals', tagline: 'Painterly washes and pretty little details.', gallery: ['jasmine', 'rings', 'bangles'], story: 'Soft colors, softer light, and a day built around the people we love. Here is everything you need to know.' },
+  { key: 'garden-green', name: 'Garden Party', couple: 'meadow', tagline: 'Green leaves, string lights, and slow evenings.', gallery: ['jasmine', 'palm', 'rings'], story: 'We are saying our vows outdoors, under the trees, with our favorite people close by. Bring comfortable shoes and stay a while.' },
+  { key: 'confetti-pop', name: 'Confetti', couple: 'studio', tagline: 'Color, confetti, and a whole lot of fun.', gallery: ['bangles', 'jasmine', 'garland'], story: 'This one is a party first and a ceremony second. Expect color everywhere and a dance floor that never really empties.' },
+  { key: 'aurora-dream', name: 'Aurora', couple: 'sunsetPair', tagline: 'Dreamy gradients and golden light.', gallery: ['rings', 'jasmine'], story: 'Golden hour is our favorite time of day, so we are getting married in it. Join us for a warm, glowing evening.' },
+  // Traditional & Regal
+  { key: 'royal-gold', name: 'Palace Gold', couple: 'goldenSaree', tagline: 'A gold and garland celebration, three days in the making.', gallery: ['garland', 'palm', 'bangles'], story: 'We fell for each other over long dinners and longer conversations. Now we are gathering everyone we love for haldi, mehndi, and the pheras.' },
+  { key: 'royal-gold', name: 'Zari Nights', couple: 'redLehenga', tagline: 'Gold zari and a dark, glowing hero.', gallery: ['bangles', 'rings', 'garland'], story: 'Deep reds, warm gold, and a room lit like a jewel box. Come celebrate a night we have been dreaming about.' },
+  { key: 'heritage-crest', name: 'Heritage', couple: 'mandapDay', tagline: 'A family crest and old-world warmth.', gallery: ['garland', 'rings', 'palm'], story: 'Two family histories, one new beginning. We are honoring where we come from and where we are headed together.' },
+  { key: 'deco-gold', name: 'Deco Gold', couple: 'cityLights', tagline: 'Deco lines and champagne gold.', gallery: ['rings', 'bangles'], story: 'Think black tie, gold accents, and a little old-Hollywood glamour. We would be honored to have you there.' },
+  { key: 'terracotta-mosaic', name: 'Terracotta', couple: 'courtyard', tagline: 'Warm clay tones and hand-set mosaic tile.', gallery: ['palm', 'jasmine', 'garland'], story: 'A sun-warmed courtyard, tiled floors, and family everywhere you look. That is the day we are inviting you into.' },
+  // Modern & Minimal
+  { key: 'modern-minimal', name: 'Quiet Modern', couple: 'forest', tagline: 'Simple, clean, and all about the two of you.', gallery: ['rings', 'bangles'], story: 'We kept the guest list small and the details intentional. Everything you need is right here, and nothing you do not.' },
+  { key: 'blanc-minimal', name: 'Blanc', couple: 'modernPair', tagline: 'White space and one perfect photo.', gallery: ['rings'], story: 'One photo, a few words, and the date that changed everything. We are keeping it simple and we cannot wait.' },
+  { key: 'brutalist-noir', name: 'Noir', couple: 'embrace', tagline: 'Black, white, and bold type.', gallery: ['rings', 'bangles'], story: 'High contrast, big letters, zero fuss. Here is where to be and when. See you on the dance floor.' },
+  { key: 'iridescent-mesh', name: 'Iridescent', couple: 'veil', tagline: 'Soft mesh gradients and a modern glow.', gallery: ['jasmine', 'rings'], story: 'A modern look for a timeless promise. Scroll down for the schedule, the stay, and everything in between.' },
+  // Bold & After Dark
+  { key: 'midnight-sangeet', name: 'Midnight Sangeet', couple: 'ceremony', tagline: 'Dark skies, bright lights, all night long.', gallery: ['garland', 'bangles'], story: 'The sangeet is the heart of it for us, so we are leaning all the way in. Rehearse your dance, we are keeping score.' },
+  { key: 'neon-nights', name: 'Neon Nights', couple: 'vows', tagline: 'Neon glow and an after-party feel.', gallery: ['bangles', 'rings'], story: 'Late nights, loud music, and the people we love in one room. This is going to be a good one.' },
+  { key: 'cinema-reel', name: 'Cinema', couple: 'aisle', tagline: 'A film-strip love story.', gallery: ['rings', 'jasmine'], story: 'Our story has had a few plot twists and a very happy ending. Come watch the final scene with us.' },
+  // Destination & Retro
+  { key: 'coastal-voyage', name: 'By the Sea', couple: 'seaside', tagline: 'Salt air, sunset vows, and a weekend by the water.', gallery: ['rings', 'jasmine'], story: 'We always come back to the coast, so this is where we want to say our vows. Pack light and bring your dancing shoes.' },
+  { key: 'vintage-postcard', name: 'Postcard', couple: 'temple', tagline: 'Travel stamps and old-postcard charm.', gallery: ['palm', 'garland'], story: 'We have collected stamps and stories across a lot of miles. Now we are adding the best one yet, with you there.' },
+  { key: 'retro-sunset', name: 'Retro Sunset', couple: 'classicShot', tagline: 'Warm seventies color and a sun-faded glow.', gallery: ['rings', 'bangles'], story: 'Think warm tones, big sun, and a laid-back party. Come as you are and stay till the last song.' },
+];
+
+// Expand each compact spec into a full example object with a hero photo, a
+// faceless detail gallery, and ready-to-edit hotels and registry.
+export const WEBSITE_EXAMPLES = EXAMPLE_SPECS.map((spec, index) => ({
+  key: `${spec.key}-${(spec.name || 'example').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
+  name: spec.name,
+  themeKey: spec.key,
+  tagline: spec.tagline,
+  hero: pixabay(COUPLE[spec.couple]),
+  story: spec.story,
+  gallery: (spec.gallery || []).map((detailKey) => DETAIL[detailKey]).filter(Boolean),
+  hotels: spec.hotels || HOTEL_SETS[index % HOTEL_SETS.length],
+  registry: spec.registry || REGISTRY_SETS[index % REGISTRY_SETS.length],
+}));
 
 // Return the ready-made examples that belong to a given template key, so the
 // picker can offer a couple "start from scratch" or a filled-in variation.
 export function getExamplesForTheme(themeKey) {
   return WEBSITE_EXAMPLES.filter((example) => example.themeKey === themeKey);
+}
+
+// The hero photo used to preview a template in the picker grid. Prefer the
+// template's first example so every card shows a real, dressed first page
+// instead of an empty colored header.
+export function getPreviewConfigForTheme(themeKey, baseConfig = {}) {
+  const [firstExample] = getExamplesForTheme(themeKey);
+  if (firstExample) return buildConfigFromExample(firstExample, baseConfig);
+  return {
+    websiteTheme: themeKey,
+    websitePublished: true,
+    websiteHero: { tagline: '' },
+    websiteGallery: { enabled: false, images: [] },
+  };
 }
 
 // Merge an example into a couple's existing config. Their names, date, event
