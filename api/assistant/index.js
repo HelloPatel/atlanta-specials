@@ -26,7 +26,7 @@ async function verifyFirebaseToken(authHeader, projectId, log) {
     return { ok: true, uid: payload.sub || payload.user_id || null, token };
   } catch (err) {
     log('Firebase token verification failed:', err.message);
-    return { ok: false };
+    return { ok: false, err: err && err.message, code: err && err.code };
   }
 }
 
@@ -229,6 +229,22 @@ module.exports = async function (context, req) {
     };
   };
 
+  // Temporary, header-guarded runtime diagnostic. Only responds when the caller
+  // sends the exact secret header, so it never leaks to normal users. Remove
+  // after the auth issue is confirmed fixed.
+  const diagOn =
+    req.headers &&
+    (req.headers['x-phera-diag'] || req.headers['X-Phera-Diag']) === 'phera-diag-7f3a9c';
+  if (diagOn && req.headers['x-phera-diag-info']) {
+    return respond(200, {
+      node: process.version,
+      hasFetch: typeof fetch,
+      hasGlobalThisFetch: typeof globalThis.fetch,
+      hasCrypto: typeof globalThis.crypto,
+      firebaseProjectId: process.env.FIREBASE_PROJECT_ID || null,
+    });
+  }
+
   if (!req.body || typeof req.body !== 'object') {
     return respond(400, { error: 'Invalid request body.' });
   }
@@ -245,7 +261,11 @@ module.exports = async function (context, req) {
     log
   );
   if (!auth.ok) {
-    return respond(401, { error: 'Not authorized. Please sign in again.' });
+    const body = { error: 'Not authorized. Please sign in again.' };
+    if (diagOn) {
+      body._diag = { node: process.version, hasFetch: typeof fetch, err: auth.err, code: auth.code };
+    }
+    return respond(401, body);
   }
 
   const provider = resolveProvider();
