@@ -1,7 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import { connectFirestoreEmulator, getFirestore } from 'firebase/firestore';
-import { connectStorageEmulator, getStorage } from 'firebase/storage';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 const firebaseConfig = {
@@ -16,12 +15,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
-  connectStorageEmulator(storage, '127.0.0.1', 9199);
 } else if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
   // App Check is a best-effort hardening layer. If reCAPTCHA fails to load or
   // initialize (network block, ad blocker, misconfigured key), it must never
@@ -36,4 +33,4 @@ if (import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
   }
 }
 
-export { auth, db, storage };
+export { auth, db };

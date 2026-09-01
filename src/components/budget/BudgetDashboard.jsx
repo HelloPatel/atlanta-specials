@@ -23,6 +23,7 @@ import {
 import {
   uploadBudgetAttachment,
   removeBudgetAttachment,
+  getAttachmentDownloadUrl,
 } from '../../services/budgetAttachmentService';
 
 const STATUS_VARIANT = {
@@ -545,6 +546,7 @@ function AttachmentsSection({ weddingId, item }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [busyId, setBusyId] = useState(null);
+  const [openingId, setOpeningId] = useState(null);
   const fileInputRef = useRef(null);
 
   // New items must be saved first — there's no item id to key files to.
@@ -589,6 +591,23 @@ function AttachmentsSection({ weddingId, item }) {
       toast.error(err?.message || 'Could not remove the attachment.');
     } finally {
       setBusyId(null);
+    }
+  };
+
+  const handleOpen = async (attachment) => {
+    setOpeningId(attachment.id);
+    // Open the tab synchronously so the browser treats it as user-initiated,
+    // then point it at the signed URL once we have it.
+    const tab = window.open('', '_blank', 'noopener,noreferrer');
+    try {
+      const url = await getAttachmentDownloadUrl(weddingId, attachment);
+      if (tab) tab.location = url;
+      else window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      if (tab) tab.close();
+      toast.error(err?.message || 'Could not open that file.');
+    } finally {
+      setOpeningId(null);
     }
   };
 
@@ -648,15 +667,19 @@ function AttachmentsSection({ weddingId, item }) {
                   <p className="truncate font-medium text-gray-800">{att.name}</p>
                   {att.size ? <p className="text-xs text-gray-400">{formatBytes(att.size)}</p> : null}
                 </div>
-                <a
-                  href={att.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-wine-600"
+                <button
+                  type="button"
+                  onClick={() => handleOpen(att)}
+                  disabled={openingId === att.id}
+                  className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-wine-600 disabled:opacity-50"
                   title="Open"
                 >
-                  <ExternalLink size={15} />
-                </a>
+                  {openingId === att.id ? (
+                    <Loader2 size={15} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={15} />
+                  )}
+                </button>
                 <button
                   type="button"
                   onClick={() => handleRemove(att)}

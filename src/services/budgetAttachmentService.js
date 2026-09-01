@@ -1,18 +1,13 @@
-import {
-  ref as storageRef,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { storage, db } from '../firebase';
+import { auth, db } from '../firebase';
 import { COLLECTIONS } from '../config/constants';
 
 // Receipts and contracts attached to a single budget line item. Files live in
-// Cloud Storage under the wedding; lightweight metadata is mirrored onto the
-// budget item doc (an `attachments` array) so the UI can list them without
-// touching Storage. Firestore's updateDoc merges field-by-field, so the array
-// survives ordinary edits made through budgetService.updateBudgetItem.
+// Azure Blob Storage (written by the /api/budget-attachment function, which
+// authorizes the caller against the wedding). Lightweight metadata is mirrored
+// onto the budget item doc as an `attachments` array so the UI can list files
+// without a round-trip. Firestore's updateDoc merges field-by-field, so the
+// array survives ordinary edits made through budgetService.updateBudgetItem.
 
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024; // 10 MB
 
@@ -36,24 +31,53 @@ function budgetItemDoc(weddingId, itemId) {
   return doc(db, COLLECTIONS.WEDDINGS, weddingId, COLLECTIONS.BUDGET, itemId);
 }
 
-// Keep the stored file name predictable but collision-free.
-function safeName(name) {
-  return String(name || 'file')
-    .replace(/[^\w.\-]+/g, '_')
-    .slice(0, 120);
+async function authToken() {
+  try {
+    return auth.currentUser ? await auth.currentUser.getIdToken() : null;
+  } catch {
+    return null;
+  }
 }
 
-function friendlyError(err) {
-  const code = err?.code || '';
-  if (code === 'storage/unauthorized') {
-    return "You don't have permission to upload files here, or file storage isn't set up yet.";
-  }
-  if (code === 'storage/canceled') return 'Upload canceled.';
-  if (code === 'storage/quota-exceeded') return 'Storage is full — free up space and try again.';
-  if (code.startsWith('storage/')) {
-    return "File uploads aren't available right now. If this keeps happening, storage may need to be turned on.";
-  }
-  return err?.message || 'Could not upload the file.';
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const comma = result.indexOf(',');
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = () => reject(new Error('Could not read that file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+// Upload via XHR so we can report progress (fetch can't observe upload bytes).
+function postWithProgress(path, token, payload, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', path);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    if (xhr.upload && onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+    }
+    xhr.onload = () => {
+      const ct = xhr.getResponseHeader('content-type') || '';
+      if (!ct.includes('application/json')) {
+        reject(new Error('File uploads run on the deployed site (Azure), not local dev.'));
+        return;
+      }
+      let data = {};
+      try { data = JSON.parse(xhr.responseText || '{}'); } catch { data = {}; }
+      if (xhr.status >= 200 && xhr.status < 300) resolve(data);
+      else reject(new Error(data.error || 'Upload failed. Please try again.'));
+    };
+    xhr.onerror = () => reject(new Error('Could not reach file storage. Please try again.'));
+    xhr.send(JSON.stringify(payload));
+  });
 }
 
 /**
@@ -61,66 +85,64 @@ function friendlyError(err) {
  * @param onProgress optional (0–100) callback for the progress bar.
  * Returns the stored attachment metadata.
  */
-export function uploadBudgetAttachment(weddingId, itemId, file, onProgress) {
-  return new Promise((resolve, reject) => {
-    if (!weddingId || !itemId) {
-      reject(new Error('Save the item before attaching files.'));
-      return;
-    }
-    if (!file) {
-      reject(new Error('No file selected.'));
-      return;
-    }
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      reject(new Error('That file is over 10 MB. Try a smaller one.'));
-      return;
-    }
-    if (file.type && !ALLOWED_TYPES.includes(file.type)) {
-      reject(new Error('Please attach a PDF, image, document, or spreadsheet.'));
-      return;
-    }
+export async function uploadBudgetAttachment(weddingId, itemId, file, onProgress) {
+  if (!weddingId || !itemId) throw new Error('Save the item before attaching files.');
+  if (!file) throw new Error('No file selected.');
+  if (file.size > MAX_ATTACHMENT_BYTES) throw new Error('That file is over 10 MB. Try a smaller one.');
+  if (file.type && !ALLOWED_TYPES.includes(file.type)) {
+    throw new Error('Please attach a PDF, image, document, or spreadsheet.');
+  }
 
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const path = `weddings/${weddingId}/budget/${itemId}/${id}-${safeName(file.name)}`;
-    const objectRef = storageRef(storage, path);
-    const task = uploadBytesResumable(objectRef, file, {
+  const token = await authToken();
+  const dataBase64 = await fileToBase64(file);
+  const data = await postWithProgress(
+    '/api/budget-attachment',
+    token,
+    {
+      action: 'upload',
+      weddingId,
+      itemId,
+      fileName: file.name || 'file',
       contentType: file.type || 'application/octet-stream',
-    });
+      dataBase64,
+    },
+    onProgress
+  );
 
-    task.on(
-      'state_changed',
-      (snap) => {
-        if (onProgress && snap.totalBytes > 0) {
-          onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100));
-        }
-      },
-      (err) => reject(new Error(friendlyError(err))),
-      async () => {
-        try {
-          const url = await getDownloadURL(task.snapshot.ref);
-          const meta = {
-            id,
-            name: file.name || 'file',
-            size: file.size,
-            type: file.type || '',
-            path,
-            url,
-            uploadedAt: Date.now(),
-          };
-          const ref = budgetItemDoc(weddingId, itemId);
-          const snap = await getDoc(ref);
-          const existing = (snap.exists() && snap.data().attachments) || [];
-          await updateDoc(ref, {
-            attachments: [...existing, meta],
-            updatedAt: serverTimestamp(),
-          });
-          resolve(meta);
-        } catch (err) {
-          reject(new Error(friendlyError(err)));
-        }
-      },
-    );
+  if (data.configured === false) {
+    throw new Error(data.error || "File storage isn't set up yet.");
+  }
+  const meta = data.attachment;
+  if (!meta) throw new Error('Upload did not complete. Please try again.');
+
+  const ref = budgetItemDoc(weddingId, itemId);
+  const snap = await getDoc(ref);
+  const existing = (snap.exists() && snap.data().attachments) || [];
+  await updateDoc(ref, {
+    attachments: [...existing, meta],
+    updatedAt: serverTimestamp(),
   });
+  return meta;
+}
+
+/** Get a short-lived, direct download URL for an attachment. */
+export async function getAttachmentDownloadUrl(weddingId, attachment) {
+  const token = await authToken();
+  const resp = await fetch('/api/budget-attachment', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ action: 'read-url', weddingId, blobPath: attachment.blobPath }),
+  });
+  const ct = resp.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    throw new Error('Downloads run on the deployed site (Azure), not local dev.');
+  }
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok || !data.url) throw new Error(data.error || 'Could not open that file.');
+  return data.url;
 }
 
 /**
@@ -129,14 +151,20 @@ export function uploadBudgetAttachment(weddingId, itemId, file, onProgress) {
  */
 export async function removeBudgetAttachment(weddingId, itemId, attachment) {
   if (!weddingId || !itemId || !attachment) return;
+  const token = await authToken();
   try {
-    await deleteObject(storageRef(storage, attachment.path));
-  } catch (err) {
-    // A missing object shouldn't block cleaning up the metadata.
-    if (err?.code !== 'storage/object-not-found') {
-      console.error('[budgetAttachmentService] deleteObject failed:', err);
-    }
+    await fetch('/api/budget-attachment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ action: 'delete', weddingId, blobPath: attachment.blobPath }),
+    });
+  } catch {
+    // Even if the blob delete request fails, still clean up the metadata below.
   }
+
   const ref = budgetItemDoc(weddingId, itemId);
   const snap = await getDoc(ref);
   const existing = (snap.exists() && snap.data().attachments) || [];
