@@ -5,7 +5,7 @@ import HeroDemo from '../components/ui/HeroDemo';
 import FeatureTiles from '../components/ui/FeatureTiles';
 import LegalFooter from '../components/legal/LegalFooter';
 import { APP_NAME } from '../config/constants';
-import { Users, ArrowRight, Sparkles, Globe, Search, Printer, MapPin } from 'lucide-react';
+import { ArrowRight, Sparkles, Globe, Wallet, Bot, Check, Users, Send, Heart } from 'lucide-react';
 import {
   CountUp,
   SplitText,
@@ -17,6 +17,9 @@ import {
   Reveal,
   RevealStagger,
   RevealItem,
+  GradientText,
+  BorderBeam,
+  Marquee,
 } from '../components/ui/reactbits';
 
 function useReveal() {  const ref = useRef(null);
@@ -199,7 +202,7 @@ export default function Landing() {
             <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
               Problems we solve
             </h2>
-            <p className="text-sm text-gray-500">The stuff that actually made our own wedding stressful.</p>
+            <p className="text-sm text-gray-500">The stuff that made our own wedding stressful.</p>
           </div>
           <RevealGrid className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
             <ScenarioCard
@@ -210,7 +213,7 @@ export default function Landing() {
             />
             <ScenarioCard
               number="02"
-              title="Seating you can actually import"
+              title="Seating you can import in one go"
               problem="You build the whole arrangement in a spreadsheet, then move one table and the entire thing falls apart."
               solution="Build your guest list, drag people to tables, or import a full arrangement in one go. Everything stays put when you move a table."
             />
@@ -245,50 +248,54 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Beyond the guest list — the features nobody else markets */}
+      {/* Beyond the basics: AI planner, budget tracker, shareable website */}
       <section className="section-blush">
         <div className="px-4 sm:px-6 py-14 sm:py-24 max-w-5xl mx-auto">
           <div className="text-center mb-10 sm:mb-16">
             <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-wine-700 uppercase tracking-[0.15em] bg-white/70 px-3 py-1.5 rounded-full mb-4 border border-wine-200/40">More than a guest list</span>
-            <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">Everything your guests actually touch</h2>
-            <p className="text-sm text-gray-500 max-w-lg mx-auto">One link ties it together — a wedding website, self-serve seating, printed place cards, and the family helping you plan.</p>
+            <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 mb-2 text-balance">
+              The tools that do the{' '}
+              <GradientText colors={['#ab204d', '#ed7824', '#ab204d']}>heavy lifting</GradientText>
+            </h2>
+            <p className="text-sm text-gray-500 max-w-xl mx-auto">An AI planner that makes real changes, a budget that keeps you honest, and a wedding website you share in one link.</p>
           </div>
           <RevealGrid className="space-y-5 sm:space-y-7">
             <ShowcaseRow
+              icon={Sparkles}
+              eyebrow="AI planner"
+              title="Ask for a change, and it makes it"
+              description="Ask about your RSVPs or budget in plain words. Tell it to add a guest, set an RSVP, fix an invite, or seat someone, and it does the work. Every change waits for your yes."
+              chips={['Answers instantly', 'Adds and edits guests', 'You approve each change']}
+              visual={<AssistantMock />}
+            />
+            <ShowcaseRow
+              reverse
+              icon={Wallet}
+              eyebrow="Budget tracker"
+              title="Know exactly where the money goes"
+              description="Set a total target, then track estimates against actuals across 15 wedding categories. Mark what's paid, attach receipts, and export the sheet whenever you need it."
+              chips={['15 categories', 'Paid vs remaining', 'Attach receipts']}
+              visual={<BudgetMock />}
+            />
+            <ShowcaseRow
               icon={Globe}
               eyebrow="Wedding website"
-              title="A themed website you share in one link"
-              description="Story, gallery, travel and hotels, registry, and RSVP — all on a public page guests open on their phone. Pick a theme, drop in your details, share the link."
-              chips={['6 themes', 'Registry', 'Travel & hotels', 'Mobile-ready']}
+              title="A themed site you share in one link"
+              description="Your story, gallery, travel and hotels, registry, and RSVP on one public page guests open on their phone. Pick a theme, add your details, then send the link."
+              chips={['6 themes', 'Registry', 'RSVP built in']}
               visual={<WebsiteMock />}
             />
-            <ShowcaseRow
-              reverse
-              icon={Search}
-              eyebrow="Table Finder"
-              title="Guests find their own seat"
-              description="No crowd around a printed board. Guests open the link, type their name, and instantly see their table for that event."
-              chips={['Search by name', 'Per event', 'No login']}
-              visual={<TableFinderMock />}
-            />
-            <ShowcaseRow
-              icon={Printer}
-              eyebrow="Print center"
-              title="Place cards and charts, print-ready"
-              description="Generate PDF place cards with table, dietary, and family — plus escort charts and guest lists, all styled to match your website theme."
-              chips={['Place cards', 'Escort chart', 'Guest list PDF']}
-              visual={<PlaceCardMock />}
-            />
-            <ShowcaseRow
-              reverse
-              icon={Users}
-              eyebrow="Plan together"
-              title="Bring in family and co-planners"
-              description="Invite a co-planner as a full editor, or give parents a view-only login so they can see everything without changing a thing."
-              chips={['Editor access', 'View-only', 'Live updates']}
-              visual={<CollabMock />}
-            />
           </RevealGrid>
+
+          {/* Everything else, on a quiet loop */}
+          <div className="mt-9 sm:mt-14">
+            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.15em] text-gray-400 mb-4">Plus everything else you'd expect</p>
+            <Marquee speed={40} gap="0.6rem">
+              {['Table Finder', 'Print center', 'Place cards', 'Escort charts', 'Co-planner access', 'View-only for parents', 'WhatsApp RSVP links', 'Dietary tracking', 'Keep-apart rules', 'Live photo queue'].map((t) => (
+                <span key={t} className="inline-flex items-center whitespace-nowrap rounded-full border border-wine-100 bg-white/70 px-3.5 py-1.5 text-xs font-medium text-wine-700 shadow-sm">{t}</span>
+              ))}
+            </Marquee>
+          </div>
         </div>
       </section>
 
@@ -298,7 +305,7 @@ export default function Landing() {
           <div className="rounded-[1.25rem] sm:rounded-[1.75rem] border border-wine-200/40 bg-gradient-to-b from-white to-wine-50/30 p-6 sm:p-12 shadow-[inset_0_1px_2px_rgba(255,255,255,0.8)]">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-wine-700 uppercase tracking-[0.15em] bg-wine-100/80 px-3 py-1.5 rounded-full mb-5 border border-wine-200/40">100% Free</span>
             <h2 className="text-2xl sm:text-4xl font-display font-bold text-gray-900 mb-4">Every feature. Unlimited guests. Free.</h2>
-            <p className="text-sm sm:text-base text-gray-500 max-w-md mx-auto mb-6 sm:mb-8">Unlimited guests, events, tables, seating charts, and RSVPs — with no hidden upgrades and no paywalls.</p>
+            <p className="text-sm sm:text-base text-gray-500 max-w-md mx-auto mb-6 sm:mb-8">Unlimited guests, events, tables, seating charts, and RSVPs. No hidden upgrades, no paywalls.</p>
             <Link to="/register" className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-wine-700 text-white font-semibold shadow-glow hover:bg-wine-800 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 ease-spring">
               Start Planning Free
               <span className="inline-flex items-center justify-center size-6 rounded-full bg-white/15 group-hover:translate-x-0.5 transition-transform duration-300 ease-spring">
@@ -312,28 +319,52 @@ export default function Landing() {
 
       {/* FAQ */}
       <section className="section-warm">
-        <div className="px-4 sm:px-6 py-12 sm:py-20 max-w-3xl mx-auto">
-          <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 text-center mb-8 sm:mb-12 text-balance">
-            Questions
-          </h2>
-          <div className="space-y-3">
-            <FAQItem
-              question="How is this different from other wedding planners?"
-              answer="Most tools support one event with about 150 guests and fixed table sizes. Phera handles 6+ events with different invite lists, 500 to 1000 guests, family-group RSVPs, and custom table sizes."
-            />
-            <FAQItem
-              question="Can I import my existing guest list?"
-              answer="Yes. Any Excel or CSV file. Drag it in, columns get detected, duplicates get caught within each family, families get grouped. Takes about 60 seconds for 500 guests."
-            />
-            <FAQItem
-              question="Do guests need to create an account?"
-              answer="No. They get a link via WhatsApp, search their name, and respond. No login, no app, no download."
-            />
-            <FAQItem
-              question="Is this actually free?"
-              answer="Yes. Unlimited guests, events, tables, seating charts, and RSVPs. Free forever. No hidden upgrades or paywalls."
-            />
+        <div className="px-4 sm:px-6 py-12 sm:py-20 max-w-4xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12">
+            <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-wine-700 uppercase tracking-[0.15em] bg-white/70 px-3 py-1.5 rounded-full mb-4 border border-wine-200/40">Good to know</span>
+            <h2 className="text-xl sm:text-3xl font-display font-bold text-gray-900 text-balance">
+              Questions, <GradientText colors={['#ab204d', '#ed7824', '#ab204d']}>answered</GradientText>
+            </h2>
           </div>
+          <FAQList
+            items={[
+              {
+                icon: Sparkles,
+                question: 'How is this different from other wedding planners?',
+                answer: 'Most tools cover one event with about 150 guests and fixed table sizes. Phera handles 6 or more events with different invite lists, 500 to 1000 guests, family-group RSVPs, and custom table sizes.',
+              },
+              {
+                icon: Bot,
+                question: 'Can the AI assistant make changes for me?',
+                answer: 'Yes. Ask it to add a guest, set an RSVP, fix an invite, or seat someone, and it prepares the change. Nothing saves until you approve the card it shows you, so it can never edit your data on its own.',
+              },
+              {
+                icon: Wallet,
+                question: 'Is there a budget tracker?',
+                answer: 'Yes. Set a total target and track estimates against actuals across 15 categories, from venue and catering to the mehndi artist. Mark what is paid, attach receipts, and export the sheet to CSV.',
+              },
+              {
+                icon: Users,
+                question: 'Can I import my existing guest list?',
+                answer: 'Yes, from any Excel or CSV file. Drag it in and columns get detected, families get grouped, and duplicates get caught within each family. About 60 seconds for 500 guests.',
+              },
+              {
+                icon: Globe,
+                question: 'Can I build a wedding website?',
+                answer: 'Yes. Pick one of 6 themes and get a public page with your story, gallery, travel and hotels, registry, and RSVP, all on one link guests open on their phone.',
+              },
+              {
+                icon: Send,
+                question: 'Do guests need to create an account?',
+                answer: 'No. They get a link over WhatsApp, search their name, and respond. No login, no app, no download.',
+              },
+              {
+                icon: Heart,
+                question: 'Is it really free?',
+                answer: 'Yes. Unlimited guests, events, tables, seating charts, and RSVPs. Free forever, with no hidden upgrades or paywalls.',
+              },
+            ]}
+          />
         </div>
       </section>
 
@@ -411,22 +442,38 @@ function ScenarioCard({ number, title, problem, solution }) {
   );
 }
 
-function FAQItem({ question, answer }) {
+function FAQList({ items }) {
+  return (
+    <div className="grid gap-3 sm:gap-4 md:grid-cols-2 md:items-start">
+      {items.map((item, i) => (
+        <FAQItem key={i} {...item} />
+      ))}
+    </div>
+  );
+}
+
+function FAQItem({ icon: Icon, question, answer }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="rounded-2xl border border-gray-200/60 bg-white overflow-hidden shadow-sm hover:shadow-card transition-shadow duration-300">
+    <div className={`relative rounded-2xl border bg-white overflow-hidden shadow-sm transition-all duration-300 ${open ? 'border-wine-200/70 shadow-card' : 'border-gray-200/60 hover:shadow-card'}`}>
+      {open && <BorderBeam color="#ab204d" speed={5} thickness={2} />}
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between px-5 sm:px-6 py-4 sm:py-5 text-left hover:bg-gray-50/50 transition-colors duration-200"
+        className="flex w-full items-center gap-3 px-5 sm:px-6 py-4 sm:py-5 text-left hover:bg-gray-50/50 transition-colors duration-200"
       >
-        <span className="text-xs sm:text-sm font-semibold text-gray-900 pr-4">{question}</span>
+        {Icon && (
+          <span className={`shrink-0 grid place-items-center w-8 h-8 rounded-xl transition-colors duration-300 ${open ? 'bg-gradient-to-br from-wine-500 to-saffron-500 text-white' : 'bg-wine-50 text-wine-600'}`}>
+            <Icon className="w-4 h-4" strokeWidth={2} />
+          </span>
+        )}
+        <span className="flex-1 text-xs sm:text-sm font-semibold text-gray-900 pr-2">{question}</span>
         <span className={`text-gray-400 transition-transform duration-300 ease-spring text-sm shrink-0 ${open ? 'rotate-180' : ''}`}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
         </span>
       </button>
       <div className={`grid transition-all duration-300 ease-spring ${open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
         <div className="overflow-hidden">
-          <div className="px-5 sm:px-6 pb-5 sm:pb-6">
+          <div className="px-5 sm:px-6 pb-5 sm:pb-6 pl-16 sm:pl-[4.25rem]">
             <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">{answer}</p>
           </div>
         </div>
@@ -502,64 +549,72 @@ function WebsiteMock() {
   );
 }
 
-function TableFinderMock() {
+function AssistantMock() {
   return (
-    <div className="rounded-2xl border border-gray-200/70 bg-white p-4 shadow-lifted sm:p-5">
-      <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50/70 px-3 py-2.5">
-        <Search size={15} className="text-gray-400" />
-        <span className="text-sm text-gray-700">Priya Sharma</span>
-        <span className="ml-0.5 inline-block h-4 w-px animate-pulse bg-wine-500" />
-      </div>
-      <div className="mt-3 flex items-center gap-3 rounded-xl border border-wine-100 bg-gradient-to-br from-wine-50 to-phera-50/50 px-3.5 py-3">
-        <span className="flex size-9 items-center justify-center rounded-xl bg-wine-600 text-white shadow-sm">
-          <MapPin size={16} />
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-lifted">
+      <BorderBeam color="#ab204d" speed={6} thickness={2} />
+      <div className="flex items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-wine-50 to-phera-50/50 px-3.5 py-2.5">
+        <span className="grid size-6 place-items-center rounded-lg bg-gradient-to-br from-wine-500 to-saffron-500 text-white">
+          <Bot size={13} />
         </span>
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-wine-500/80">Reception</p>
-          <p className="text-sm font-semibold text-gray-900">You're at Table 8</p>
+        <span className="text-xs font-semibold text-gray-800">Planning assistant</span>
+      </div>
+      <div className="space-y-2.5 p-3.5">
+        <div className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-wine-600 px-3 py-2 text-[11px] leading-snug text-white">
+          Add my cousin Priya Patel and invite her to the Sangeet.
         </div>
+        <div className="max-w-[88%] rounded-2xl rounded-tl-sm bg-gray-100 px-3 py-2 text-[11px] leading-snug text-gray-700">
+          Sure. Here is the change for you to review.
+        </div>
+        <div className="rounded-xl border border-wine-100 bg-gradient-to-br from-ivory-50 to-white p-3">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-wine-500/80">Add guest</p>
+          <div className="mt-1.5 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-gray-900">Priya Patel</p>
+              <p className="text-[10px] text-gray-500">Invited to · Sangeet</p>
+            </div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-600 px-2.5 py-1 text-[10px] font-semibold text-white shadow-sm">
+              <Check size={11} /> Approve
+            </span>
+          </div>
+        </div>
+        <p className="text-center text-[10px] text-gray-400">Nothing changes until you approve it.</p>
       </div>
     </div>
   );
 }
 
-function PlaceCardMock() {
-  return (
-    <div className="relative rounded-2xl border border-gray-200/70 bg-gradient-to-br from-ivory-50 to-white p-5 shadow-lifted sm:p-6">
-      <div className="absolute inset-x-8 -top-2 h-8 rounded-t-xl border border-gray-200/60 bg-white/70" aria-hidden="true" />
-      <div className="relative rounded-xl border border-wine-100 bg-white px-5 py-5 text-center shadow-sm">
-        <p className="font-display text-[9px] uppercase tracking-[0.3em] text-wine-400">Table 12</p>
-        <p className="mt-1 font-display text-xl font-bold text-gray-900">Anaya Patel</p>
-        <div className="mt-2 flex items-center justify-center gap-2 text-[10px] text-gray-400">
-          <span className="inline-flex items-center gap-1"><span className="size-1.5 rounded-full bg-green-500" />Veg</span>
-          <span className="text-gray-300">·</span>
-          <span>Patel family</span>
-        </div>
-      </div>
-      <div className="mt-3 flex justify-center">
-        <span className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-medium text-white">
-          <Printer size={11} /> Export PDF
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function CollabMock() {
-  const people = [
-    { initial: 'Y', name: 'You', role: 'Owner', tone: 'bg-wine-600' },
-    { initial: 'P', name: 'Priya', role: 'Editor', tone: 'bg-phera-500' },
-    { initial: 'M', name: 'Mom', role: 'View-only', tone: 'bg-gray-400' },
+function BudgetMock() {
+  const rows = [
+    { name: 'Venue', paid: true },
+    { name: 'Catering', paid: true },
+    { name: 'Photography', paid: false },
   ];
   return (
-    <div className="space-y-2.5 rounded-2xl border border-gray-200/70 bg-white p-4 shadow-lifted sm:p-5">
-      {people.map((p) => (
-        <div key={p.name} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-3 py-2.5">
-          <span className={`flex size-8 items-center justify-center rounded-full text-xs font-bold text-white ${p.tone}`}>{p.initial}</span>
-          <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
-          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${p.role === 'View-only' ? 'bg-gray-100 text-gray-500' : 'bg-wine-50 text-wine-700'}`}>{p.role}</span>
+    <div className="rounded-2xl border border-gray-200/70 bg-white p-4 shadow-lifted sm:p-5">
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Spent so far</p>
+          <p className="font-display text-2xl font-bold text-gray-900">
+            $<CountUp to={48200} separator="," />
+          </p>
         </div>
-      ))}
+        <p className="text-[11px] text-gray-500">of $60,000</p>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-gray-100">
+        <div className="h-full rounded-full bg-gradient-to-r from-wine-500 to-saffron-500" style={{ width: '80%' }} />
+      </div>
+      <div className="mt-4 space-y-1.5">
+        {rows.map((r) => (
+          <div key={r.name} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2">
+            <span className="text-xs font-medium text-gray-700">{r.name}</span>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${r.paid ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+              {r.paid ? 'Paid' : 'Due'}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-center text-[10px] text-gray-400">15 categories tracked · export to CSV</p>
     </div>
   );
 }
