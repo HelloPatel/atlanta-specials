@@ -134,7 +134,7 @@ export async function sendAssistantMessage({ messages, context }) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(token ? { 'X-Firebase-Token': token, Authorization: 'Bearer ' + token } : {}),
       },
       body: JSON.stringify({ messages, context }),
     });
