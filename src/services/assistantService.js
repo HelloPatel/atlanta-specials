@@ -90,24 +90,47 @@ export function buildWeddingContext(wedding, data = {}) {
     lines.push('Budget: no budget items yet.');
   }
 
-  // A tiny guest sample helps answer "who is invited to X" style questions
-  // without shipping the entire directory.
-  if (guests.length) {
-    const sample = guests
-      .slice(0, 25)
-      .map((g) => {
-        const name = fullName(g) || 'Unnamed guest';
-        const evNames = events
-          .filter((ev) => guestInvitedToEvent(ev, g.id))
-          .map((ev) => ev.name)
-          .filter(Boolean);
-        return evNames.length ? `${name} → ${evNames.join(', ')}` : name;
-      })
-      .join('; ');
-    lines.push('');
-    lines.push(
-      `Guest sample (first ${Math.min(25, guests.length)} of ${guests.length}): ${sample}`
+  // ── Compact coded RSVP roster ──────────────────────────────────────────
+  // We ship the WHOLE roster (not a sample) so the assistant can answer any
+  // "who is invited / who accepted / who hasn't RSVP'd to X" question, but we
+  // encode it tightly to stay cheap: events are numbered E1..En and statuses
+  // are single letters (a=accepted, d=declined, p=pending). Each guest is one
+  // line listing only the events they're invited to. This is placed LAST and
+  // is the largest, most stable block, which also helps prompt caching.
+  if (guests.length && events.length) {
+    const evList = [...events].sort((a, b) =>
+      String(a.date || '').localeCompare(String(b.date || ''))
     );
+    const codeFor = new Map(evList.map((ev, i) => [ev.id, `E${i + 1}`]));
+
+    lines.push('');
+    lines.push('RSVP roster (source of truth for guest-level RSVP questions).');
+    lines.push(
+      'Event codes: ' +
+        evList.map((ev, i) => `E${i + 1}=${ev.name || 'Untitled'}`).join(' ')
+    );
+    lines.push('Status letters: a=accepted, d=declined, p=pending (p = has NOT responded).');
+    lines.push('Format: Full Name | <event><status>,...  (only events the guest is invited to)');
+
+    const roster = [];
+    for (const g of guests) {
+      const name = fullName(g) || 'Unnamed guest';
+      const codes = [];
+      for (const ev of evList) {
+        if (!guestInvitedToEvent(ev, g.id)) continue;
+        const st = rsvpFor(g, ev.id);
+        const letter = st === 'accepted' ? 'a' : st === 'declined' ? 'd' : 'p';
+        codes.push(`${codeFor.get(ev.id)}${letter}`);
+      }
+      if (g.plusOne) codes.push('+1');
+      roster.push(`${name} | ${codes.join(',') || '(no events)'}`);
+    }
+    lines.push(...roster);
+  } else if (guests.length) {
+    // No events yet — just list names so "who is on the guest list" works.
+    lines.push('');
+    lines.push('Guest list (no events created yet):');
+    lines.push(guests.map((g) => fullName(g) || 'Unnamed guest').join(', '));
   }
 
   return lines.join('\n');
