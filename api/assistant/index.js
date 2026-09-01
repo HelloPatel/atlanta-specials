@@ -251,45 +251,6 @@ module.exports = async function (context, req) {
     };
   };
 
-  // Temporary, header-guarded runtime diagnostic. Only responds when the caller
-  // sends the exact secret header, so it never leaks to normal users. Remove
-  // after the auth issue is confirmed fixed.
-  const diagOn =
-    req.headers &&
-    (req.headers['x-phera-diag'] || req.headers['X-Phera-Diag']) === 'phera-diag-7f3a9c';
-  if (diagOn && req.headers['x-phera-diag-info']) {
-    const out = {
-      node: process.version,
-      hasFetch: typeof fetch,
-      firebaseProjectId: process.env.FIREBASE_PROJECT_ID || null,
-    };
-    try {
-      const authH = req.headers.authorization || req.headers.Authorization || '';
-      const tok = authH.replace(/^Bearer\s+/i, '').trim();
-      if (tok) {
-        const { decodeProtectedHeader, decodeJwt } = require('jose');
-        out.tokenKid = decodeProtectedHeader(tok).kid || null;
-        const c = decodeJwt(tok);
-        out.tokenAud = c.aud;
-        out.tokenIss = c.iss;
-      }
-      const cr = await fetch(FIREBASE_X509_URL);
-      out.certStatus = cr.status;
-      out.certContentType = cr.headers.get('content-type');
-      const body = await cr.text();
-      out.certBodyLen = body.length;
-      try {
-        out.certKids = Object.keys(JSON.parse(body));
-      } catch (e) {
-        out.certKids = 'parse-failed';
-        out.certSnippet = body.slice(0, 200);
-      }
-    } catch (e) {
-      out.probeErr = e && e.message;
-    }
-    return respond(200, out);
-  }
-
   if (!req.body || typeof req.body !== 'object') {
     return respond(400, { error: 'Invalid request body.' });
   }
@@ -300,17 +261,20 @@ module.exports = async function (context, req) {
   }
 
   // Auth: verify the caller is a signed-in Firebase user (when configured).
-  const auth = await verifyFirebaseToken(
-    req.headers && (req.headers.authorization || req.headers.Authorization),
-    process.env.FIREBASE_PROJECT_ID,
-    log
-  );
+  // NOTE: Azure Static Web Apps overwrites the inbound `Authorization` header
+  // with its own platform token before forwarding to managed functions, so the
+  // client sends the Firebase ID token in a custom header that SWA passes
+  // through untouched. We fall back to Authorization for non-SWA hosts.
+  const rawToken =
+    (req.headers &&
+      (req.headers['x-firebase-token'] ||
+        req.headers['X-Firebase-Token'] ||
+        req.headers.authorization ||
+        req.headers.Authorization)) ||
+    '';
+  const auth = await verifyFirebaseToken(rawToken, process.env.FIREBASE_PROJECT_ID, log);
   if (!auth.ok) {
-    const body = { error: 'Not authorized. Please sign in again.' };
-    if (diagOn) {
-      body._diag = { node: process.version, hasFetch: typeof fetch, err: auth.err, code: auth.code };
-    }
-    return respond(401, body);
+    return respond(401, { error: 'Not authorized. Please sign in again.' });
   }
 
   const provider = resolveProvider();
