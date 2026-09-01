@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Send, Bot, User, Trash2, AlertCircle, X } from 'lucide-react';
+import { Sparkles, Send, Bot, User, Trash2, AlertCircle, X, Check, Loader2, Wand2 } from 'lucide-react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { useToast } from '../ui';
 import { subscribeToGuests } from '../../services/guestService';
@@ -12,13 +12,14 @@ import {
   buildWeddingContext,
   sendAssistantMessage,
 } from '../../services/assistantService';
+import { describeAction, executeAction } from '../../services/assistantActions';
 
 const SUGGESTIONS = [
-  'What should I be working on next for our wedding?',
   'Which events still have the most pending RSVPs?',
-  'Help me draft a day-of timeline for the ceremony and reception.',
+  'Who hasn\u2019t RSVP\u2019d to the Haldi yet?',
+  'Add my cousin Priya Patel on the bride\u2019s side and invite her to the Sangeet.',
+  'Mark Rohit Sharma as attending the reception.',
   'How is our budget looking, and where might we be overspending?',
-  'Give me a checklist for the 4 weeks before the wedding.',
 ];
 
 function TypingDots() {
@@ -47,6 +48,7 @@ function Avatar({ isUser }) {
 
 function MessageBubble({ role, content, error }) {
   const isUser = role === 'user';
+  if (!content) return null;
   return (
     <div className={`flex gap-2.5 animate-message-in ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <Avatar isUser={isUser} />
@@ -61,6 +63,81 @@ function MessageBubble({ role, content, error }) {
       >
         {content}
       </div>
+    </div>
+  );
+}
+
+// A single proposed change the user can Confirm or Dismiss.
+function ActionCard({ action, describe, onConfirm, onCancel }) {
+  const { status, result } = action;
+  const blocked = !!describe.error;
+  const done = status === 'done';
+  const failed = status === 'error';
+  const cancelled = status === 'cancelled';
+  const running = status === 'running';
+  const settled = done || failed || cancelled;
+
+  return (
+    <div
+      className={`rounded-xl border px-3 py-2.5 text-sm shadow-sm animate-message-in ${
+        done
+          ? 'border-green-200 bg-green-50'
+          : failed
+            ? 'border-red-200 bg-red-50'
+            : blocked
+              ? 'border-amber-200 bg-amber-50'
+              : 'border-wine-200 bg-white'
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <div
+          className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center ${
+            done
+              ? 'bg-green-100 text-green-700'
+              : failed
+                ? 'bg-red-100 text-red-700'
+                : 'bg-wine-100 text-wine-700'
+          }`}
+        >
+          {done ? <Check className="w-3.5 h-3.5" /> : running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wand2 className="w-3.5 h-3.5" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className={`font-medium leading-snug ${done ? 'text-green-800' : failed ? 'text-red-800' : blocked ? 'text-amber-800' : 'text-gray-800'}`}>
+            {describe.label}
+          </p>
+          {blocked && !settled && (
+            <p className="text-xs text-amber-700 mt-0.5">{describe.error}</p>
+          )}
+          {settled && result && (
+            <p className={`text-xs mt-0.5 ${failed ? 'text-red-700' : 'text-gray-500'}`}>{result}</p>
+          )}
+          {cancelled && !result && <p className="text-xs text-gray-400 mt-0.5">Dismissed.</p>}
+        </div>
+      </div>
+
+      {!settled && (
+        <div className="flex items-center gap-2 mt-2 pl-8">
+          {!blocked && (
+            <button
+              onClick={onConfirm}
+              disabled={running}
+              className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:opacity-60 ${
+                describe.destructive ? 'bg-red-600 hover:bg-red-700' : 'bg-wine-600 hover:bg-wine-700'
+              }`}
+            >
+              {running ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              {describe.destructive ? 'Delete' : 'Confirm'}
+            </button>
+          )}
+          <button
+            onClick={onCancel}
+            disabled={running}
+            className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-300 hover:bg-gray-50 disabled:opacity-60"
+          >
+            {blocked ? 'Dismiss' : 'Cancel'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -82,6 +159,11 @@ export default function AssistantChat({ onClose }) {
   const scrollRef = useRef(null);
   const textareaRef = useRef(null);
   const weddingId = activeWedding?.id;
+
+  // Always-fresh snapshot of the data executors need, so confirm handlers created
+  // in earlier renders still run against the latest guests/events.
+  const dataRef = useRef({ weddingId, guests, events });
+  dataRef.current = { weddingId, guests, events };
 
   useEffect(() => {
     if (!weddingId) {
@@ -135,11 +217,21 @@ export default function AssistantChat({ onClose }) {
     setLoading(true);
 
     try {
-      const { reply } = await sendAssistantMessage({
+      const { reply, actions } = await sendAssistantMessage({
         messages: nextMessages,
         context: contextText,
       });
-      setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+      const proposed = (actions || []).map((a, idx) => ({
+        id: a.id || `act-${Date.now()}-${idx}`,
+        name: a.name,
+        arguments: a.arguments || {},
+        status: 'pending',
+        result: null,
+      }));
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: reply, actions: proposed },
+      ]);
     } catch (err) {
       const message = err?.message || 'The assistant is unavailable right now.';
       setMessages((prev) => [
@@ -150,6 +242,34 @@ export default function AssistantChat({ onClose }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  // Update one action inside one message by id.
+  function patchAction(msgIndex, actionId, patch) {
+    setMessages((prev) =>
+      prev.map((m, i) =>
+        i === msgIndex
+          ? { ...m, actions: m.actions.map((a) => (a.id === actionId ? { ...a, ...patch } : a)) }
+          : m
+      )
+    );
+  }
+
+  async function runAction(msgIndex, action) {
+    patchAction(msgIndex, action.id, { status: 'running', result: null });
+    try {
+      const result = await executeAction(action.name, action.arguments, dataRef.current);
+      patchAction(msgIndex, action.id, { status: 'done', result });
+      toast.success(result);
+    } catch (err) {
+      const message = err?.message || 'That change could not be made.';
+      patchAction(msgIndex, action.id, { status: 'error', result: message });
+      toast.error(message);
+    }
+  }
+
+  function cancelAction(msgIndex, action) {
+    patchAction(msgIndex, action.id, { status: 'cancelled' });
   }
 
   function handleKeyDown(e) {
@@ -211,8 +331,8 @@ export default function AssistantChat({ onClose }) {
               What can I help you with?
             </h3>
             <p className="text-sm text-gray-500 mt-1 mb-5 animate-message-in [animation-delay:120ms]">
-              Ask about planning, timelines, RSVPs, seating, or the budget.
-              I can see the details for this wedding.
+              Ask about planning, RSVPs, seating, or the budget — or ask me to add a
+              guest, set an RSVP, or change a seat. I&apos;ll confirm before saving.
             </p>
             <div className="flex flex-wrap gap-2 justify-center">
               {SUGGESTIONS.map((s, i) => (
@@ -229,7 +349,22 @@ export default function AssistantChat({ onClose }) {
           </div>
         ) : (
           messages.map((m, i) => (
-            <MessageBubble key={i} role={m.role} content={m.content} error={m.error} />
+            <div key={i} className="space-y-2">
+              <MessageBubble role={m.role} content={m.content} error={m.error} />
+              {m.actions?.length > 0 && (
+                <div className="ml-10 space-y-2">
+                  {m.actions.map((a) => (
+                    <ActionCard
+                      key={a.id}
+                      action={a}
+                      describe={describeAction(a.name, a.arguments, { guests, events })}
+                      onConfirm={() => runAction(i, a)}
+                      onCancel={() => cancelAction(i, a)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           ))
         )}
 
@@ -276,8 +411,8 @@ export default function AssistantChat({ onClose }) {
           </button>
         </div>
         <p className="text-[11px] text-gray-400 mt-1.5 px-1">
-          I can get things wrong, and I can&apos;t edit your wedding yet — I just give
-          advice and answers. Double-check anything important.
+          I can get things wrong, and any change I suggest waits for your confirmation
+          before it&apos;s saved. Double-check anything important.
         </p>
       </div>
     </div>

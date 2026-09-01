@@ -190,10 +190,28 @@ function buildSystemPrompt(contextText) {
     '- Use ONLY the wedding data provided in the context below. Never invent guest',
     '  names, counts, dates, or amounts. If the data needed is not in the context,',
     '  say what you can see and ask the user to add it on the relevant page.',
-    '- You currently cannot make changes to the wedding (add guests, edit events,',
-    '  update the budget, etc.). When a user asks you to change something, explain',
-    '  the exact steps to do it on the matching page (Guests, Events, Seating, RSVP,',
-    '  Budget, Photos, Website). Making changes for the user is coming soon.',
+    '- The context includes a full "RSVP roster": one line per guest as',
+    '  "Full Name | E1a,E2p,..." where E# maps to the listed event codes and the',
+    '  trailing letter is a=accepted, d=declined, p=pending. A guest is invited to',
+    '  an event only if that event code appears on their line. "Pending" (p) means',
+    '  they have NOT responded yet. You MAY and SHOULD list the actual guest names',
+    '  when asked things like "who hasn\'t RSVP\'d to Haldi?", "who declined the',
+    '  reception?", or "who is invited to sangeet?" — read them straight from the',
+    '  roster and list them. This is the couple\'s own data; do not refuse or defer',
+    '  to another page when the roster already contains the answer. For very long',
+    '  lists, you may group or note the total, but still list the names.',
+    '- You CAN make a focused set of changes for the user through actions: add a',
+    '  guest, update a guest\u2019s details, set a guest\u2019s RSVP for an event, invite or',
+    '  uninvite a guest to/from an event, assign a guest to a seating table, and',
+    '  delete a guest. When the user clearly asks for one of these, call the matching',
+    '  tool with names taken from the roster/events. Do NOT ask for internal IDs \u2014',
+    '  use the guest and event NAMES. The user sees a confirmation card and must',
+    '  approve before anything is written, so it is safe to propose the action; you',
+    '  do not need to ask "are you sure" yourself. You may call several tools at once',
+    '  when the user asks for multiple changes.',
+    '- For changes OUTSIDE that set (events, budget, photos, website, bulk edits),',
+    '  explain the exact steps on the matching page (Guests, Events, Seating, RSVP,',
+    '  Budget, Photos, Website).',
     '- Never give binding legal, medical, or financial advice; suggest consulting a',
     '  professional when appropriate.',
     '',
@@ -204,7 +222,150 @@ function buildSystemPrompt(contextText) {
   ].join('\n');
 }
 
-// ─── LLM provider dispatch (Azure OpenAI or OpenAI) ──────────────────────────
+// ─── Action tools (function calling) ─────────────────────────────────────────
+// The model may PROPOSE these. It never executes them — the API returns the
+// tool calls to the client, which shows a confirmation card and runs the change
+// via the app's normal (auth-scoped) service functions. Arguments use human
+// names (guest/event/table names); the client resolves them to IDs.
+const RSVP_STATUSES = ['accepted', 'declined', 'pending'];
+const ASSISTANT_TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'add_guest',
+      description:
+        "Add a new guest to this wedding's guest list, optionally inviting them to named events.",
+      parameters: {
+        type: 'object',
+        properties: {
+          firstName: { type: 'string', description: 'Guest first name.' },
+          lastName: { type: 'string', description: 'Guest last name (optional).' },
+          side: {
+            type: 'string',
+            enum: ['bride', 'groom'],
+            description: 'Which side the guest belongs to.',
+          },
+          relation: {
+            type: 'string',
+            description: 'Relationship, e.g. "cousin", "college friend".',
+          },
+          invitedEvents: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Names of events to invite this guest to (must match existing events).',
+          },
+          plusOne: { type: 'boolean', description: 'Whether the guest gets a plus-one.' },
+          plusOneName: { type: 'string', description: 'Name of the plus-one, if known.' },
+          dietary: {
+            type: 'string',
+            description: 'Dietary preference, e.g. "vegetarian", "vegan", "no restrictions".',
+          },
+        },
+        required: ['firstName'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'update_guest',
+      description:
+        "Update an existing guest's details. Only the fields you provide are changed.",
+      parameters: {
+        type: 'object',
+        properties: {
+          guestName: {
+            type: 'string',
+            description: 'Full name of the guest to update (as it appears in the roster).',
+          },
+          email: { type: 'string' },
+          phone: { type: 'string' },
+          side: { type: 'string', enum: ['bride', 'groom'] },
+          relation: { type: 'string' },
+          dietary: { type: 'string' },
+          dietaryNotes: { type: 'string' },
+          notes: { type: 'string' },
+          plusOne: { type: 'boolean' },
+          plusOneName: { type: 'string' },
+        },
+        required: ['guestName'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_guest_rsvp',
+      description: "Set a guest's RSVP status for a specific event.",
+      parameters: {
+        type: 'object',
+        properties: {
+          guestName: { type: 'string', description: 'Full name of the guest.' },
+          eventName: { type: 'string', description: 'Name of the event.' },
+          status: {
+            type: 'string',
+            enum: RSVP_STATUSES,
+            description: 'accepted, declined, or pending (pending = not responded).',
+          },
+        },
+        required: ['guestName', 'eventName', 'status'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_guest_invite',
+      description: 'Invite or uninvite a guest to/from a specific event.',
+      parameters: {
+        type: 'object',
+        properties: {
+          guestName: { type: 'string', description: 'Full name of the guest.' },
+          eventName: { type: 'string', description: 'Name of the event.' },
+          invited: {
+            type: 'boolean',
+            description: 'true to invite, false to remove the invite.',
+          },
+        },
+        required: ['guestName', 'eventName', 'invited'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'assign_guest_table',
+      description: "Assign a guest to a seating table for a specific event's seating chart.",
+      parameters: {
+        type: 'object',
+        properties: {
+          guestName: { type: 'string', description: 'Full name of the guest.' },
+          eventName: { type: 'string', description: 'Name of the event whose seating to change.' },
+          tableName: {
+            type: 'string',
+            description: 'Name or number of the target table, e.g. "Table 4" or "Family".',
+          },
+        },
+        required: ['guestName', 'eventName', 'tableName'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'delete_guest',
+      description:
+        'Permanently remove a guest from the wedding. Use only when the user clearly asks to delete/remove a guest.',
+      parameters: {
+        type: 'object',
+        properties: {
+          guestName: { type: 'string', description: 'Full name of the guest to delete.' },
+        },
+        required: ['guestName'],
+      },
+    },
+  },
+];
 function resolveProvider() {
   const azEndpoint = process.env.AZURE_OPENAI_ENDPOINT;
   const azKey = process.env.AZURE_OPENAI_KEY;
@@ -319,6 +480,8 @@ module.exports = async function (context, req) {
     temperature: 0.5,
     max_tokens: 800,
     top_p: 0.95,
+    tools: ASSISTANT_TOOLS,
+    tool_choice: 'auto',
   };
   if (provider.model) payload.model = provider.model;
 
@@ -342,14 +505,38 @@ module.exports = async function (context, req) {
     }
 
     const data = await resp.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-    if (!reply) {
+    const message = data?.choices?.[0]?.message || {};
+    const reply = typeof message.content === 'string' ? message.content.trim() : '';
+
+    // The model may propose one or more write actions. We do NOT execute them
+    // here — hand them to the client, which confirms with the user and runs the
+    // change through the app's auth-scoped services.
+    const actions = [];
+    if (Array.isArray(message.tool_calls)) {
+      for (const call of message.tool_calls) {
+        if (!call || call.type !== 'function' || !call.function) continue;
+        let args = {};
+        try {
+          args = call.function.arguments ? JSON.parse(call.function.arguments) : {};
+        } catch {
+          args = {};
+        }
+        actions.push({
+          id: call.id || `call_${actions.length}`,
+          name: call.function.name,
+          arguments: args,
+        });
+      }
+    }
+
+    if (!reply && !actions.length) {
       return respond(502, { error: 'The assistant returned an empty response.' });
     }
 
     return respond(200, {
       configured: true,
       reply,
+      actions,
       usage: data.usage || null,
       remaining: usage.remaining,
     });
