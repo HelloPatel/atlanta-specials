@@ -264,8 +264,8 @@ export default function TableComponent({ table, guests, warnings = [], selected 
         ) : null}
 
         <span className="text-xs font-semibold text-gray-700 leading-tight">{table.name}</span>
-        <div className="relative flex items-center justify-center">
-          <svg width="36" height="36" className="absolute">
+        <div className="relative mt-0.5 flex h-9 w-9 items-center justify-center">
+          <svg width="36" height="36" className="absolute inset-0">
             <circle cx="18" cy="18" r="15" fill="none" stroke="#e5e7eb" strokeWidth="2.5" />
             <circle
               cx="18" cy="18" r="15" fill="none"

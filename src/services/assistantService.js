@@ -181,5 +181,9 @@ export async function sendAssistantMessage({ messages, context }) {
     throw new Error(data.error || 'The assistant is temporarily unavailable. Please try again.');
   }
 
-  return { reply: data.reply || '', configured: data.configured !== false };
+  return {
+    reply: data.reply || '',
+    actions: Array.isArray(data.actions) ? data.actions : [],
+    configured: data.configured !== false,
+  };
 }
