@@ -23,10 +23,132 @@ async function verifyFirebaseToken(authHeader, projectId, log) {
       issuer: `https://securetoken.google.com/${projectId}`,
       audience: projectId,
     });
-    return { ok: true, uid: payload.sub || payload.user_id || null };
+    return { ok: true, uid: payload.sub || payload.user_id || null, token };
   } catch (err) {
     log('Firebase token verification failed:', err.message);
     return { ok: false };
+  }
+}
+
+// ─── Per-user weekly rate limit (Firestore REST) ─────────────────────────────
+// Each signed-in user gets a fixed number of assistant messages per ISO week.
+// The counter lives at /users/{uid}/assistantUsage/{weekId}, which Firestore
+// rules only let that same user read/write — so counters never cross users.
+// We use the caller's own ID token (no service account), matching the rest of
+// the app's trust model.
+const WEEKLY_LIMIT = 200;
+
+// ISO-8601 week id like "2026-W35" in UTC. Weeks start Monday.
+function isoWeekId(d = new Date()) {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = date.getUTCDay() || 7; // Sun=0 -> 7
+  date.setUTCDate(date.getUTCDate() + 4 - day); // shift to Thursday of this week
+  const year = date.getUTCFullYear();
+  const yearStart = new Date(Date.UTC(year, 0, 1));
+  const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+  return `${year}-W${String(week).padStart(2, '0')}`;
+}
+
+function usageDocName(projectId, uid, weekId) {
+  return (
+    `projects/${projectId}/databases/(default)/documents` +
+    `/users/${encodeURIComponent(uid)}/assistantUsage/${encodeURIComponent(weekId)}`
+  );
+}
+
+// Returns { allowed, remaining, limit }. Fails open (allows) on unconfigured
+// project, missing uid, or any Firestore error — the cap is a cost guardrail,
+// not a security boundary, so it must never block a legitimate user on a blip.
+async function checkAndIncrementUsage(projectId, uid, token, log) {
+  const limit = WEEKLY_LIMIT;
+  if (!projectId || !uid || !token) return { allowed: true, remaining: limit, limit };
+
+  const weekId = isoWeekId();
+  const docName = usageDocName(projectId, uid, weekId);
+  const base = 'https://firestore.googleapis.com/v1/';
+  const authHeaders = { Authorization: 'Bearer ' + token };
+
+  // 1) Read the current week's counter.
+  let storedCount = 0;
+  let storedWeek = null;
+  try {
+    const getResp = await fetch(base + docName, { headers: authHeaders });
+    if (getResp.ok) {
+      const doc = await getResp.json().catch(() => null);
+      const fields = doc && doc.fields;
+      if (fields) {
+        storedWeek = fields.weekId && fields.weekId.stringValue;
+        const cv = fields.count && fields.count.integerValue;
+        storedCount = cv ? parseInt(cv, 10) || 0 : 0;
+      }
+    } else if (getResp.status !== 404) {
+      log(`Usage read HTTP ${getResp.status} — allowing request.`);
+      return { allowed: true, remaining: limit, limit };
+    }
+  } catch (err) {
+    log('Usage read failed — allowing request:', err && err.message);
+    return { allowed: true, remaining: limit, limit };
+  }
+
+  const sameWeek = storedWeek === weekId;
+  const current = sameWeek ? storedCount : 0;
+
+  if (current >= limit) {
+    return { allowed: false, remaining: 0, limit };
+  }
+
+  // 2) Increment atomically (or reset to 1 on a new week).
+  const commitUrl = `${base}projects/${projectId}/databases/(default)/documents:commit`;
+  let write;
+  if (sameWeek) {
+    // Preserve count via updateMask, then atomically +1 with a transform.
+    write = {
+      update: {
+        name: docName,
+        fields: { weekId: { stringValue: weekId }, uid: { stringValue: uid } },
+      },
+      updateMask: { fieldPaths: ['weekId', 'uid'] },
+      updateTransforms: [{ fieldPath: 'count', increment: { integerValue: '1' } }],
+    };
+  } else {
+    // New week (or no doc): overwrite and start the count at 1.
+    write = {
+      update: {
+        name: docName,
+        fields: {
+          weekId: { stringValue: weekId },
+          uid: { stringValue: uid },
+          count: { integerValue: '1' },
+        },
+      },
+    };
+  }
+
+  try {
+    const commitResp = await fetch(commitUrl, {
+      method: 'POST',
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ writes: [write] }),
+    });
+    if (!commitResp.ok) {
+      log(`Usage commit HTTP ${commitResp.status} — allowing request.`);
+      return { allowed: true, remaining: Math.max(0, limit - current - 1), limit };
+    }
+    const result = await commitResp.json().catch(() => null);
+    const tr = result && result.writeResults && result.writeResults[0]
+      && result.writeResults[0].transformResults;
+    let newCount = current + 1;
+    if (tr && tr[0] && tr[0].integerValue) {
+      newCount = parseInt(tr[0].integerValue, 10) || newCount;
+    }
+    if (newCount > limit) {
+      // Raced past the cap between read and commit.
+      return { allowed: false, remaining: 0, limit };
+    }
+    return { allowed: true, remaining: Math.max(0, limit - newCount), limit };
+  } catch (err) {
+    log('Usage commit failed — allowing request:', err && err.message);
+    return { allowed: true, remaining: Math.max(0, limit - current - 1), limit };
   }
 }
 
@@ -139,6 +261,24 @@ module.exports = async function (context, req) {
     });
   }
 
+  // Per-user weekly cap (cost guardrail). Only counts real, configured attempts.
+  const usage = await checkAndIncrementUsage(
+    process.env.FIREBASE_PROJECT_ID,
+    auth.uid,
+    auth.token,
+    log
+  );
+  if (!usage.allowed) {
+    return respond(429, {
+      configured: true,
+      limited: true,
+      error:
+        `You\u2019ve hit this week\u2019s limit of ${usage.limit} assistant messages. ` +
+        'It resets Monday. Until then, you can keep planning on the Guests, ' +
+        'Events, Budget, and Seating pages.',
+    });
+  }
+
   const contextText = typeof req.body.context === 'string' ? req.body.context : '';
   const messages = [
     { role: 'system', content: buildSystemPrompt(contextText) },
@@ -182,6 +322,7 @@ module.exports = async function (context, req) {
       configured: true,
       reply,
       usage: data.usage || null,
+      remaining: usage.remaining,
     });
   } catch (err) {
     const aborted = err && err.name === 'AbortError';
