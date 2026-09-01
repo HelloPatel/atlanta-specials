@@ -1373,6 +1373,7 @@ export default function WeddingWebsitePreview({
   config: rawConfig,
   events = [],
   previewMode = false,
+  heroOnly = false,
 }) {
   const config = useMemo(() => normalizeWebsiteConfig(rawConfig), [rawConfig]);
   const baseTheme = useMemo(() => getThemeConfig(config.websiteTheme), [config.websiteTheme]);
@@ -1444,6 +1445,19 @@ export default function WeddingWebsitePreview({
         return <HeroBotanical {...heroProps} />;
     }
   };
+
+  if (heroOnly) {
+    return (
+      <div
+        className="@container overflow-hidden"
+        style={{ backgroundColor: theme.background, color: theme.text, fontFamily: theme.bodyFontFamily }}
+        aria-hidden="true"
+      >
+        <HeroKeyframes />
+        {renderHero()}
+      </div>
+    );
+  }
 
   return (
     <div

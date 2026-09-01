@@ -1,6 +1,7 @@
 /**
- * GradientText — flows a soft wine→saffron gradient across text (reactbits style).
- * Uses the `.rb-gradient-text` primitive in index.css; reduced-motion freezes it.
+ * GradientText — renders a solid wine heading. The animated wine/saffron gradient
+ * was retired in favor of one calm brand color; the API is unchanged so callers
+ * (colors/speed are accepted but ignored) keep working.
  *
  * <GradientText as="h1" className="text-5xl">Aditi & Rohan</GradientText>
  */
@@ -8,26 +9,15 @@ export default function GradientText({
   as: Tag = 'span',
   children,
   className = '',
-  colors,                 // e.g. ['#ab204d', '#ed7824', '#ab204d']
-  speed = 8,              // seconds per cycle
+  colors,                 // accepted for compatibility, no longer used
+  speed,                  // accepted for compatibility, no longer used
   style = {},
   ...rest
 }) {
-  const gradient = colors?.length
-    ? `linear-gradient(120deg, ${colors.join(', ')})`
-    : undefined;
-
   return (
-    <Tag
-      className={`rb-gradient-text ${className}`}
-      style={{
-        ...(gradient ? { backgroundImage: gradient } : {}),
-        '--rb-gt-speed': `${speed}s`,
-        ...style,
-      }}
-      {...rest}
-    >
+    <Tag className={`text-wine-700 ${className}`} style={style} {...rest}>
       {children}
     </Tag>
   );
 }
+

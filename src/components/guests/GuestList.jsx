@@ -5,7 +5,7 @@ import { subscribeToEvents, applyInvitedEventUpdates } from '../../services/even
 import { subscribeToSeating } from '../../services/seatingService';
 import { resolveInvitedEventUpdates, resolveGuestInviteUpdates, guestInvitedToEvent, invitedEventNamesForGuest } from '../../utils/eventInvites';
 import { Button, Input, Badge, Modal, useToast } from '../ui';
-import { AlertTriangle, CheckCircle2, Download, Edit3, FileSpreadsheet, Plus, Search, Trash2, Upload, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, Download, Edit3, FileSpreadsheet, Plus, Search, Trash2, Upload, XCircle } from 'lucide-react';
 import {
   analyzeGuestImport,
   autoMapColumns,
@@ -763,7 +763,7 @@ function FamilyView({ familyGroups, events, selected, toggleSelect, toggleSelect
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4">
         {families.map((family, i) => (
           <FamilyCard
             key={family.name}
@@ -799,6 +799,7 @@ function FamilyView({ familyGroups, events, selected, toggleSelect, toggleSelect
 
 function FamilyCard({ family, index, events, selected, toggleSelect, toggleSelectMany, onEdit, tableMap, isSolo }) {
   const { name, members } = family;
+  const [open, setOpen] = useState(true);
   const memberIds = members.map((m) => m.id);
   const allSelected = memberIds.length > 0 && memberIds.every((id) => selected.has(id));
   const someSelected = memberIds.some((id) => selected.has(id));
@@ -820,15 +821,26 @@ function FamilyCard({ family, index, events, selected, toggleSelect, toggleSelec
             className="h-4 w-4 flex-shrink-0 rounded"
             title={allSelected ? 'Deselect family' : 'Select whole family'}
           />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="truncate font-serif text-base font-semibold text-gray-900">{name}</h3>
-              {!isSolo && side && (
-                <Badge variant={side === 'bride' ? 'rose' : 'info'} className="flex-shrink-0 capitalize">{side}</Badge>
-              )}
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          >
+            <ChevronDown
+              size={16}
+              className={`flex-shrink-0 text-gray-400 transition-transform duration-200 ${open ? '' : '-rotate-90'}`}
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="truncate font-serif text-base font-semibold text-gray-900">{name}</h3>
+                {!isSolo && side && (
+                  <Badge variant={side === 'bride' ? 'rose' : 'info'} className="flex-shrink-0 capitalize">{side}</Badge>
+                )}
+              </div>
+              <p className="text-xs text-gray-400">{members.length} {members.length === 1 ? 'guest' : 'guests'}</p>
             </div>
-            <p className="text-xs text-gray-400">{members.length} {members.length === 1 ? 'guest' : 'guests'}</p>
-          </div>
+          </button>
           {summary && (
             <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 ${SUMMARY_TONE[summary.tone]}`}>
               {summary.text}
@@ -837,6 +849,7 @@ function FamilyCard({ family, index, events, selected, toggleSelect, toggleSelec
         </div>
 
         {/* Member × event attendance grid */}
+        {open && (
         <div className="overflow-x-auto border-t border-gray-100">
           <table className="w-full text-sm">
             {events.length > 0 && (
@@ -889,6 +902,7 @@ function FamilyCard({ family, index, events, selected, toggleSelect, toggleSelec
             </tbody>
           </table>
         </div>
+        )}
       </div>
     </div>
   );

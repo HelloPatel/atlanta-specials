@@ -21,13 +21,17 @@ import {
   Trash2,
   Type,
 } from 'lucide-react';
-import { Badge, Button, Card, Input, useToast } from '../ui';
+import { Badge, Button, Card, Input, Modal, useToast } from '../ui';
 import { useWedding } from '../../contexts/WeddingContext';
 import { subscribeToEvents } from '../../services/eventService';
 import { saveWebsiteConfig } from '../../services/websiteService';
 import WeddingWebsitePreview from './WeddingWebsitePreview';
+import ThemeThumbnail from './ThemeThumbnail';
 import {
   WEBSITE_THEMES,
+  getGroupedThemes,
+  getExamplesForTheme,
+  buildConfigFromExample,
   getCoupleDisplayName,
   getPublicWeddingWebsiteLink,
   normalizeWebsiteConfig,
@@ -35,6 +39,7 @@ import {
 } from './websiteThemes';
 
 const websiteThemes = Object.values(WEBSITE_THEMES);
+const themeGroups = getGroupedThemes();
 
 function Toggle({ checked, onChange, label, disabled = false, helperText }) {
   return (
@@ -117,6 +122,7 @@ export default function WebsiteBuilder() {
   const [uploadingHero, setUploadingHero] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [showCustomColors, setShowCustomColors] = useState(false);
+  const [chooserTheme, setChooserTheme] = useState(null);
 
   // While the site is published (live for guests), the whole builder is locked.
   // Editors must unpublish to make changes, then republish — this prevents a
@@ -265,6 +271,12 @@ export default function WebsiteBuilder() {
     });
   };
 
+  const handleUseExample = (example) => {
+    if (!canEdit || editingLocked) return;
+    setConfig((current) => buildConfigFromExample(example, current));
+    toast.success(`${example.name} example applied. Personalize the details below.`);
+  };
+
   const handleRemoveGalleryImage = (index) => {
     updateSection('websiteGallery', {
       ...config.websiteGallery,
@@ -294,7 +306,7 @@ export default function WebsiteBuilder() {
       await saveWebsiteConfig(activeWedding.id, nextConfig);
       setConfig(nextConfig);
       if (wasPublishToggle) {
-        toast.success(published ? 'Website published — it\'s live for guests.' : 'Website unpublished.');
+        toast.success(published ? 'Website published. It\'s live for guests.' : 'Website unpublished.');
       } else {
         toast.success('Website saved.');
       }
@@ -358,39 +370,140 @@ export default function WebsiteBuilder() {
       case 'theme':
         return (
           <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              {websiteThemes.map((theme) => {
-                const selected = config.websiteTheme === theme.key;
-                return (
-                  <button
-                    key={theme.key}
-                    type="button"
-                    disabled={editingLocked}
-                    onClick={() => canEdit && updateSection('websiteTheme', theme.key)}
-                    className={`rounded-3xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-500 focus-visible:ring-offset-2 ${
-                      selected ? 'border-wine-600 ring-2 ring-wine-100' : 'border-gray-200 hover:border-gray-300'
-                    } ${canEdit ? '' : 'cursor-default'}`}
-                    style={{ backgroundColor: theme.background }}
-                  >
-                    <div className="mb-4 flex items-center justify-between">
-                      <div
-                        className="h-12 w-12 rounded-2xl"
-                        style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}
-                      />
-                      {selected && <Check className="text-wine-700" size={18} />}
+            <p className="text-center text-sm text-gray-500">
+              Each template previews the real first page. Click one to start from scratch or pick a ready-made example.
+            </p>
+            {themeGroups.map((group) => (
+              <div key={group.key} className="space-y-3">
+                <div>
+                  <p className="text-base font-semibold text-gray-900">{group.name}</p>
+                  {group.description && <p className="text-sm text-gray-500">{group.description}</p>}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {group.themes.map((theme) => {
+                    const selected = config.websiteTheme === theme.key;
+                    const exampleCount = getExamplesForTheme(theme.key).length;
+                    return (
+                      <button
+                        key={theme.key}
+                        type="button"
+                        disabled={editingLocked}
+                        onClick={() => canEdit && setChooserTheme(theme)}
+                        className={`group overflow-hidden rounded-3xl border text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-500 focus-visible:ring-offset-2 ${
+                          selected ? 'border-wine-600 ring-2 ring-wine-100' : 'border-gray-200 hover:border-gray-300'
+                        } ${canEdit ? '' : 'cursor-default'}`}
+                      >
+                        <div className="relative">
+                          <ThemeThumbnail
+                            wedding={activeWedding}
+                            themeKey={theme.key}
+                            heroDate={config.websiteHero?.date}
+                          />
+                          {selected && (
+                            <span className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-wine-600 text-white shadow-md">
+                              <Check size={16} />
+                            </span>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <p className="text-base font-semibold text-gray-900">{theme.name}</p>
+                          <p className="mt-1 text-sm text-gray-600">{theme.description}</p>
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-700">
+                              {theme.layout} layout
+                            </span>
+                            {exampleCount > 0 && (
+                              <span className="rounded-full bg-wine-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-wine-700">
+                                {exampleCount} example{exampleCount > 1 ? 's' : ''}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            <Modal
+              open={Boolean(chooserTheme)}
+              onClose={() => setChooserTheme(null)}
+              title={chooserTheme ? chooserTheme.name : ''}
+              size="xl"
+            >
+              {chooserTheme && (
+                <div className="space-y-6">
+                  <div>
+                    <ThemeThumbnail
+                      wedding={activeWedding}
+                      themeKey={chooserTheme.key}
+                      heroDate={config.websiteHero?.date}
+                      aspect="16 / 9"
+                    />
+                    <p className="mt-3 text-sm text-gray-600">{chooserTheme.description}</p>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Start from scratch</p>
+                      <p className="text-sm text-gray-500">Use this style with your own photos and words.</p>
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">{theme.name}</p>
-                    <p className="mt-1 text-sm text-gray-600">{theme.description}</p>
-                    <div className="mt-3 flex items-center gap-2">
-                      <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-700 shadow-sm">
-                        {theme.layout} layout
-                      </span>
-                      <span className="text-xs uppercase tracking-[0.3em] text-gray-500">{theme.fontName} · {theme.bodyFontName}</span>
+                    <Button
+                      type="button"
+                      className="mt-3 w-full sm:mt-0 sm:w-auto"
+                      disabled={editingLocked}
+                      onClick={() => {
+                        updateSection('websiteTheme', chooserTheme.key);
+                        toast.success(`${chooserTheme.name} selected. Add your photos and words below.`);
+                        setChooserTheme(null);
+                      }}
+                    >
+                      Use this template
+                    </Button>
+                  </div>
+
+                  {getExamplesForTheme(chooserTheme.key).length > 0 && (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">Or start from an example</p>
+                        <p className="text-sm text-gray-500">A finished site you can import, then swap in your own details.</p>
+                      </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {getExamplesForTheme(chooserTheme.key).map((example) => {
+                          const exampleConfig = buildConfigFromExample(example, config);
+                          return (
+                            <div
+                              key={example.key}
+                              className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
+                            >
+                              <ThemeThumbnail wedding={activeWedding} config={exampleConfig} />
+                              <div className="p-3">
+                                <p className="text-sm font-semibold text-gray-900">{example.name}</p>
+                                <p className="mt-0.5 text-sm text-gray-600">{example.tagline}</p>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="mt-3 w-full"
+                                  disabled={editingLocked}
+                                  onClick={() => {
+                                    handleUseExample(example);
+                                    setChooserTheme(null);
+                                  }}
+                                >
+                                  Use this example
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </button>
-                );
-              })}
-            </div>
+                  )}
+                </div>
+              )}
+            </Modal>
+
             <div className="rounded-3xl border border-gray-200 bg-gray-50 p-4">
               <button
                 type="button"

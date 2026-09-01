@@ -5,7 +5,7 @@
 export const WEBSITE_THEMES = {
   'classic-rose': {
     key: 'classic-rose',
-    name: 'Classic Rose',
+    name: 'Amara',
     description: 'An arched invitation window with a serif monogram and soft blush romance.',
     layout: 'arch',
     primary: '#be123c',
@@ -25,7 +25,7 @@ export const WEBSITE_THEMES = {
   },
   'royal-gold': {
     key: 'royal-gold',
-    name: 'Royal Gold',
+    name: 'Zari',
     description: 'A dark, luxe hero with a gold script name and a live countdown.',
     layout: 'luxe',
     primary: '#92400e',
@@ -47,7 +47,7 @@ export const WEBSITE_THEMES = {
   },
   'garden-green': {
     key: 'garden-green',
-    name: 'Garden Green',
+    name: 'Juniper',
     description: 'Airy botanical layout with leafy dividers and a framed portrait.',
     layout: 'botanical',
     primary: '#166534',
@@ -67,7 +67,7 @@ export const WEBSITE_THEMES = {
   },
   'modern-minimal': {
     key: 'modern-minimal',
-    name: 'Modern Minimal',
+    name: 'Sloane',
     description: 'Editorial magazine layout: top nav, giant ampersand, hairline rules.',
     layout: 'editorial',
     primary: '#1e293b',
@@ -87,7 +87,7 @@ export const WEBSITE_THEMES = {
   },
   'marigold-mandap': {
     key: 'marigold-mandap',
-    name: 'Marigold Mandap',
+    name: 'Marigold',
     description: 'A bold poster layout with a top menu, oversized names, and giant date numerals.',
     layout: 'poster',
     primary: '#c2410c',
@@ -107,7 +107,7 @@ export const WEBSITE_THEMES = {
   },
   'midnight-sangeet': {
     key: 'midnight-sangeet',
-    name: 'Midnight Sangeet',
+    name: 'Midnight',
     description: 'A dark two-column split: script names and countdown beside an evening photo panel.',
     layout: 'split',
     primary: '#312e81',
@@ -129,7 +129,7 @@ export const WEBSITE_THEMES = {
   },
   'coastal-voyage': {
     key: 'coastal-voyage',
-    name: 'Coastal Voyage',
+    name: 'Amalfi',
     description: 'A destination boarding-pass hero — origin, destination and a perforated ticket stub for the big day.',
     layout: 'ticket',
     primary: '#0369a1',
@@ -149,7 +149,7 @@ export const WEBSITE_THEMES = {
   },
   'neon-nights': {
     key: 'neon-nights',
-    name: 'Neon Nights',
+    name: 'Electric',
     description: 'An electric after-dark hero with a kinetic name marquee and a glass date chip.',
     layout: 'marquee',
     primary: '#6d28d9',
@@ -169,7 +169,7 @@ export const WEBSITE_THEMES = {
   },
   'vintage-postcard': {
     key: 'vintage-postcard',
-    name: 'Vintage Postcard',
+    name: 'Voyage',
     description: 'A mailed-from-paradise postcard hero with a postage stamp, postmark and handwritten names.',
     layout: 'stamp',
     primary: '#0f766e',
@@ -191,7 +191,7 @@ export const WEBSITE_THEMES = {
   },
   'brutalist-noir': {
     key: 'brutalist-noir',
-    name: 'Brutalist Noir',
+    name: 'Noir',
     description: 'A stark Swiss-grid hero — oversized uppercase names, hairline rules and a single red accent.',
     layout: 'grid',
     primary: '#111827',
@@ -211,7 +211,7 @@ export const WEBSITE_THEMES = {
   },
   'aurora-dream': {
     key: 'aurora-dream',
-    name: 'Aurora Dream',
+    name: 'Aurora',
     description: 'Floating aurora blobs drift behind a frosted-glass card holding your names and countdown.',
     layout: 'aurora',
     primary: '#4f46e5',
@@ -231,7 +231,7 @@ export const WEBSITE_THEMES = {
   },
   'heritage-crest': {
     key: 'heritage-crest',
-    name: 'Heritage Crest',
+    name: 'Beaumont',
     description: 'A ceremonial monogram seal — laurel crest, joined initials and an engraved date band.',
     layout: 'monogram',
     primary: '#065f46',
@@ -251,7 +251,7 @@ export const WEBSITE_THEMES = {
   },
   'cinema-reel': {
     key: 'cinema-reel',
-    name: 'Cinema Reel',
+    name: 'Cinema',
     description: 'A now-showing marquee hero with letterbox bars, a feature title card and showtime credits.',
     layout: 'filmstrip',
     primary: '#18181b',
@@ -271,7 +271,7 @@ export const WEBSITE_THEMES = {
   },
   'retro-sunset': {
     key: 'retro-sunset',
-    name: 'Retro Sunset',
+    name: 'Sundown',
     description: 'A 70s sunburst hero with groovy rounded type and radiating mustard-and-orange rays.',
     layout: 'retro',
     primary: '#a16207',
@@ -291,7 +291,7 @@ export const WEBSITE_THEMES = {
   },
   'deco-gold': {
     key: 'deco-gold',
-    name: 'Deco Gold',
+    name: 'Ravenna',
     description: 'A symmetrical Art Deco frame in black and gold with a geometric sunfan and engraved names.',
     layout: 'deco',
     primary: '#1c1917',
@@ -311,7 +311,7 @@ export const WEBSITE_THEMES = {
   },
   'confetti-pop': {
     key: 'confetti-pop',
-    name: 'Confetti Pop',
+    name: 'Poppy',
     description: 'A joyful, playful hero with floating terrazzo confetti and a rounded display face.',
     layout: 'terrazzo',
     primary: '#7c3aed',
@@ -331,7 +331,7 @@ export const WEBSITE_THEMES = {
   },
   'watercolor-wash': {
     key: 'watercolor-wash',
-    name: 'Watercolor Wash',
+    name: 'Camellia',
     description: 'Soft painterly blooms drift behind an airy serif name for a dreamy, romantic feel.',
     layout: 'watercolor',
     primary: '#a21caf',
@@ -351,7 +351,7 @@ export const WEBSITE_THEMES = {
   },
   'blanc-minimal': {
     key: 'blanc-minimal',
-    name: 'Blanc Minimal',
+    name: 'Blanc',
     description: 'Gallery-grade whitespace, a single hairline rule and a thin high-contrast serif.',
     layout: 'minimal',
     primary: '#292524',
@@ -371,7 +371,7 @@ export const WEBSITE_THEMES = {
   },
   'iridescent-mesh': {
     key: 'iridescent-mesh',
-    name: 'Iridescent Mesh',
+    name: 'Prism',
     description: 'A drifting gradient mesh glows behind a modern glass headline for a bold, futuristic mood.',
     layout: 'mesh',
     primary: '#6366f1',
@@ -391,7 +391,7 @@ export const WEBSITE_THEMES = {
   },
   'terracotta-mosaic': {
     key: 'terracotta-mosaic',
-    name: 'Terracotta Mosaic',
+    name: 'Ravello',
     description: 'A warm tiled grid of name, date, place and monogram in sun-baked terracotta tones.',
     layout: 'mosaic',
     primary: '#c2410c',
@@ -409,6 +409,108 @@ export const WEBSITE_THEMES = {
     heroOverlay: 'linear-gradient(135deg, rgba(76, 29, 10, 0.74), rgba(194, 65, 12, 0.44))',
     heroBackground: 'radial-gradient(circle at 76% 16%, rgba(253, 186, 116, 0.5), transparent 34%), linear-gradient(135deg, #c2410c, #4c1d0a)',
   },
+  'sindoor-silk': {
+    key: 'sindoor-silk',
+    name: 'Rani',
+    description: 'A deep maroon hero with a gold script name and a live countdown, made for a grand shaadi.',
+    layout: 'luxe',
+    primary: '#9f1239',
+    accent: '#d4af37',
+    background: '#fff7ed',
+    surface: '#fffdf7',
+    text: '#4c0519',
+    muted: '#9f1239',
+    fontName: 'Cormorant Garamond',
+    fontFamily: '"Cormorant Garamond", Georgia, serif',
+    bodyFontName: 'Mulish',
+    bodyFontFamily: '"Mulish", system-ui, sans-serif',
+    scriptFontName: 'Tangerine',
+    scriptFontFamily: '"Tangerine", "Cormorant Garamond", cursive',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Mulish:wght@400;500;600&family=Tangerine:wght@700&display=swap',
+    ornaments: true,
+    heroOverlay: 'linear-gradient(135deg, rgba(76, 5, 25, 0.78), rgba(159, 18, 57, 0.46))',
+    heroBackground: 'radial-gradient(circle at 76% 16%, rgba(212, 175, 55, 0.6), transparent 32%), linear-gradient(135deg, #9f1239, #4c0519)',
+  },
+  'kumkum-poster': {
+    key: 'kumkum-poster',
+    name: 'Vermillion',
+    description: 'A bold crimson poster with a top menu, oversized names, and giant date numerals.',
+    layout: 'poster',
+    primary: '#b91c1c',
+    accent: '#f59e0b',
+    background: '#fff7ed',
+    surface: '#fffbf5',
+    text: '#450a0a',
+    muted: '#991b1b',
+    fontName: 'Yeseva One',
+    fontFamily: '"Yeseva One", Georgia, serif',
+    bodyFontName: 'Mulish',
+    bodyFontFamily: '"Mulish", system-ui, sans-serif',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Yeseva+One&family=Mulish:wght@400;500;600&display=swap',
+    ornaments: true,
+    heroOverlay: 'linear-gradient(135deg, rgba(69, 10, 10, 0.78), rgba(185, 28, 28, 0.44))',
+    heroBackground: 'radial-gradient(circle at 78% 16%, rgba(245, 158, 11, 0.7), transparent 34%), linear-gradient(135deg, #b91c1c, #450a0a)',
+  },
+  'mehndi-henna': {
+    key: 'mehndi-henna',
+    name: 'Henna',
+    description: 'Airy botanical layout in henna green and gold with leafy dividers and a framed portrait.',
+    layout: 'botanical',
+    primary: '#3f6212',
+    accent: '#ca8a04',
+    background: '#f7fee7',
+    surface: '#ffffff',
+    text: '#1a2e05',
+    muted: '#4d7c0f',
+    fontName: 'Lora',
+    fontFamily: '"Lora", Georgia, serif',
+    bodyFontName: 'Nunito Sans',
+    bodyFontFamily: '"Nunito Sans", system-ui, sans-serif',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Nunito+Sans:wght@400;500;600&display=swap',
+    ornaments: true,
+    heroOverlay: 'linear-gradient(135deg, rgba(26, 46, 5, 0.76), rgba(63, 98, 18, 0.44))',
+    heroBackground: 'radial-gradient(circle at 76% 16%, rgba(202, 138, 4, 0.5), transparent 34%), linear-gradient(135deg, #3f6212, #1a2e05)',
+  },
+  'peacock-royal': {
+    key: 'peacock-royal',
+    name: 'Mayura',
+    description: 'A jewel-tone mesh hero in teal and gold with a soft iridescent glow.',
+    layout: 'mesh',
+    primary: '#0f766e',
+    accent: '#d4af37',
+    background: '#ecfeff',
+    surface: '#ffffff',
+    text: '#083344',
+    muted: '#0e7490',
+    fontName: 'Fraunces',
+    fontFamily: '"Fraunces", Georgia, serif',
+    bodyFontName: 'Inter',
+    bodyFontFamily: '"Inter", system-ui, sans-serif',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap',
+    ornaments: true,
+    heroOverlay: 'linear-gradient(135deg, rgba(8, 51, 68, 0.78), rgba(15, 118, 110, 0.44))',
+    heroBackground: 'radial-gradient(circle at 76% 16%, rgba(212, 175, 55, 0.5), transparent 32%), linear-gradient(135deg, #0f766e, #083344)',
+  },
+  'lotus-blush': {
+    key: 'lotus-blush',
+    name: 'Kamala',
+    description: 'A soft watercolor wash in rose and gold with painterly edges and gentle serif type.',
+    layout: 'watercolor',
+    primary: '#be185d',
+    accent: '#d4af37',
+    background: '#fdf2f8',
+    surface: '#ffffff',
+    text: '#500724',
+    muted: '#9d174d',
+    fontName: 'Playfair Display',
+    fontFamily: '"Playfair Display", Georgia, serif',
+    bodyFontName: 'Karla',
+    bodyFontFamily: '"Karla", system-ui, sans-serif',
+    fontUrl: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Karla:wght@400;500;600&display=swap',
+    ornaments: true,
+    heroOverlay: 'linear-gradient(135deg, rgba(80, 7, 36, 0.72), rgba(190, 24, 93, 0.44))',
+    heroBackground: 'radial-gradient(circle at 78% 16%, rgba(212, 175, 55, 0.45), transparent 34%), linear-gradient(135deg, #be185d, #500724)',
+  },
 };
 
 // Layouts drive genuinely different structure (hero + section styling), not
@@ -420,6 +522,246 @@ export const WEBSITE_LAYOUTS = [
 ];
 
 export const WEBSITE_HERO_PATTERNS = ['none', 'mandala', 'floral', 'geometric', 'paisley'];
+
+// Curated groupings so the theme picker reads like a styled lookbook instead of a
+// flat wall of swatches. Every theme key belongs to exactly one group; any theme
+// not listed here falls back to a catch-all group in the UI.
+export const THEME_GROUPS = [
+  {
+    key: 'ceremonial',
+    name: 'Ceremonial & Indian',
+    description: 'Marigold, mehndi, and gold for every rasm.',
+    themes: ['marigold-mandap', 'sindoor-silk', 'kumkum-poster', 'mehndi-henna', 'peacock-royal', 'lotus-blush'],
+  },
+  {
+    key: 'romantic',
+    name: 'Romantic & Soft',
+    description: 'Blush tones, florals, and gentle serif type.',
+    themes: ['classic-rose', 'watercolor-wash', 'garden-green', 'confetti-pop', 'aurora-dream'],
+  },
+  {
+    key: 'regal',
+    name: 'Traditional & Regal',
+    description: 'Gold, crests, and ceremonial warmth.',
+    themes: ['royal-gold', 'heritage-crest', 'deco-gold', 'terracotta-mosaic'],
+  },
+  {
+    key: 'modern',
+    name: 'Modern & Minimal',
+    description: 'Clean grids, big type, and quiet color.',
+    themes: ['modern-minimal', 'blanc-minimal', 'brutalist-noir', 'iridescent-mesh'],
+  },
+  {
+    key: 'bold',
+    name: 'Bold & After Dark',
+    description: 'Deep backgrounds and high-energy accents.',
+    themes: ['midnight-sangeet', 'neon-nights', 'cinema-reel'],
+  },
+  {
+    key: 'destination',
+    name: 'Destination & Retro',
+    description: 'Travel stamps, sunsets, and postcard nostalgia.',
+    themes: ['coastal-voyage', 'vintage-postcard', 'retro-sunset'],
+  },
+];
+
+// Build the ordered group list, folding any ungrouped theme keys into an "More
+// styles" bucket so nothing silently disappears when new themes are added.
+export function getGroupedThemes() {
+  const grouped = new Set();
+  const groups = THEME_GROUPS.map((group) => {
+    const themes = group.themes.map((key) => WEBSITE_THEMES[key]).filter(Boolean);
+    themes.forEach((theme) => grouped.add(theme.key));
+    return { ...group, themeList: themes };
+  }).filter((group) => group.themeList.length > 0);
+
+  const leftovers = Object.values(WEBSITE_THEMES).filter((theme) => !grouped.has(theme.key));
+  if (leftovers.length > 0) {
+    groups.push({ key: 'more', name: 'More Styles', description: 'Fresh looks to explore.', themeList: leftovers });
+  }
+  return groups;
+}
+
+// Open-license photography (Pixabay, free for commercial use, no attribution)
+// used only inside the ready-made examples so a couple can preview a fully
+// dressed site and import it in one click. URLs are hotlinked at full size.
+const pixabay = (url) => url;
+
+// Curated image sets. Every hero is ONE identifiable couple; the rest of each
+// gallery is faceless detail work (henna, bangles, rings, jasmine, garlands) so
+// a single example never mixes two different couples. Variety comes across
+// examples, not inside one.
+const COUPLE = {
+  blushGold: 'https://cdn.pixabay.com/photo/2023/12/11/10/11/couple-8443236_1280.jpg',
+  goldenSaree: 'https://cdn.pixabay.com/photo/2021/08/03/21/16/bride-6520538_1280.jpg',
+  marigoldPair: 'https://cdn.pixabay.com/photo/2021/12/23/04/34/bride-6888615_1280.jpg',
+  marigoldBride: 'https://cdn.pixabay.com/photo/2021/12/23/04/34/bride-6888614_1280.jpg',
+  mustardField: 'https://cdn.pixabay.com/photo/2021/10/05/11/28/couple-6682448_1280.jpg',
+  seaside: 'https://cdn.pixabay.com/photo/2024/09/26/04/47/pre-wedding-9074893_1280.jpg',
+  forest: 'https://cdn.pixabay.com/photo/2022/01/30/05/50/couple-6979881_1280.jpg',
+  garden: 'https://cdn.pixabay.com/photo/2018/09/11/16/13/indian-wedding-3669913_1280.jpg',
+};
+const DETAIL = {
+  jasmine: 'https://cdn.pixabay.com/photo/2021/08/24/11/32/couple-6570391_1280.jpg',
+  mehndiRings: 'https://cdn.pixabay.com/photo/2021/08/24/11/33/mehndi-6570407_1280.jpg',
+  bangles: 'https://cdn.pixabay.com/photo/2020/01/07/04/37/bangles-4746766_1280.jpg',
+  rings: 'https://cdn.pixabay.com/photo/2018/05/31/07/57/ring-3443341_1280.jpg',
+  palm: 'https://cdn.pixabay.com/photo/2019/08/06/12/01/indian-4388166_1280.jpg',
+  garland: 'https://cdn.pixabay.com/photo/2019/09/13/08/44/wedding-4473452_1280.jpg',
+};
+
+// Fully embedded example sites. Each one pairs a template with sample photos and
+// copy so the picker shows the real potential of a theme. Importing an example
+// drops this content into the couple's own config, which they can then edit. The
+// couple's real names and event schedule always come from their wedding data, so
+// only the styling, story, photos, hotels, and registry are seeded here.
+export const WEBSITE_EXAMPLES = [
+  {
+    key: 'palace-gold',
+    name: 'Palace Gold',
+    themeKey: 'royal-gold',
+    tagline: 'A gold and garland celebration, three days in the making.',
+    hero: pixabay(COUPLE.goldenSaree),
+    story:
+      'We fell for each other over long dinners and longer conversations. Now we are gathering everyone we love for haldi, mehndi, and the pheras. Come hungry, come ready to dance.',
+    gallery: [DETAIL.garland, DETAIL.palm, DETAIL.bangles],
+    hotels: [
+      { name: 'Heritage Palace Hotel', address: 'Old City, a short walk to the mandap', link: 'https://example.com/heritage', groupRateCode: 'SHAADI' },
+      { name: 'Riverside Inn', address: 'By the river, free shuttle to every event', link: 'https://example.com/riverside', groupRateCode: '' },
+    ],
+    registry: [
+      { name: 'Honeymoon Fund', url: 'https://example.com/honeymoon' },
+      { name: 'Home Registry', url: 'https://example.com/registry' },
+    ],
+  },
+  {
+    key: 'marigold-morning',
+    name: 'Marigold Morning',
+    themeKey: 'royal-gold',
+    tagline: 'Marigolds, family, and a morning we will never forget.',
+    hero: pixabay(COUPLE.marigoldPair),
+    story:
+      'Two families, one big celebration. We are marking the day with the rituals our grandparents kept and the music our cousins cannot sit still for. We would love for you to be there.',
+    gallery: [pixabay(COUPLE.marigoldBride), DETAIL.garland, DETAIL.jasmine],
+    hotels: [
+      { name: 'Grand Ballroom Hotel', address: 'Downtown, next to the reception', link: 'https://example.com/stay', groupRateCode: 'WEDDING2026' },
+    ],
+    registry: [
+      { name: 'Blessings and Gifts', url: 'https://example.com/blessings' },
+    ],
+  },
+  {
+    key: 'golden-hour',
+    name: 'Golden Hour',
+    themeKey: 'classic-rose',
+    tagline: 'Soft light, warm hearts, and the start of forever.',
+    hero: pixabay(COUPLE.blushGold),
+    story:
+      'We met at a friend\'s Diwali party and have laughed our way through the years since. Now we are ready to celebrate with the people who mean the most to us, over a weekend of color, food, and dancing.',
+    gallery: [DETAIL.rings, DETAIL.bangles, DETAIL.jasmine],
+    hotels: [
+      { name: 'Garden Suites', address: 'Ten minutes from the ceremony', link: 'https://example.com/garden', groupRateCode: 'ROSE26' },
+    ],
+    registry: [
+      { name: 'Our Honeymoon Fund', url: 'https://example.com/honeymoon' },
+    ],
+  },
+  {
+    key: 'garden-vows',
+    name: 'Garden Vows',
+    themeKey: 'classic-rose',
+    tagline: 'A garden gathering of two families becoming one.',
+    hero: pixabay(COUPLE.garden),
+    story:
+      'We love slow mornings, good chai, and being outdoors. So a garden felt right for the day we say our vows. Bring comfortable shoes and stay for the evening under the string lights.',
+    gallery: [DETAIL.jasmine, DETAIL.mehndiRings, DETAIL.rings],
+    hotels: [
+      { name: 'Willow Court Hotel', address: 'Beside the gardens, group block available', link: 'https://example.com/willow', groupRateCode: 'GARDEN' },
+    ],
+    registry: [
+      { name: 'Home Registry', url: 'https://example.com/registry' },
+    ],
+  },
+  {
+    key: 'mustard-fields',
+    name: 'Mustard Fields',
+    themeKey: 'mehndi-henna',
+    tagline: 'Open fields, bright colors, and a whole lot of love.',
+    hero: pixabay(COUPLE.mustardField),
+    story:
+      'Our story started in a small town and grew across cities and seasons. This spring we are heading back to where it began to celebrate with our families. Expect dhol, good food, and plenty of color.',
+    gallery: [DETAIL.palm, DETAIL.bangles, DETAIL.jasmine],
+    hotels: [
+      { name: 'Countryside Retreat', address: 'Fifteen minutes from the venue', link: 'https://example.com/countryside', groupRateCode: 'MEHNDI' },
+    ],
+    registry: [
+      { name: 'Our First Home', url: 'https://example.com/firsthome' },
+    ],
+  },
+  {
+    key: 'by-the-sea',
+    name: 'By the Sea',
+    themeKey: 'coastal-voyage',
+    tagline: 'Salt air, sunset vows, and a weekend by the water.',
+    hero: pixabay(COUPLE.seaside),
+    story:
+      'We always come back to the coast, so this is where we want to say our vows. Pack light, bring your dancing shoes, and get ready for a weekend by the sea.',
+    gallery: [DETAIL.rings, DETAIL.jasmine],
+    hotels: [
+      { name: 'Seaside Resort', address: 'On the beach, group block available', link: 'https://example.com/seaside', groupRateCode: 'BEACHWED' },
+      { name: 'Harbor View Hotel', address: 'Overlooking the marina', link: 'https://example.com/harbor', groupRateCode: '' },
+    ],
+    registry: [
+      { name: 'Adventure Fund', url: 'https://example.com/adventure' },
+    ],
+  },
+  {
+    key: 'quiet-modern',
+    name: 'Quiet Modern',
+    themeKey: 'modern-minimal',
+    tagline: 'Simple, clean, and all about the two of us.',
+    hero: pixabay(COUPLE.forest),
+    story:
+      'We kept the guest list small and the details intentional. Everything you need to know is right here, and nothing you do not. We cannot wait to celebrate with you.',
+    gallery: [DETAIL.rings, DETAIL.bangles],
+    hotels: [
+      { name: 'The Modern Hotel', address: 'Design district, near the reception', link: 'https://example.com/modern', groupRateCode: 'MINIMAL' },
+    ],
+    registry: [
+      { name: 'Registry', url: 'https://example.com/registry' },
+    ],
+  },
+];
+
+// Return the ready-made examples that belong to a given template key, so the
+// picker can offer a couple "start from scratch" or a filled-in variation.
+export function getExamplesForTheme(themeKey) {
+  return WEBSITE_EXAMPLES.filter((example) => example.themeKey === themeKey);
+}
+
+// Merge an example into a couple's existing config. Their names, date, event
+// selection, RSVP, and publish state are preserved; the example seeds styling,
+// story, photos, hotels, and registry that they can edit afterward.
+export function buildConfigFromExample(example, baseConfig = {}) {
+  const base = normalizeWebsiteConfig(baseConfig);
+  return {
+    ...base,
+    websiteTheme: example.themeKey,
+    websiteCustomColors: { primary: '', accent: '', background: '' },
+    websiteHero: {
+      ...base.websiteHero,
+      tagline: example.tagline || base.websiteHero.tagline,
+      backgroundImage: example.hero || base.websiteHero.backgroundImage,
+    },
+    websiteStory: { enabled: true, text: example.story || '' },
+    websiteGallery: {
+      enabled: true,
+      images: (example.gallery || []).slice(0, 12),
+    },
+    websiteHotels: { enabled: true, items: example.hotels || [] },
+    websiteRegistry: { enabled: true, items: example.registry || [] },
+  };
+}
 
 export function getThemeConfig(themeKey) {
   return WEBSITE_THEMES[themeKey] || WEBSITE_THEMES['classic-rose'];
