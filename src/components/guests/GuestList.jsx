@@ -5,6 +5,7 @@ import { subscribeToEvents, applyInvitedEventUpdates } from '../../services/even
 import { subscribeToSeating } from '../../services/seatingService';
 import { resolveInvitedEventUpdates, resolveGuestInviteUpdates, guestInvitedToEvent, invitedEventNamesForGuest } from '../../utils/eventInvites';
 import { Button, Input, Badge, Modal, useToast } from '../ui';
+import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
 import { AlertTriangle, CheckCircle2, ChevronDown, Download, Edit3, FileSpreadsheet, Plus, Search, Trash2, Upload, XCircle } from 'lucide-react';
 import {
   analyzeGuestImport,
@@ -37,6 +38,26 @@ export default function GuestList() {
   const [inlineEdit, setInlineEdit] = useState(null); // {id, firstName, lastName}
   const [viewMode, setViewMode] = useState('family'); // family | list
   const syncedPublicDirectoryRef = useRef(null);
+
+  const handleQuickAdd = async () => {
+    const input = prompt('Enter guest names (comma-separated):\nExample: Arjun Patel, Anjali Shah, Rohan Mehta');
+    if (!input) return;
+    const names = input.split(',').map((n) => n.trim()).filter(Boolean);
+    if (names.length === 0) return;
+    const newGuests = names.map((n) => {
+      const parts = n.split(/\s+/);
+      const firstName = parts[0] || '';
+      const lastName = parts.slice(1).join(' ') || '';
+      return { firstName, lastName, side: 'bride', dietary: 'vegetarian', tags: [] };
+    });
+    try {
+      await importGuestsBatch(activeWedding.id, newGuests);
+      toast.success(`Added ${newGuests.length} guests`);
+    } catch (err) {
+      console.error('Quick add failed:', err);
+      toast.error('Could not add guests. Please try again.');
+    }
+  };
 
   useEffect(() => {
     if (!activeWedding) return;
@@ -286,36 +307,60 @@ export default function GuestList() {
           </div>
         </div>
 
-        {/* Actions row — neat single scrollable row on mobile, wraps on desktop */}
+        {/* Actions row — primary add plus a single data menu */}
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
           <Button onClick={() => setShowAddModal(true)} className="flex-shrink-0 whitespace-nowrap"><Plus size={16} /> Add Guest</Button>
-          <Button variant="outline" onClick={() => setShowImportModal(true)} className="flex-shrink-0 whitespace-nowrap"><Upload size={16} /> Import</Button>
-          <Button variant="outline" onClick={async () => {
-            const input = prompt('Enter guest names (comma-separated):\nExample: Arjun Patel, Anjali Shah, Rohan Mehta');
-            if (!input) return;
-            const names = input.split(',').map((n) => n.trim()).filter(Boolean);
-            const newGuests = names.map((n) => {
-              const parts = n.split(/\s+/);
-              const firstName = parts[0] || '';
-              const lastName = parts.slice(1).join(' ') || '';
-              return { firstName, lastName, side: 'bride', dietary: 'vegetarian', tags: [] };
-            });
-            try {
-              await importGuestsBatch(activeWedding.id, newGuests);
-              toast.success(`Added ${newGuests.length} guests`);
-            } catch (err) {
-              console.error('Quick add failed:', err);
-              toast.error('Could not add guests. Please try again.');
-            }
-          }} className="flex-shrink-0 whitespace-nowrap" title="Quickly add multiple guests by name">
-            <Plus size={16} /> Quick Add
-          </Button>
-          <Button variant="outline" onClick={downloadGuestTemplate} className="flex-shrink-0 whitespace-nowrap">
-            <Download size={16} /> Template
-          </Button>
-          <Button variant="outline" onClick={() => exportGuestsToExcel(guests, events)} className="flex-shrink-0 whitespace-nowrap">
-            <Download size={16} /> Export
-          </Button>
+
+          <Menu as="div" className="relative flex-shrink-0">
+            <MenuButton as={Button} variant="outline" className="whitespace-nowrap">
+              <Upload size={16} /> Import / Export <ChevronDown size={14} className="opacity-60" />
+            </MenuButton>
+            <MenuItems
+              transition
+              anchor="bottom start"
+              className="z-50 mt-1 w-60 origin-top rounded-xl border border-gray-200 bg-white p-1.5 text-sm shadow-lg ring-1 ring-black/5 transition duration-150 ease-out focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+            >
+              <p className="px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Add in bulk</p>
+              <MenuItem>
+                <button
+                  onClick={() => setShowImportModal(true)}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-gray-700 data-[focus]:bg-wine-50 data-[focus]:text-wine-800"
+                >
+                  <Upload size={15} className="text-gray-400" />
+                  <span>Import from file<span className="block text-[11px] text-gray-400">Excel or CSV with column mapping</span></span>
+                </button>
+              </MenuItem>
+              <MenuItem>
+                <button
+                  onClick={handleQuickAdd}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-gray-700 data-[focus]:bg-wine-50 data-[focus]:text-wine-800"
+                >
+                  <Plus size={15} className="text-gray-400" />
+                  <span>Quick add by name<span className="block text-[11px] text-gray-400">Paste a list of names</span></span>
+                </button>
+              </MenuItem>
+              <div className="my-1 h-px bg-gray-100" />
+              <p className="px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">Get your data out</p>
+              <MenuItem>
+                <button
+                  onClick={() => exportGuestsToExcel(guests, events)}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-gray-700 data-[focus]:bg-wine-50 data-[focus]:text-wine-800"
+                >
+                  <Download size={15} className="text-gray-400" />
+                  <span>Export to Excel<span className="block text-[11px] text-gray-400">All guests and their details</span></span>
+                </button>
+              </MenuItem>
+              <MenuItem>
+                <button
+                  onClick={downloadGuestTemplate}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-gray-700 data-[focus]:bg-wine-50 data-[focus]:text-wine-800"
+                >
+                  <FileSpreadsheet size={15} className="text-gray-400" />
+                  <span>Download template<span className="block text-[11px] text-gray-400">Blank sheet to fill in</span></span>
+                </button>
+              </MenuItem>
+            </MenuItems>
+          </Menu>
         </div>
       </div>
 

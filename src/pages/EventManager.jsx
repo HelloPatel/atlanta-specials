@@ -1,12 +1,14 @@
 import EventList from '../components/events/EventList';
+import { PageHeader } from '../components/ui';
 
 export default function EventManager() {
   return (
     <div>
-      <div className="mb-4 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Events</h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">Manage your wedding events: Mehndi, Sangeet, Ceremony, Reception and more</p>
-      </div>
+      <PageHeader
+        eyebrow="Celebrations"
+        title="Events"
+        subtitle="Plan every celebration, from mehndi and sangeet to the ceremony and reception."
+      />
       <EventList />
     </div>
   );
