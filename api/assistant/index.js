@@ -1,14 +1,30 @@
 'use strict';
 
-const { createRemoteJWKSet, jwtVerify } = require('jose');
+const { importX509, jwtVerify, decodeProtectedHeader } = require('jose');
 
 // ─── Firebase ID-token verification ──────────────────────────────────────────
 // Firebase ID tokens are RS256 JWTs signed by Google. We verify them against
-// Google's public JWKS so the endpoint can only be used by signed-in users of
-// this Firebase project. No firebase-admin / service account needed.
-const FIREBASE_JWKS = createRemoteJWKSet(
-  new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
-);
+// Google's public signing certificates so the endpoint can only be used by
+// signed-in users of this Firebase project. No firebase-admin / service account
+// needed. We use the X.509 cert endpoint (the canonical Firebase method) and
+// import a single key by `kid`, which avoids a jose JWKSet-parsing edge case
+// ("Unsupported alg value for a JSON Web Key Set") seen on some runtimes.
+const FIREBASE_X509_URL =
+  'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
+
+let _certCache = { certs: null, exp: 0 };
+async function getFirebaseCerts() {
+  const now = Date.now();
+  if (_certCache.certs && now < _certCache.exp) return _certCache.certs;
+  const resp = await fetch(FIREBASE_X509_URL);
+  if (!resp.ok) throw new Error(`cert fetch HTTP ${resp.status}`);
+  const certs = await resp.json();
+  const cc = resp.headers.get('cache-control') || '';
+  const m = cc.match(/max-age=(\d+)/);
+  const ttl = m ? parseInt(m[1], 10) * 1000 : 3600 * 1000;
+  _certCache = { certs, exp: now + ttl };
+  return certs;
+}
 
 async function verifyFirebaseToken(authHeader, projectId, log) {
   // If no project id is configured, skip verification (local/dev/unconfigured).
@@ -19,9 +35,15 @@ async function verifyFirebaseToken(authHeader, projectId, log) {
   const token = (authHeader || '').replace(/^Bearer\s+/i, '').trim();
   if (!token) return { ok: false };
   try {
-    const { payload } = await jwtVerify(token, FIREBASE_JWKS, {
+    const { kid } = decodeProtectedHeader(token);
+    const certs = await getFirebaseCerts();
+    const pem = kid && certs[kid];
+    if (!pem) throw new Error('no matching signing cert for token kid');
+    const key = await importX509(pem, 'RS256');
+    const { payload } = await jwtVerify(token, key, {
       issuer: `https://securetoken.google.com/${projectId}`,
       audience: projectId,
+      algorithms: ['RS256'],
     });
     return { ok: true, uid: payload.sub || payload.user_id || null, token };
   } catch (err) {
