@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { PageHeader } from '../components/ui';
 
 // Split desktop (heavy @dnd-kit) from mobile (lightweight, no DnD)
 const DesktopSeatingCanvas = lazy(() => import('../components/seating/SeatingCanvas'));
@@ -30,9 +31,12 @@ export default function SeatingChart() {
 
   return (
     <div>
-      <div className="mb-4 hidden md:block">
-        <h1 className="text-2xl font-bold text-gray-900">Seating Chart</h1>
-        <p className="text-sm text-gray-500 mt-1">Drag and drop guests to arrange tables</p>
+      <div className="hidden md:block">
+        <PageHeader
+          eyebrow="Tables"
+          title="Seating Chart"
+          subtitle="Drag and drop guests to arrange tables."
+        />
       </div>
       <h1 className="sr-only md:hidden">Seating Chart</h1>
       <Suspense fallback={<SeatingLoader />}>

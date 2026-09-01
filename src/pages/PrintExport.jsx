@@ -1,12 +1,14 @@
 import PrintCenter from '../components/print/PrintCenter';
+import { PageHeader } from '../components/ui';
 
 export default function PrintExport() {
   return (
     <div>
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Print and Export</h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">Generate place cards, table assignments, and guest lists as PDFs</p>
-      </div>
+      <PageHeader
+        eyebrow="Paper"
+        title="Print and Export"
+        subtitle="Generate place cards, table assignments, and guest lists as PDFs."
+      />
       <PrintCenter />
     </div>
   );
