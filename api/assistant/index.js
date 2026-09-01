@@ -258,13 +258,36 @@ module.exports = async function (context, req) {
     req.headers &&
     (req.headers['x-phera-diag'] || req.headers['X-Phera-Diag']) === 'phera-diag-7f3a9c';
   if (diagOn && req.headers['x-phera-diag-info']) {
-    return respond(200, {
+    const out = {
       node: process.version,
       hasFetch: typeof fetch,
-      hasGlobalThisFetch: typeof globalThis.fetch,
-      hasCrypto: typeof globalThis.crypto,
       firebaseProjectId: process.env.FIREBASE_PROJECT_ID || null,
-    });
+    };
+    try {
+      const authH = req.headers.authorization || req.headers.Authorization || '';
+      const tok = authH.replace(/^Bearer\s+/i, '').trim();
+      if (tok) {
+        const { decodeProtectedHeader, decodeJwt } = require('jose');
+        out.tokenKid = decodeProtectedHeader(tok).kid || null;
+        const c = decodeJwt(tok);
+        out.tokenAud = c.aud;
+        out.tokenIss = c.iss;
+      }
+      const cr = await fetch(FIREBASE_X509_URL);
+      out.certStatus = cr.status;
+      out.certContentType = cr.headers.get('content-type');
+      const body = await cr.text();
+      out.certBodyLen = body.length;
+      try {
+        out.certKids = Object.keys(JSON.parse(body));
+      } catch (e) {
+        out.certKids = 'parse-failed';
+        out.certSnippet = body.slice(0, 200);
+      }
+    } catch (e) {
+      out.probeErr = e && e.message;
+    }
+    return respond(200, out);
   }
 
   if (!req.body || typeof req.body !== 'object') {
