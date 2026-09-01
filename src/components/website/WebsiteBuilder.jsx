@@ -31,6 +31,7 @@ import {
   WEBSITE_THEMES,
   getGroupedThemes,
   getExamplesForTheme,
+  getPreviewConfigForTheme,
   buildConfigFromExample,
   getCoupleDisplayName,
   getPublicWeddingWebsiteLink,
@@ -380,7 +381,7 @@ export default function WebsiteBuilder() {
                   {group.description && <p className="text-sm text-gray-500">{group.description}</p>}
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {group.themes.map((theme) => {
+                  {group.themeList.map((theme) => {
                     const selected = config.websiteTheme === theme.key;
                     const exampleCount = getExamplesForTheme(theme.key).length;
                     return (
@@ -396,8 +397,7 @@ export default function WebsiteBuilder() {
                         <div className="relative">
                           <ThemeThumbnail
                             wedding={activeWedding}
-                            themeKey={theme.key}
-                            heroDate={config.websiteHero?.date}
+                            config={getPreviewConfigForTheme(theme.key, config)}
                           />
                           {selected && (
                             <span className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-wine-600 text-white shadow-md">
@@ -437,8 +437,7 @@ export default function WebsiteBuilder() {
                   <div>
                     <ThemeThumbnail
                       wedding={activeWedding}
-                      themeKey={chooserTheme.key}
-                      heroDate={config.websiteHero?.date}
+                      config={getPreviewConfigForTheme(chooserTheme.key, config)}
                       aspect="16 / 9"
                     />
                     <p className="mt-3 text-sm text-gray-600">{chooserTheme.description}</p>
