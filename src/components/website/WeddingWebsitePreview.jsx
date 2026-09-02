@@ -612,7 +612,7 @@ function HeroSplit({ theme, config, wedding, names, coupleName, initials, heroDa
           <span className="h-px w-8 bg-white/40" />The wedding of
         </div>
         {scriptFamily ? (
-          <h1 className="mt-6 leading-none text-white" style={{ fontFamily: scriptFamily, fontSize: 'clamp(3rem, 9vw, 5.5rem)' }}>
+          <h1 className="mt-6 leading-[0.9] text-white" style={{ fontFamily: scriptFamily, fontSize: 'clamp(2.75rem, 14cqw, 5.25rem)' }}>
             {names.second ? (<>{names.first} <span style={{ color: theme.accent }}>&amp;</span> {names.second}</>) : coupleName}
           </h1>
         ) : (
@@ -1351,10 +1351,17 @@ function HeroMosaic({ theme, config, wedding, names, initials, heroDate, locatio
             </h1>
             {tagline && <p className="mt-6 max-w-md text-sm leading-7" style={{ color: hexToRgba('#ffffff', 0.82), fontFamily: theme.bodyFontFamily }}>{tagline}</p>}
           </div>
-          <div className="flex items-center justify-center rounded-2xl p-6" style={{ backgroundColor: theme.accent, color: '#ffffff' }}>
-            <span className="text-5xl font-semibold" style={{ fontFamily: theme.fontFamily }}>{initials}</span>
+          <div
+            className="relative flex items-center justify-center overflow-hidden rounded-2xl p-6"
+            style={{ background: `linear-gradient(150deg, ${theme.accent}, ${theme.primary})`, color: '#ffffff' }}
+          >
+            <span className="absolute inset-3 rounded-xl border border-white/25" aria-hidden="true" />
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.35em] text-white/75">Est. 2027</span>
+              <span className="text-5xl font-semibold leading-none" style={{ fontFamily: theme.fontFamily }}>{initials}</span>
+            </div>
           </div>
-          <div className="flex flex-col justify-center gap-3 rounded-2xl p-6" style={{ backgroundColor: theme.surface }}>
+          <div className="flex flex-col justify-center gap-3 rounded-2xl border p-6" style={{ backgroundColor: theme.surface, borderColor: hexToRgba(theme.primary, 0.14) }}>
             <p className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: theme.text }}><CalendarDays size={16} style={{ color: theme.primary }} />{heroDate || 'Date coming soon'}</p>
             <p className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: theme.text }}><MapPin size={16} style={{ color: theme.primary }} />{location}</p>
           </div>
@@ -1363,6 +1370,263 @@ function HeroMosaic({ theme, config, wedding, names, initials, heroDate, locatio
           <CountdownTimer targetDate={rawDate} theme={theme} variant="inline" tone="onLight" />
           <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" />
         </div>
+      </div>
+    </section>
+  );
+}
+
+// 21) Toran hero — a festive Indian valance of hanging marigold strings over a
+// warm, sunlit welcome. Built entirely from CSS so it stays crisp at any size.
+function HeroToran({ theme, config, wedding, names, coupleName, heroDate, location, publicEvents }) {
+  const rawDate = config.websiteHero?.date || wedding?.weddingDate;
+  const tagline = config.websiteHero?.tagline;
+  const strands = Array.from({ length: 15 });
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="toran"
+      className="relative isolate overflow-hidden px-6 py-14 text-center @md:px-10 @lg:py-20"
+      style={{ backgroundColor: theme.background, color: theme.text }}
+    >
+      {/* hanging marigold valance */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-center gap-[3.2cqw] px-2" aria-hidden="true">
+        {strands.map((_, i) => (
+          <span key={i} className={`phera-float${i % 2 ? '-slow' : ''} flex flex-col items-center`} style={{ animationDelay: `${(i % 5) * 0.4}s` }}>
+            <span className="block w-px" style={{ height: `${18 + (i % 3) * 10}px`, backgroundColor: hexToRgba(theme.primary, 0.35) }} />
+            <span
+              className="block h-3 w-3 rounded-full @md:h-3.5 @md:w-3.5"
+              style={{ background: `radial-gradient(circle at 35% 30%, ${theme.accent}, ${theme.primary})` }}
+            />
+            <span className="mt-0.5 block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: hexToRgba(theme.accent, 0.55) }} />
+          </span>
+        ))}
+      </div>
+
+      <div className="relative mx-auto max-w-3xl pt-20">
+        <p className="phera-rise text-[11px] font-semibold uppercase tracking-[0.5em]" style={{ color: theme.primary }}>
+          You are warmly invited
+        </p>
+        <h1 className="phera-rise phera-d2 mt-6 text-[clamp(2.5rem,13cqw,5rem)] font-semibold leading-[0.98]" style={{ fontFamily: theme.fontFamily }}>
+          {names.first}
+          {names.second && (<span className="mx-2" style={{ color: theme.accent }}>&amp;</span>)}
+          {names.second}
+        </h1>
+        <div className="phera-rise phera-d3 mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium" style={{ color: theme.muted }}>
+          <span className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.primary }} />{heroDate || 'Date coming soon'}</span>
+          <span className="hidden h-4 w-px @sm:inline-block" style={{ backgroundColor: hexToRgba(theme.primary, 0.3) }} />
+          <span className="inline-flex items-center gap-2"><MapPin size={15} style={{ color: theme.primary }} />{location}</span>
+        </div>
+        {tagline && <p className="phera-rise phera-d4 mx-auto mt-6 max-w-xl text-sm leading-7" style={{ color: theme.muted }}>{tagline}</p>}
+        <div className="phera-rise phera-d4 flex justify-center"><CountdownTimer targetDate={rawDate} theme={theme} variant="feature" tone="onLight" align="center" /></div>
+        <div className="phera-rise phera-d5 flex justify-center">
+          <HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 22) Wreath hero — centered names encircled by a hand-set ring of blossoms. A
+// quiet, botanical frame for soft, romantic palettes.
+function HeroWreath({ theme, config, wedding, names, coupleName, initials, heroDate, location, publicEvents }) {
+  const rawDate = config.websiteHero?.date || wedding?.weddingDate;
+  const tagline = config.websiteHero?.tagline;
+  const petals = Array.from({ length: 18 });
+  const blossoms = ['\u2740', '\u273f', '\u2741', '\u2698'];
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="wreath"
+      className="relative isolate overflow-hidden px-6 py-16 text-center @md:px-10 @lg:py-24"
+      style={{ backgroundColor: theme.background, color: theme.text }}
+    >
+      <div className="relative mx-auto flex max-w-2xl flex-col items-center">
+        <div className="phera-rise relative flex aspect-square w-[74cqw] max-w-[440px] items-center justify-center">
+          {/* blossom ring */}
+          <div className="absolute inset-0 phera-spin-slow" aria-hidden="true">
+            {petals.map((_, i) => (
+              <span
+                key={i}
+                className="absolute left-1/2 top-1/2 block"
+                style={{
+                  transform: `rotate(${i * (360 / petals.length)}deg) translateY(-33cqw) rotate(${i * 18}deg)`,
+                  color: i % 3 === 0 ? theme.primary : theme.accent,
+                  opacity: i % 2 ? 0.9 : 0.6,
+                  fontSize: i % 3 === 0 ? '1.35rem' : '1rem',
+                }}
+              >
+                {blossoms[i % blossoms.length]}
+              </span>
+            ))}
+          </div>
+          <span className="absolute inset-[13%] rounded-full border" style={{ borderColor: hexToRgba(theme.primary, 0.16) }} aria-hidden="true" />
+          <div className="relative px-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.45em]" style={{ color: theme.primary }}>The wedding of</p>
+            <h1 className="mt-3 text-[clamp(1.9rem,9cqw,3.4rem)] font-semibold leading-[1.02]" style={{ fontFamily: theme.scriptFontFamily || theme.fontFamily, color: theme.text }}>
+              {names.second ? (<>{names.first}<span className="mx-1.5" style={{ color: theme.accent }}>&amp;</span>{names.second}</>) : coupleName}
+            </h1>
+            <p className="mt-3 text-xs font-medium uppercase tracking-[0.3em]" style={{ color: theme.muted }}>{heroDate || 'Date coming soon'}</p>
+          </div>
+        </div>
+        <p className="phera-rise phera-d3 mt-6 inline-flex items-center gap-2 text-sm font-medium" style={{ color: theme.muted }}>
+          <MapPin size={15} style={{ color: theme.primary }} />{location}
+        </p>
+        {tagline && <p className="phera-rise phera-d4 mx-auto mt-4 max-w-lg text-sm leading-7" style={{ color: theme.muted }}>{tagline}</p>}
+        <div className="phera-rise phera-d4"><CountdownTimer targetDate={rawDate} theme={theme} variant="inline" tone="onLight" align="center" /></div>
+        <div className="phera-rise phera-d5"><HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" /></div>
+      </div>
+    </section>
+  );
+}
+
+// 23) Magazine hero — a glossy cover with a masthead, cover lines, and an issue
+// stamp. Editorial and confident; a photo, when present, becomes the cover.
+function HeroMagazine({ theme, config, wedding, names, coupleName, heroDate, location, publicEvents }) {
+  const hasPhoto = Boolean(config.websiteHero?.backgroundImage);
+  const tagline = config.websiteHero?.tagline;
+  const coverLines = ['The Ceremony', 'The Celebration', 'Where to Stay', publicEvents.length ? 'Full Schedule Inside' : 'Our Story'];
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="magazine"
+      className="relative isolate overflow-hidden"
+      style={{ backgroundColor: theme.surface, color: theme.text }}
+    >
+      {hasPhoto && (
+        <>
+          <div className="absolute inset-0" style={{ backgroundImage: `url(${config.websiteHero.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }} aria-hidden="true" />
+          <div className="absolute inset-0" style={{ background: theme.heroOverlay }} aria-hidden="true" />
+        </>
+      )}
+      <div className="relative px-6 py-10 @md:px-10 @lg:py-14" style={hasPhoto ? { color: '#ffffff' } : undefined}>
+        {/* masthead */}
+        <div className="mx-auto flex max-w-5xl items-center justify-between border-b pb-4" style={{ borderColor: hasPhoto ? 'rgba(255,255,255,0.35)' : hexToRgba(theme.text, 0.16) }}>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.4em]" style={{ color: hasPhoto ? 'rgba(255,255,255,0.85)' : theme.muted }}>Vol. I</span>
+          <span className="text-[clamp(1.5rem,7cqw,2.75rem)] font-semibold uppercase tracking-[0.12em]" style={{ fontFamily: theme.fontFamily }}>The Wedding</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.4em]" style={{ color: hasPhoto ? 'rgba(255,255,255,0.85)' : theme.muted }}>Est. 2027</span>
+        </div>
+
+        <div className="mx-auto mt-10 grid max-w-5xl gap-8 @lg:grid-cols-[1fr_auto] @lg:items-end @lg:pb-4">
+          <div className="phera-rise">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.4em]" style={{ color: hasPhoto ? 'rgba(255,255,255,0.85)' : theme.primary }}>{heroDate || 'Date coming soon'}</p>
+            <h1 className="mt-4 text-[clamp(2.6rem,15cqw,6.5rem)] font-semibold leading-[0.9]" style={{ fontFamily: theme.fontFamily }}>
+              {names.first}
+              {names.second && <span className="block" style={{ color: theme.accent }}>&amp; {names.second}</span>}
+            </h1>
+            {tagline && <p className="mt-5 max-w-md text-sm leading-7" style={{ color: hasPhoto ? 'rgba(255,255,255,0.9)' : theme.muted }}>{tagline}</p>}
+            <div className="mt-2 inline-flex items-center gap-2 text-sm font-medium" style={{ color: hasPhoto ? 'rgba(255,255,255,0.9)' : theme.muted }}>
+              <MapPin size={15} style={{ color: hasPhoto ? '#ffffff' : theme.primary }} />{location}
+            </div>
+          </div>
+          {/* cover lines */}
+          <ul className="phera-rise phera-d2 space-y-2.5 border-l pl-5 text-sm @lg:max-w-[220px]" style={{ borderColor: hasPhoto ? 'rgba(255,255,255,0.4)' : hexToRgba(theme.primary, 0.3) }}>
+            {coverLines.map((line) => (
+              <li key={line} className="flex items-start gap-2 font-medium" style={{ color: hasPhoto ? 'rgba(255,255,255,0.92)' : theme.text }}>
+                <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full" style={{ backgroundColor: theme.accent }} />
+                {line}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="phera-rise phera-d3 mx-auto mt-8 max-w-5xl">
+          {hasPhoto
+            ? <SquareActions config={config} wedding={wedding} publicEvents={publicEvents} primaryBg="#ffffff" primaryText={theme.primary} outline="#ffffff" />
+            : <SquareActions config={config} wedding={wedding} publicEvents={publicEvents} primaryBg={theme.primary} primaryText="#ffffff" outline={theme.primary} />}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// 24) Polaroid hero — a warm, tactile scatter of instant photos with tape and a
+// handwritten name. Casual and personal for playful couples.
+function HeroPolaroid({ theme, config, wedding, names, coupleName, initials, heroDate, location, publicEvents }) {
+  const rawDate = config.websiteHero?.date || wedding?.weddingDate;
+  const tagline = config.websiteHero?.tagline;
+  const photo = config.websiteHero?.backgroundImage;
+  const frames = [
+    { rot: '-6deg', fill: theme.primary, label: names.first },
+    { rot: '4deg', fill: theme.accent, label: names.second || '\u2764' },
+    { rot: '-2deg', fill: theme.surface, label: initials, ink: theme.primary },
+  ];
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="polaroid"
+      className="relative isolate overflow-hidden px-6 py-14 text-center @md:px-10 @lg:py-20"
+      style={{ backgroundColor: theme.background, color: theme.text }}
+    >
+      <div className="mx-auto max-w-3xl">
+        <div className="phera-rise flex items-end justify-center">
+          {frames.map((f, i) => (
+            <div
+              key={i}
+              className={`relative ${i === 1 ? 'z-10 -mx-4' : ''} rounded-sm bg-white p-2 pb-6 shadow-[0_18px_40px_rgba(15,23,42,0.18)]`}
+              style={{ transform: `rotate(${f.rot})`, width: 'clamp(88px, 26cqw, 150px)' }}
+            >
+              <span className="absolute -top-2 left-1/2 h-4 w-14 -translate-x-1/2 rounded-sm" style={{ backgroundColor: hexToRgba(theme.accent, 0.5) }} aria-hidden="true" />
+              <div
+                className="flex aspect-square items-center justify-center overflow-hidden rounded-sm text-2xl font-semibold"
+                style={photo && i === 1
+                  ? { backgroundImage: `url(${photo})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                  : { backgroundColor: f.fill, color: f.ink || '#ffffff', fontFamily: theme.fontFamily }}
+              >
+                {!(photo && i === 1) && f.label}
+              </div>
+              <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.2em]" style={{ color: theme.muted }}>{i === 0 ? 'the bride' : i === 1 ? 'us' : 'the groom'}</p>
+            </div>
+          ))}
+        </div>
+
+        <h1 className="phera-rise phera-d2 mt-9 text-[clamp(2.4rem,12cqw,4.5rem)] leading-[1]" style={{ fontFamily: theme.scriptFontFamily || theme.fontFamily, color: theme.primary }}>
+          {coupleName}
+        </h1>
+        <div className="phera-rise phera-d3 mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm font-medium" style={{ color: theme.muted }}>
+          <span className="inline-flex items-center gap-2"><CalendarDays size={15} style={{ color: theme.accent }} />{heroDate || 'Date coming soon'}</span>
+          <span className="hidden h-4 w-px @sm:inline-block" style={{ backgroundColor: hexToRgba(theme.primary, 0.3) }} />
+          <span className="inline-flex items-center gap-2"><MapPin size={15} style={{ color: theme.accent }} />{location}</span>
+        </div>
+        {tagline && <p className="phera-rise phera-d4 mx-auto mt-4 max-w-lg text-sm leading-7" style={{ color: theme.muted }}>{tagline}</p>}
+        <div className="phera-rise phera-d4 flex justify-center"><CountdownTimer targetDate={rawDate} theme={theme} variant="inline" tone="onLight" align="center" /></div>
+        <div className="phera-rise phera-d5 flex justify-center"><HeroActions theme={theme} config={config} wedding={wedding} publicEvents={publicEvents} tone="onLight" /></div>
+      </div>
+    </section>
+  );
+}
+
+// 25) Duotone hero — a full-bleed photo washed in a single brand color with an
+// oversized cutout name. Bold, modern, and graphic.
+function HeroDuotone({ theme, config, wedding, names, coupleName, heroDate, location, publicEvents }) {
+  const hasPhoto = Boolean(config.websiteHero?.backgroundImage);
+  const tagline = config.websiteHero?.tagline;
+  return (
+    <section
+      data-website-theme={theme.key}
+      data-hero-layout="duotone"
+      className="relative isolate flex min-h-[420px] flex-col justify-end overflow-hidden px-6 py-12 @md:px-10 @lg:min-h-[520px] @lg:py-16"
+      style={{ background: theme.heroBackground || theme.primary, color: '#ffffff' }}
+    >
+      {hasPhoto && (
+        <>
+          <div className="absolute inset-0" style={{ backgroundImage: `url(${config.websiteHero.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', filter: 'grayscale(1) contrast(1.05)' }} aria-hidden="true" />
+          <div className="absolute inset-0 mix-blend-multiply" style={{ backgroundColor: theme.primary, opacity: 0.82 }} aria-hidden="true" />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${hexToRgba('#000000', 0.55)}, transparent 60%)` }} aria-hidden="true" />
+        </>
+      )}
+      <div className="relative mx-auto w-full max-w-5xl">
+        <p className="phera-rise text-[11px] font-semibold uppercase tracking-[0.5em] text-white/80">{heroDate || 'Date coming soon'} · {location}</p>
+        <h1 className="phera-rise phera-d2 mt-4 text-[clamp(3rem,20cqw,8rem)] font-semibold uppercase leading-[0.82] tracking-[-0.02em]" style={{ fontFamily: theme.fontFamily }}>
+          {names.first}
+          {names.second && (
+            <span className="block">
+              <span className="text-[0.6em] align-middle" style={{ color: theme.accent }}>&amp; </span>{names.second}
+            </span>
+          )}
+        </h1>
+        {tagline && <p className="phera-rise phera-d3 mt-6 max-w-xl text-sm leading-7 text-white/85">{tagline}</p>}
+        <div className="phera-rise phera-d3"><CountdownTimer targetDate={config.websiteHero?.date || wedding?.weddingDate} theme={theme} variant="inline" /></div>
+        <div className="phera-rise phera-d4"><SquareActions config={config} wedding={wedding} publicEvents={publicEvents} primaryBg="#ffffff" primaryText={theme.primary} outline="rgba(255,255,255,0.6)" /></div>
       </div>
     </section>
   );
@@ -1440,6 +1704,16 @@ export default function WeddingWebsitePreview({
         return <HeroMesh {...heroProps} />;
       case 'mosaic':
         return <HeroMosaic {...heroProps} />;
+      case 'toran':
+        return <HeroToran {...heroProps} />;
+      case 'wreath':
+        return <HeroWreath {...heroProps} />;
+      case 'magazine':
+        return <HeroMagazine {...heroProps} />;
+      case 'polaroid':
+        return <HeroPolaroid {...heroProps} />;
+      case 'duotone':
+        return <HeroDuotone {...heroProps} />;
       case 'botanical':
       default:
         return <HeroBotanical {...heroProps} />;
