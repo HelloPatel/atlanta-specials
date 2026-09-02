@@ -95,6 +95,117 @@ export async function updateCollaboratorRole(weddingId, collabId, role) {
   });
 }
 
+// ─── Custom roles ───────────────────────────────────────────────────────────
+// Owners can define named custom roles with per-feature view/edit permissions
+// (e.g. "Parents" who can edit Budget but only view Events). A custom role is
+// stored on the wedding doc `customRoles` array and assigned to a collaborator
+// by setting their `role` to the custom role id (prefixed 'custom_'). Built-in
+// roles always take precedence over custom ones during resolution.
+
+export const CUSTOM_ROLE_PREFIX = 'custom_';
+
+export const isCustomRoleId = (role) =>
+  typeof role === 'string' && role.startsWith(CUSTOM_ROLE_PREFIX);
+
+// Feature catalog offered in the custom-role builder. Keys MUST match the
+// feature gate keys used by WeddingContext (ALL_FEATURES).
+export const PERMISSION_FEATURES = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'guests', label: 'Guest List' },
+  { key: 'events', label: 'Events' },
+  { key: 'seating', label: 'Seating' },
+  { key: 'rsvp', label: 'RSVPs' },
+  { key: 'budget', label: 'Budget' },
+  { key: 'photos', label: 'Photo Groups' },
+  { key: 'bets', label: 'Games' },
+  { key: 'website', label: 'Website' },
+  { key: 'print', label: 'Print' },
+  { key: 'assistant', label: 'AI Assistant' },
+];
+
+function newCustomRoleId() {
+  const raw =
+    globalThis.crypto?.randomUUID?.() ||
+    `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  return `${CUSTOM_ROLE_PREFIX}${raw.replace(/-/g, '').slice(0, 12)}`;
+}
+
+// Normalize a permissions payload → { view: [], edit: [], viewGuestPII }.
+// Edit always implies view so gates stay consistent.
+function normalizePermissions({ view = [], edit = [], viewGuestPII = true } = {}) {
+  const editList = [...new Set(edit)];
+  const viewList = [...new Set([...view, ...edit])];
+  return { view: viewList, edit: editList, viewGuestPII: Boolean(viewGuestPII) };
+}
+
+export async function createCustomRole(weddingId, { name, view, edit, viewGuestPII }) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) throw new Error('Give the role a name');
+
+  const weddingRef = doc(db, COLLECTIONS.WEDDINGS, weddingId);
+  const snap = await getDoc(weddingRef);
+  if (!snap.exists()) throw new Error('Wedding not found');
+
+  const existing = snap.data().customRoles || [];
+  if (existing.some((r) => (r.name || '').trim().toLowerCase() === trimmed.toLowerCase())) {
+    throw new Error('A custom role with that name already exists');
+  }
+
+  const role = {
+    id: newCustomRoleId(),
+    name: trimmed,
+    ...normalizePermissions({ view, edit, viewGuestPII }),
+    createdAt: Date.now(),
+  };
+  await updateDoc(weddingRef, { customRoles: [...existing, role] });
+  return role;
+}
+
+export async function updateCustomRole(weddingId, roleId, { name, view, edit, viewGuestPII }) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) throw new Error('Give the role a name');
+
+  const weddingRef = doc(db, COLLECTIONS.WEDDINGS, weddingId);
+  const snap = await getDoc(weddingRef);
+  if (!snap.exists()) throw new Error('Wedding not found');
+
+  const existing = snap.data().customRoles || [];
+  if (
+    existing.some(
+      (r) => r.id !== roleId && (r.name || '').trim().toLowerCase() === trimmed.toLowerCase()
+    )
+  ) {
+    throw new Error('A custom role with that name already exists');
+  }
+
+  const next = existing.map((r) =>
+    r.id === roleId
+      ? { ...r, name: trimmed, ...normalizePermissions({ view, edit, viewGuestPII }), updatedAt: Date.now() }
+      : r
+  );
+  await updateDoc(weddingRef, { customRoles: next });
+}
+
+export async function deleteCustomRole(weddingId, roleId) {
+  const weddingRef = doc(db, COLLECTIONS.WEDDINGS, weddingId);
+  const snap = await getDoc(weddingRef);
+  if (!snap.exists()) return;
+
+  const existing = snap.data().customRoles || [];
+  await updateDoc(weddingRef, { customRoles: existing.filter((r) => r.id !== roleId) });
+
+  // Downgrade any collaborators still assigned this custom role to viewer.
+  const affected = await getDocs(query(collabRef(weddingId), where('role', '==', roleId)));
+  await Promise.all(
+    affected.docs.map((d) =>
+      updateDoc(doc(collabRef(weddingId), d.id), {
+        role: COLLAB_ROLES.VIEWER,
+        updatedAt: serverTimestamp(),
+      })
+    )
+  );
+}
+
 // ─── Remove collaborator ────────────────────────────────────────────────────
 
 export async function removeCollaborator(weddingId, collabId) {

@@ -139,26 +139,35 @@ export function WeddingProvider({ children }) {
   const isViewer = userRole === 'viewer';
   const canEdit = userRole === 'owner' || userRole === 'editor';
 
-  // Granular per-feature permission helpers (used by planner/dealer roles).
+  // Resolve the active role's access object. Built-in roles come from
+  // ROLE_ACCESS; anything else is looked up as an owner-defined custom role on
+  // the wedding doc (customRoles). `null` = full access, `undefined` = unknown.
+  const roleAccess = useMemo(() => {
+    const builtin = ROLE_ACCESS[userRole];
+    if (builtin !== undefined) return builtin;
+    const custom = (activeWedding?.customRoles || []).find((r) => r.id === userRole);
+    if (custom) return { view: custom.view || [], edit: custom.edit || [] };
+    return undefined;
+  }, [userRole, activeWedding]);
+
+  // Granular per-feature permission helpers (used by planner/dealer + custom roles).
   const canViewFeature = useMemo(() => {
-    const access = ROLE_ACCESS[userRole];
     return (feature) => {
-      if (access === undefined) return canEdit; // unknown role → fall back to canEdit
-      if (access === null) return true;         // owner / editor
-      if (access.view === 'ALL') return true;
-      return access.view.includes(feature);
+      if (roleAccess === undefined) return canEdit; // unknown role → fall back to canEdit
+      if (roleAccess === null) return true;         // owner / editor
+      if (roleAccess.view === 'ALL') return true;
+      return roleAccess.view.includes(feature);
     };
-  }, [userRole, canEdit]);
+  }, [roleAccess, canEdit]);
 
   const canEditFeature = useMemo(() => {
-    const access = ROLE_ACCESS[userRole];
     return (feature) => {
-      if (access === undefined) return canEdit;
-      if (access === null) return true;
-      if (access.edit === 'ALL') return true;
-      return Array.isArray(access.edit) && access.edit.includes(feature);
+      if (roleAccess === undefined) return canEdit;
+      if (roleAccess === null) return true;
+      if (roleAccess.edit === 'ALL') return true;
+      return Array.isArray(roleAccess.edit) && roleAccess.edit.includes(feature);
     };
-  }, [userRole, canEdit]);
+  }, [roleAccess, canEdit]);
 
   // Ordered list of features this role may see (used for nav + default route).
   const allowedFeatures = useMemo(
@@ -167,7 +176,12 @@ export function WeddingProvider({ children }) {
   );
 
   // Whether the current role may see guest personal info anywhere in the app.
-  const canViewGuestPII = !NO_GUEST_PII_ROLES.includes(userRole);
+  const canViewGuestPII = useMemo(() => {
+    if (NO_GUEST_PII_ROLES.includes(userRole)) return false;
+    const custom = (activeWedding?.customRoles || []).find((r) => r.id === userRole);
+    if (custom) return custom.viewGuestPII !== false;
+    return true;
+  }, [userRole, activeWedding]);
 
   useEffect(() => {
     if (!activeWedding || !canEdit) return;
