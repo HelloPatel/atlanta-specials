@@ -10,8 +10,8 @@ import {
 
 describe('websiteThemes', () => {
   describe('WEBSITE_THEMES', () => {
-    it('has exactly 20 themes', () => {
-      expect(Object.keys(WEBSITE_THEMES)).toHaveLength(20);
+    it('has exactly 53 themes', () => {
+      expect(Object.keys(WEBSITE_THEMES)).toHaveLength(53);
     });
 
     it('contains the expected theme keys', () => {
@@ -46,7 +46,7 @@ describe('websiteThemes', () => {
   describe('getThemeConfig', () => {
     it('returns the correct theme by key', () => {
       const theme = getThemeConfig('royal-gold');
-      expect(theme.name).toBe('Royal Gold');
+      expect(theme.name).toBe('Zari');
       expect(theme.primary).toBe('#92400e');
     });
 
