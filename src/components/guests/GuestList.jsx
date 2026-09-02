@@ -896,14 +896,14 @@ function FamilyCard({ family, index, events, selected, toggleSelect, toggleSelec
         {/* Member × event attendance grid */}
         {open && (
         <div className="overflow-x-auto border-t border-gray-100">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-max text-sm">
             {events.length > 0 && (
               <thead>
                 <tr className="text-[10px] uppercase tracking-wide text-gray-400">
-                  <th className="px-4 py-2 text-left font-medium">Guest</th>
+                  <th className="sticky left-0 z-10 bg-white px-4 py-2 text-left font-medium">Guest</th>
                   {events.map((ev) => (
-                    <th key={ev.id} className="px-2 py-2 text-center font-medium" title={ev.name}>
-                      <span className="mx-auto block max-w-[64px] truncate">{ev.name}</span>
+                    <th key={ev.id} className="px-3 py-2 text-center font-medium" title={ev.name}>
+                      <span className="mx-auto block min-w-[64px] whitespace-nowrap">{ev.name}</span>
                     </th>
                   ))}
                 </tr>
@@ -916,7 +916,7 @@ function FamilyCard({ family, index, events, selected, toggleSelect, toggleSelec
                   className="group cursor-pointer transition-colors hover:bg-wine-50/40"
                   onClick={() => onEdit(m)}
                 >
-                  <td className="px-4 py-2.5">
+                  <td className="sticky left-0 z-10 bg-white px-4 py-2.5 group-hover:bg-wine-50/40">
                     <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
