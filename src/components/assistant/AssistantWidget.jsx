@@ -3,53 +3,107 @@ import { Sparkles, X } from 'lucide-react';
 import { useWedding } from '../../contexts/WeddingContext';
 import AssistantChat from './AssistantChat';
 
-const CORNER_KEY = 'phera:assistantCorner';
-const VALID_CORNERS = ['br', 'bl', 'tr', 'tl'];
+const LAUNCHER_KEY = 'phera:assistantLauncherPos';
 const BUTTON_SIZE = 56; // w-14 / h-14
+const PANEL_W = 400; // sm:w-[400px]
 const DRAG_THRESHOLD = 6; // px of movement before it counts as a drag
-const EDGE_GAP = 16; // keep this far from the viewport edge while dragging
+const EDGE_GAP = 16; // keep this far from the viewport edge
 
-function readCorner() {
-  if (typeof window === 'undefined') return 'br';
-  const saved = window.localStorage.getItem(CORNER_KEY);
-  return VALID_CORNERS.includes(saved) ? saved : 'br';
+function clampToViewport(pos, w, h) {
+  const maxLeft = window.innerWidth - w - EDGE_GAP;
+  const maxTop = window.innerHeight - h - EDGE_GAP;
+  return {
+    left: Math.min(Math.max(EDGE_GAP, pos.left), Math.max(EDGE_GAP, maxLeft)),
+    top: Math.min(Math.max(EDGE_GAP, pos.top), Math.max(EDGE_GAP, maxTop)),
+  };
 }
 
-// Resting position for the launcher. Bottom corners clear the mobile nav bar
-// and the phone's safe-area inset; desktop uses a simple 1.5rem margin.
-const LAUNCHER_POS = {
-  br: 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 md:bottom-6 md:right-6',
-  bl: 'bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-4 md:bottom-6 md:left-6',
-  tr: 'top-[calc(0.75rem+env(safe-area-inset-top))] right-4 md:top-6 md:right-6',
-  tl: 'top-[calc(0.75rem+env(safe-area-inset-top))] left-4 md:top-6 md:left-6',
-};
+// Default resting spot: bottom-right, clearing the mobile nav bar / safe area.
+function defaultLauncherPos() {
+  if (typeof window === 'undefined') return { left: 0, top: 0 };
+  return clampToViewport(
+    {
+      left: window.innerWidth - BUTTON_SIZE - 24,
+      top: window.innerHeight - BUTTON_SIZE - 88,
+    },
+    BUTTON_SIZE,
+    BUTTON_SIZE
+  );
+}
 
-// The desktop chat panel opens from the same corner the button rests in.
-const PANEL_POS = {
-  br: 'sm:bottom-24 sm:right-6 origin-bottom-right',
-  bl: 'sm:bottom-24 sm:left-6 origin-bottom-left',
-  tr: 'sm:top-24 sm:right-6 origin-top-right',
-  tl: 'sm:top-24 sm:left-6 origin-top-left',
-};
+function readLauncherPos() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(LAUNCHER_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (typeof p?.left === 'number' && typeof p?.top === 'number') return p;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function panelHeight() {
+  return Math.min(620, window.innerHeight - 128); // matches sm:h-[min(620px,100dvh-8rem)]
+}
 
 /**
  * Floating "chat bubble" entry point for the Phera Assistant.
  *
- * The launcher lives in a corner but can be dragged anywhere; on release it
- * snaps to the nearest corner and remembers that choice. A short drag never
- * counts as a click, so moving it won't accidentally open the chat.
+ * The launcher can be dragged anywhere on screen (not just the corners) and
+ * remembers where you left it; on first load it starts in the bottom-right.
+ * The open chat panel opens centered on desktop and can be dragged around by
+ * its header. A short drag never counts as a click, so moving either one won't
+ * accidentally open or close the chat.
  */
 export default function AssistantWidget() {
   const { canViewFeature } = useWedding();
   const [open, setOpen] = useState(false);
-  const [corner, setCorner] = useState(readCorner);
-  const [dragPos, setDragPos] = useState(null); // {left, top} while dragging
+  const [launcherPos, setLauncherPos] = useState(
+    () => readLauncherPos() || defaultLauncherPos()
+  );
+  const [panelPos, setPanelPos] = useState(null); // desktop panel {left, top}
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches
+  );
   const panelRef = useRef(null);
   const launcherRef = useRef(null);
 
   // Pointer/drag bookkeeping kept in refs so it doesn't trigger re-renders.
   const drag = useRef({ active: false, moved: false, grabX: 0, grabY: 0 });
+  const panelDrag = useRef({ active: false, grabX: 0, grabY: 0 });
   const suppressClick = useRef(false);
+
+  // Track the desktop breakpoint so drag/center only apply on sm+.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 640px)');
+    const onChange = () => setIsDesktop(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  // Keep the launcher on-screen across resizes / first mount.
+  useEffect(() => {
+    const clamp = () =>
+      setLauncherPos((p) => clampToViewport(p || defaultLauncherPos(), BUTTON_SIZE, BUTTON_SIZE));
+    clamp();
+    window.addEventListener('resize', clamp);
+    return () => window.removeEventListener('resize', clamp);
+  }, []);
+
+  // Center the desktop panel each time it opens; clear position when closed.
+  useEffect(() => {
+    if (open && isDesktop) {
+      const h = panelHeight();
+      setPanelPos({
+        left: Math.max(EDGE_GAP, Math.round((window.innerWidth - PANEL_W) / 2)),
+        top: Math.max(EDGE_GAP, Math.round((window.innerHeight - h) / 2)),
+      });
+    } else if (!open) {
+      setPanelPos(null);
+    }
+  }, [open, isDesktop]);
 
   // Close on Escape and restore focus to the launcher.
   useEffect(() => {
@@ -64,15 +118,15 @@ export default function AssistantWidget() {
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const persistCorner = useCallback((next) => {
-    setCorner(next);
+  const persistLauncher = useCallback((pos) => {
     try {
-      window.localStorage.setItem(CORNER_KEY, next);
+      window.localStorage.setItem(LAUNCHER_KEY, JSON.stringify(pos));
     } catch {
       /* private mode / storage disabled — position just won't persist */
     }
   }, []);
 
+  // ---- Launcher drag (free positioning, anywhere on screen) ----
   const onPointerDown = useCallback(
     (e) => {
       if (open) return; // only draggable in its launcher state
@@ -107,12 +161,7 @@ export default function AssistantWidget() {
       if (!movedFar) return;
       d.moved = true;
     }
-    const maxLeft = window.innerWidth - BUTTON_SIZE - EDGE_GAP;
-    const maxTop = window.innerHeight - BUTTON_SIZE - EDGE_GAP;
-    setDragPos({
-      left: Math.min(Math.max(EDGE_GAP, left), Math.max(EDGE_GAP, maxLeft)),
-      top: Math.min(Math.max(EDGE_GAP, top), Math.max(EDGE_GAP, maxTop)),
-    });
+    setLauncherPos(clampToViewport({ left, top }, BUTTON_SIZE, BUTTON_SIZE));
   }, []);
 
   const endDrag = useCallback(
@@ -125,19 +174,55 @@ export default function AssistantWidget() {
       } catch {
         /* ignore */
       }
-      if (d.moved && dragPos) {
-        // Snap to the nearest corner based on the button's center point.
-        const centerX = dragPos.left + BUTTON_SIZE / 2;
-        const centerY = dragPos.top + BUTTON_SIZE / 2;
-        const horiz = centerX < window.innerWidth / 2 ? 'l' : 'r';
-        const vert = centerY < window.innerHeight / 2 ? 't' : 'b';
-        persistCorner(`${vert}${horiz}`);
+      if (d.moved) {
         suppressClick.current = true; // this pointer sequence was a drag, not a tap
+        setLauncherPos((p) => {
+          persistLauncher(p);
+          return p;
+        });
       }
-      setDragPos(null);
     },
-    [dragPos, persistCorner]
+    [persistLauncher]
   );
+
+  // ---- Panel drag (desktop only, via the header handle) ----
+  const onPanelPointerDown = useCallback(
+    (e) => {
+      if (!isDesktop) return;
+      if (e.target.closest('button')) return; // let header buttons work normally
+      const rect = panelRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      panelDrag.current = {
+        active: true,
+        grabX: e.clientX - rect.left,
+        grabY: e.clientY - rect.top,
+      };
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+    },
+    [isDesktop]
+  );
+
+  const onPanelPointerMove = useCallback((e) => {
+    const d = panelDrag.current;
+    if (!d.active) return;
+    const w = panelRef.current?.offsetWidth || PANEL_W;
+    const h = panelRef.current?.offsetHeight || panelHeight();
+    setPanelPos(clampToViewport({ left: e.clientX - d.grabX, top: e.clientY - d.grabY }, w, h));
+  }, []);
+
+  const onPanelPointerUp = useCallback((e) => {
+    if (!panelDrag.current.active) return;
+    panelDrag.current.active = false;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const onClick = useCallback(() => {
     if (suppressClick.current) {
@@ -149,23 +234,40 @@ export default function AssistantWidget() {
 
   if (!canViewFeature('assistant')) return null;
 
-  const dragging = dragPos !== null;
+  const dragging = drag.current.active && drag.current.moved;
+  const dragHandleProps = isDesktop
+    ? {
+        onPointerDown: onPanelPointerDown,
+        onPointerMove: onPanelPointerMove,
+        onPointerUp: onPanelPointerUp,
+        onPointerCancel: onPanelPointerUp,
+      }
+    : undefined;
 
   return (
     <>
-      {/* Chat panel */}
+      {/* Chat panel — centered on desktop, draggable by its header; full-screen sheet on mobile */}
       {open && (
         <div
           ref={panelRef}
           role="dialog"
           aria-label="Phera Assistant chat"
-          className={`fixed z-50 bottom-0 right-0 left-0 top-0 sm:top-auto sm:left-auto sm:right-auto sm:bottom-auto ${PANEL_POS[corner]} sm:w-[400px] sm:h-[min(620px,calc(100dvh-8rem))] bg-white sm:rounded-2xl border border-gray-200 shadow-2xl overflow-hidden flex flex-col animate-sheet-up sm:animate-assistant-in`}
+          style={
+            isDesktop && panelPos
+              ? { left: panelPos.left, top: panelPos.top, right: 'auto', bottom: 'auto' }
+              : undefined
+          }
+          className="fixed z-50 bottom-0 right-0 left-0 top-0 sm:inset-auto sm:w-[400px] sm:h-[min(620px,calc(100dvh-8rem))] bg-white sm:rounded-2xl border border-gray-200 shadow-2xl overflow-hidden flex flex-col animate-sheet-up sm:animate-assistant-in"
         >
-          <AssistantChat onClose={() => setOpen(false)} />
+          <AssistantChat
+            onClose={() => setOpen(false)}
+            onMinimize={() => setOpen(false)}
+            dragHandleProps={dragHandleProps}
+          />
         </div>
       )}
 
-      {/* Launcher button — draggable, snaps to the nearest corner on release */}
+      {/* Launcher button — draggable anywhere, remembers its position */}
       <button
         ref={launcherRef}
         type="button"
@@ -176,15 +278,9 @@ export default function AssistantWidget() {
         onClick={onClick}
         aria-expanded={open}
         aria-label={open ? 'Close Phera Assistant' : 'Open Phera Assistant'}
-        style={
-          dragging
-            ? { left: dragPos.left, top: dragPos.top, right: 'auto', bottom: 'auto', touchAction: 'none' }
-            : { touchAction: 'none' }
-        }
+        style={{ left: launcherPos.left, top: launcherPos.top, right: 'auto', bottom: 'auto', touchAction: 'none' }}
         className={`fixed z-50 flex items-center justify-center rounded-full shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-wine-600 focus-visible:ring-offset-2 ${
-          dragging
-            ? 'cursor-grabbing scale-110 transition-transform'
-            : 'transition-all active:scale-95 cursor-grab ' + LAUNCHER_POS[corner]
+          dragging ? 'cursor-grabbing scale-110 transition-transform' : 'transition-all active:scale-95 cursor-grab'
         } ${
           open
             ? 'w-12 h-12 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hidden sm:flex'

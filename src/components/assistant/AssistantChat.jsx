@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Sparkles, Send, Bot, User, Trash2, AlertCircle, X, Check, Loader2, Wand2 } from 'lucide-react';
+import { Sparkles, Send, Bot, User, Trash2, AlertCircle, X, Minus, Check, Loader2, Wand2 } from 'lucide-react';
 import { useWedding } from '../../contexts/WeddingContext';
 import { useToast } from '../ui';
 import { subscribeToGuests } from '../../services/guestService';
@@ -142,7 +142,38 @@ function ActionCard({ action, describe, onConfirm, onCancel }) {
   );
 }
 
-export default function AssistantChat({ onClose }) {
+// Keep a short rolling history per wedding so closing the panel (or a refresh)
+// doesn't wipe the recent conversation. Only the plain role/content/error is
+// stored — proposed actions are intentionally dropped so reloaded history is
+// read-only and can't re-trigger stale writes.
+const HISTORY_LIMIT = 30;
+function historyKey(id) {
+  return id ? `phera:assistantHistory:${id}` : null;
+}
+function loadHistory(id) {
+  const key = historyKey(id);
+  if (!key || typeof window === 'undefined') return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+function saveHistory(id, messages) {
+  const key = historyKey(id);
+  if (!key || typeof window === 'undefined') return;
+  try {
+    const slim = messages
+      .slice(-HISTORY_LIMIT)
+      .map((m) => ({ role: m.role, content: m.content, error: !!m.error }));
+    window.localStorage.setItem(key, JSON.stringify(slim));
+  } catch {
+    /* storage disabled / private mode — history just won't persist */
+  }
+}
+
+export default function AssistantChat({ onClose, onMinimize, dragHandleProps }) {
   const { activeWedding } = useWedding();
   const toast = useToast();
 
@@ -193,6 +224,23 @@ export default function AssistantChat({ onClose }) {
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
+
+  // Restore recent conversation for this wedding (runs before the persist
+  // effect below, so a fresh mount never clobbers saved history with []).
+  useEffect(() => {
+    setMessages(loadHistory(weddingId));
+  }, [weddingId]);
+
+  // Persist on every change. Skip empty saves so mounting doesn't wipe history;
+  // clearing is handled explicitly by clearConversation().
+  useEffect(() => {
+    if (weddingId && messages.length > 0) saveHistory(weddingId, messages);
+  }, [messages, weddingId]);
+
+  function clearConversation() {
+    setMessages([]);
+    saveHistory(weddingId, []);
+  }
 
   const contextText = useMemo(
     () =>
@@ -283,8 +331,13 @@ export default function AssistantChat({ onClose }) {
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-wine-50/40 to-white overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white/70 backdrop-blur">
+      {/* Header — doubles as the drag handle on desktop */}
+      <div
+        {...dragHandleProps}
+        className={`flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white/70 backdrop-blur ${
+          dragHandleProps ? 'cursor-move select-none touch-none' : ''
+        }`}
+      >
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-wine-500 to-wine-700 text-white flex items-center justify-center shadow-sm">
           <Sparkles className="w-5 h-5" />
         </div>
@@ -299,12 +352,22 @@ export default function AssistantChat({ onClose }) {
         <div className="ml-auto flex items-center gap-1">
           {!isEmpty && (
             <button
-              onClick={() => setMessages([])}
+              onClick={clearConversation}
               className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-wine-700 hover:bg-wine-50 transition-colors"
               title="Clear conversation"
               aria-label="Clear conversation"
             >
               <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+          {onMinimize && (
+            <button
+              onClick={onMinimize}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+              title="Minimize"
+              aria-label="Minimize assistant"
+            >
+              <Minus className="w-4 h-4" />
             </button>
           )}
           {onClose && (

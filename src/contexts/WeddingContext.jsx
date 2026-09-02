@@ -31,6 +31,10 @@ const ROLE_ACCESS = {
 // Roles that must not see guest personal info (names, contact, dietary, family).
 const NO_GUEST_PII_ROLES = ['planner', 'dealer'];
 
+// Features restricted to Owners and Editors by default. The viewer "view: 'ALL'"
+// shortcut does NOT auto-grant these — a custom role must list them explicitly.
+const OWNER_EDITOR_ONLY_FEATURES = ['assistant'];
+
 export function WeddingProvider({ children }) {
   const { user, userProfile } = useAuth();
   const [ownedWeddings, setOwnedWeddings] = useState([]);
@@ -155,6 +159,11 @@ export function WeddingProvider({ children }) {
     return (feature) => {
       if (roleAccess === undefined) return canEdit; // unknown role → fall back to canEdit
       if (roleAccess === null) return true;         // owner / editor
+      // Owner/editor-only features are never granted by the view:'ALL' shortcut;
+      // a custom role must list them explicitly.
+      if (OWNER_EDITOR_ONLY_FEATURES.includes(feature)) {
+        return Array.isArray(roleAccess.view) && roleAccess.view.includes(feature);
+      }
       if (roleAccess.view === 'ALL') return true;
       return roleAccess.view.includes(feature);
     };

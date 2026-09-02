@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, CalendarPlus, Clock3, ExternalLink, Gift, Heart, MapPin, Plane } from 'lucide-react';
+import { CalendarDays, CalendarPlus, Clock3, ExternalLink, Gift, Heart, MapPin, Menu, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   getCoupleDisplayName,
@@ -1632,6 +1632,61 @@ function HeroDuotone({ theme, config, wedding, names, coupleName, heroDate, loca
   );
 }
 
+// Lively top-left "jump to section" menu shared by every template. Renders as a
+// glassy pill with an animated glow; opens a compact list of the sections the
+// couple has actually enabled and smooth-scrolls to them.
+function SectionNav({ theme, links }) {
+  const [open, setOpen] = useState(false);
+  if (!links || links.length < 2) return null;
+
+  const go = (e, id) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setOpen(false);
+  };
+
+  return (
+    <div className="absolute left-4 top-4 z-30 @md:left-6 @md:top-6">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label="Jump to a section"
+        className="group relative flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.24em] shadow-[0_10px_30px_rgba(15,23,42,0.22)] backdrop-blur transition-transform hover:-translate-y-0.5"
+        style={{ backgroundColor: 'rgba(255,255,255,0.92)', color: theme.primary }}
+      >
+        <span
+          className="absolute inset-0 -z-10 rounded-full opacity-70 blur-[6px] animate-pulse"
+          style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}
+          aria-hidden="true"
+        />
+        <Menu size={15} className="transition-transform group-hover:rotate-90" />
+        Menu
+      </button>
+
+      {open && (
+        <div
+          className="mt-2 min-w-[11rem] overflow-hidden rounded-2xl border shadow-[0_18px_50px_rgba(15,23,42,0.18)]"
+          style={{ backgroundColor: theme.surface, borderColor: hexToRgba(theme.text, 0.1) }}
+        >
+          {links.map((link) => (
+            <a
+              key={link.id}
+              href={`#${link.id}`}
+              onClick={(e) => go(e, link.id)}
+              className="block px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] transition-colors hover:bg-black/5"
+              style={{ color: theme.text }}
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WeddingWebsitePreview({
   wedding,
   config: rawConfig,
@@ -1652,6 +1707,21 @@ export default function WeddingWebsitePreview({
     return events.filter((event) => selectedIds.has(event.id));
   }, [config.websiteEventIds, events]);
   useThemeFont(theme);
+
+  const sectionLinks = useMemo(
+    () =>
+      [
+        { id: 'home', label: 'Top' },
+        publicEvents.length > 0 && { id: 'events', label: 'Events' },
+        config.websiteStory?.enabled && config.websiteStory?.text && { id: 'story', label: 'Our Story' },
+        config.websiteGallery?.enabled &&
+          (config.websiteGallery.images || []).length > 0 && { id: 'gallery', label: 'Gallery' },
+        config.websiteRegistry?.enabled &&
+          (config.websiteRegistry.items || []).length > 0 && { id: 'registry', label: 'Registry' },
+        config.websiteRsvp?.enabled && { id: 'rsvp', label: 'RSVP' },
+      ].filter(Boolean),
+    [config, publicEvents],
+  );
 
   const heroProps = {
     theme,
@@ -1735,10 +1805,12 @@ export default function WeddingWebsitePreview({
 
   return (
     <div
-      className="@container overflow-hidden rounded-[2rem] border border-white/60 shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
+      className="@container relative overflow-hidden rounded-[2rem] border border-white/60 shadow-[0_24px_80px_rgba(15,23,42,0.12)]"
       style={{ backgroundColor: theme.background, color: theme.text, fontFamily: theme.bodyFontFamily }}
     >
       <HeroKeyframes />
+      <span id="home" aria-hidden="true" className="block scroll-mt-24" />
+      {!heroOnly && <SectionNav theme={theme} links={sectionLinks} />}
       {!config.websitePublished && previewMode && (
         <div
           className="flex items-center justify-center gap-2 px-4 py-3 text-center text-sm font-medium"
@@ -1958,7 +2030,7 @@ export default function WeddingWebsitePreview({
         )}
 
         {config.websiteGallery?.enabled && (config.websiteGallery.images || []).length > 0 && (
-          <section className="py-16">
+          <section id="gallery" className="scroll-mt-24 py-16">
             <SectionTitle
               eyebrow="Gallery"
               title="Our Moments"
@@ -1976,7 +2048,7 @@ export default function WeddingWebsitePreview({
         )}
 
         {config.websiteRsvp?.enabled && (
-          <section className="py-8">
+          <section id="rsvp" className="scroll-mt-24 py-8">
             <div
               className="rounded-[2rem] px-8 py-10 text-center shadow-[0_20px_50px_rgba(15,23,42,0.12)]"
               style={{
