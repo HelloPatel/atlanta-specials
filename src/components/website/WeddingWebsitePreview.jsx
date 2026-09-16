@@ -2,6 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, CalendarPlus, Clock3, ExternalLink, Gift, Heart, MapPin, Menu, Plane } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
+  MandalaCorner,
+  MughalArch,
+  HangingBell,
+  PeacockMotif,
+  BotanicalSpray,
+  FiligreeDivider,
+  LotusMark,
+} from './WeddingOrnaments';
+import {
   getCoupleDisplayName,
   getCoupleInitials,
   getCoupleNames,
@@ -122,32 +131,10 @@ function useThemeFont(theme) {
 
 function Divider({ theme, className = '' }) {
   const layout = theme.layout || 'botanical';
+  // Intentionally minimalist layouts keep a hairline rule.
   if (layout === 'editorial') {
     return (
       <div className={`mx-auto mt-5 h-px w-16 ${className}`} style={{ backgroundColor: hexToRgba(theme.accent, 0.7) }} />
-    );
-  }
-  if (layout === 'luxe') {
-    return (
-      <div className={`mx-auto mt-5 flex items-center justify-center gap-2 ${className}`}>
-        <span className="h-px w-10" style={{ backgroundColor: hexToRgba(theme.accent, 0.6) }} />
-        <span className="text-lg leading-none" style={{ color: theme.accent }}>&#10022;</span>
-        <span className="h-px w-10" style={{ backgroundColor: hexToRgba(theme.accent, 0.6) }} />
-      </div>
-    );
-  }
-  if (layout === 'arch') {
-    return (
-      <div className={`mx-auto mt-5 flex items-center justify-center gap-2 ${className}`}>
-        <span className="h-px w-12" style={{ backgroundColor: hexToRgba(theme.accent, 0.55) }} />
-        <span className="text-sm leading-none" style={{ color: theme.accent }}>&#9671;</span>
-        <span className="h-px w-12" style={{ backgroundColor: hexToRgba(theme.accent, 0.55) }} />
-      </div>
-    );
-  }
-  if (layout === 'poster') {
-    return (
-      <div className={`mx-auto mt-5 h-1 w-14 rounded-full ${className}`} style={{ backgroundColor: theme.accent }} />
     );
   }
   if (layout === 'split') {
@@ -155,13 +142,17 @@ function Divider({ theme, className = '' }) {
       <div className={`mx-auto mt-5 h-px w-20 ${className}`} style={{ backgroundColor: hexToRgba(theme.accent, 0.7) }} />
     );
   }
-  // botanical — small leafy sprig
+  if (layout === 'minimal' || layout === 'poster' || layout === 'deco') {
+    return (
+      <div className={`mx-auto mt-5 h-1 w-14 rounded-full ${className}`} style={{ backgroundColor: theme.accent }} />
+    );
+  }
+  // Every other layout gets the refined filigree divider, themed to the accent.
   return (
-    <div className={`mx-auto mt-5 flex items-center justify-center gap-2 ${className}`}>
-      <span className="h-px w-8" style={{ backgroundColor: hexToRgba(theme.accent, 0.5) }} />
-      <span className="text-base leading-none" style={{ color: theme.accent }}>&#10047;</span>
-      <span className="h-px w-8" style={{ backgroundColor: hexToRgba(theme.accent, 0.5) }} />
-    </div>
+    <FiligreeDivider
+      className={`mx-auto mt-5 h-6 w-52 @lg:w-60 ${className}`}
+      style={{ color: theme.accent }}
+    />
   );
 }
 
@@ -343,6 +334,8 @@ function HeroBotanical({ theme, config, wedding, coupleName, initials, heroDate,
       className="relative isolate overflow-hidden px-6 py-14 @md:px-10 @lg:py-20 @2xl:px-16"
       style={{ backgroundColor: theme.background, color: theme.text }}
     >
+      <BotanicalSpray className="pointer-events-none absolute -bottom-2 -left-2 h-32 w-28 @lg:h-44 @lg:w-40" style={{ color: hexToRgba(theme.primary, 0.5) }} />
+      <BotanicalSpray className="pointer-events-none absolute -bottom-2 -right-2 h-32 w-28 @lg:h-44 @lg:w-40" style={{ color: hexToRgba(theme.primary, 0.5), transform: 'scaleX(-1)' }} />
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
         <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 text-2xl font-semibold"
           style={{ borderColor: theme.accent, color: theme.primary, fontFamily: theme.fontFamily }}>
@@ -405,6 +398,10 @@ function HeroLuxe({ theme, config, wedding, names, coupleName, heroDate, locatio
         backgroundPosition: 'center',
       }}
     >
+      <MandalaCorner className="pointer-events-none absolute left-0 top-0 h-24 w-24 @lg:h-32 @lg:w-32" style={{ color: hexToRgba(theme.accent, 0.55) }} />
+      <MandalaCorner className="pointer-events-none absolute right-0 top-0 h-24 w-24 @lg:h-32 @lg:w-32" style={{ color: hexToRgba(theme.accent, 0.55), transform: 'scaleX(-1)' }} />
+      <MandalaCorner className="pointer-events-none absolute bottom-0 left-0 h-24 w-24 @lg:h-32 @lg:w-32" style={{ color: hexToRgba(theme.accent, 0.55), transform: 'scaleY(-1)' }} />
+      <MandalaCorner className="pointer-events-none absolute bottom-0 right-0 h-24 w-24 @lg:h-32 @lg:w-32" style={{ color: hexToRgba(theme.accent, 0.55), transform: 'scale(-1, -1)' }} />
       <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-col items-center text-center">
         <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.4em] text-white/70">
           <span className="h-px w-8 bg-white/40" />
@@ -496,29 +493,33 @@ function HeroArch({ theme, config, wedding, coupleName, initials, heroDate, loca
         backgroundImage: `radial-gradient(circle at 50% 0%, ${hexToRgba(theme.accent, 0.16)}, transparent 60%)`,
       }}
     >
+      <MandalaCorner className="pointer-events-none absolute left-3 top-3 h-16 w-16 @lg:h-20 @lg:w-20" style={{ color: hexToRgba(theme.accent, 0.45) }} />
+      <MandalaCorner className="pointer-events-none absolute right-3 top-3 h-16 w-16 @lg:h-20 @lg:w-20" style={{ color: hexToRgba(theme.accent, 0.45), transform: 'scaleX(-1)' }} />
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+        <LotusMark className="mb-3 h-6 w-11" style={{ color: theme.accent }} />
         <p className="text-[11px] font-semibold uppercase tracking-[0.5em]" style={{ color: theme.accent }}>
           Together with their families
         </p>
-        <div
-          className="relative mt-8 w-64 overflow-hidden border @sm:w-72"
-          style={{
-            borderColor: hexToRgba(theme.accent, 0.5),
-            borderRadius: '9999px 9999px 1.5rem 1.5rem',
-            aspectRatio: '3 / 4',
-            backgroundColor: theme.surface,
-            backgroundImage: hasPhoto
-              ? `url(${config.websiteHero.backgroundImage})`
-              : `linear-gradient(160deg, ${hexToRgba(theme.accent, 0.22)}, ${hexToRgba(theme.primary, 0.14)})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          {!hasPhoto && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-5xl font-semibold" style={{ fontFamily: theme.fontFamily, color: theme.primary }}>{initials}</span>
-            </div>
-          )}
+        <div className="relative mt-8 h-80 w-64 @sm:h-96 @sm:w-72">
+          <MughalArch className="absolute inset-0 h-full w-full" style={{ color: hexToRgba(theme.accent, 0.6) }} />
+          <div
+            className="absolute bottom-[5%] left-[11%] right-[11%] top-[14%] overflow-hidden"
+            style={{
+              borderRadius: '9999px 9999px 0.6rem 0.6rem',
+              backgroundColor: theme.surface,
+              backgroundImage: hasPhoto
+                ? `url(${config.websiteHero.backgroundImage})`
+                : `linear-gradient(160deg, ${hexToRgba(theme.accent, 0.22)}, ${hexToRgba(theme.primary, 0.14)})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          >
+            {!hasPhoto && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-5xl font-semibold" style={{ fontFamily: theme.fontFamily, color: theme.primary }}>{initials}</span>
+              </div>
+            )}
+          </div>
         </div>
         <h1 className="mt-9 text-4xl font-semibold leading-tight @sm:text-5xl @xl:text-6xl" style={{ fontFamily: theme.fontFamily }}>
           {coupleName}
@@ -1380,7 +1381,6 @@ function HeroMosaic({ theme, config, wedding, names, initials, heroDate, locatio
 function HeroToran({ theme, config, wedding, names, coupleName, heroDate, location, publicEvents }) {
   const rawDate = config.websiteHero?.date || wedding?.weddingDate;
   const tagline = config.websiteHero?.tagline;
-  const strands = Array.from({ length: 15 });
   return (
     <section
       data-website-theme={theme.key}
@@ -1388,19 +1388,25 @@ function HeroToran({ theme, config, wedding, names, coupleName, heroDate, locati
       className="relative isolate overflow-hidden px-6 py-14 text-center @md:px-10 @lg:py-20"
       style={{ backgroundColor: theme.background, color: theme.text }}
     >
-      {/* hanging marigold valance */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-center gap-[3.2cqw] px-2" aria-hidden="true">
-        {strands.map((_, i) => (
-          <span key={i} className={`phera-float${i % 2 ? '-slow' : ''} flex flex-col items-center`} style={{ animationDelay: `${(i % 5) * 0.4}s` }}>
-            <span className="block w-px" style={{ height: `${18 + (i % 3) * 10}px`, backgroundColor: hexToRgba(theme.primary, 0.35) }} />
+      {/* toran valance — a hanging arc of bells on beaded strings */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-center gap-[1.5cqw] px-2 @md:gap-[2cqw]" aria-hidden="true">
+        {Array.from({ length: 11 }).map((_, i, arr) => {
+          const mid = (arr.length - 1) / 2;
+          const arc = Math.abs(i - mid) / mid; // 0 center → 1 edges
+          const len = 10 + arc * 34; // bells dip lower toward the sides
+          return (
             <span
-              className="block h-3 w-3 rounded-full @md:h-3.5 @md:w-3.5"
-              style={{ background: `radial-gradient(circle at 35% 30%, ${theme.accent}, ${theme.primary})` }}
-            />
-            <span className="mt-0.5 block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: hexToRgba(theme.accent, 0.55) }} />
-          </span>
-        ))}
+              key={i}
+              className={`phera-float${i % 2 ? '-slow' : ''} block w-[5cqw] max-w-[44px]`}
+              style={{ animationDelay: `${(i % 5) * 0.35}s`, color: theme.primary }}
+            >
+              <HangingBell className="h-auto w-full" stringLength={len} style={{ color: i % 2 ? theme.accent : theme.primary }} />
+            </span>
+          );
+        })}
       </div>
+      <MandalaCorner className="pointer-events-none absolute bottom-3 left-3 h-16 w-16 @lg:h-20 @lg:w-20" style={{ color: hexToRgba(theme.accent, 0.4), transform: 'scaleY(-1)' }} />
+      <MandalaCorner className="pointer-events-none absolute bottom-3 right-3 h-16 w-16 @lg:h-20 @lg:w-20" style={{ color: hexToRgba(theme.accent, 0.4), transform: 'scale(-1,-1)' }} />
 
       <div className="relative mx-auto max-w-3xl pt-20">
         <p className="phera-rise text-[11px] font-semibold uppercase tracking-[0.5em]" style={{ color: theme.primary }}>
@@ -1440,6 +1446,8 @@ function HeroWreath({ theme, config, wedding, names, coupleName, initials, heroD
       className="relative isolate overflow-hidden px-6 py-16 text-center @md:px-10 @lg:py-24"
       style={{ backgroundColor: theme.background, color: theme.text }}
     >
+      <PeacockMotif className="pointer-events-none absolute -bottom-3 -left-3 h-28 w-28 @lg:h-36 @lg:w-36" style={{ color: hexToRgba(theme.primary, 0.4) }} />
+      <PeacockMotif className="pointer-events-none absolute -bottom-3 -right-3 h-28 w-28 @lg:h-36 @lg:w-36" style={{ color: hexToRgba(theme.primary, 0.4), transform: 'scaleX(-1)' }} />
       <div className="relative mx-auto flex max-w-2xl flex-col items-center">
         <div className="phera-rise relative flex aspect-square w-[74cqw] max-w-[440px] items-center justify-center">
           {/* blossom ring */}
